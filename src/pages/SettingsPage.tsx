@@ -1,0 +1,172 @@
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, User, Phone, Palette, Globe, Bell, LogOut, History, Star } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import AnimatedInput from '@/components/AnimatedInput';
+import PhotoUpload from '@/components/PhotoUpload';
+
+const SettingsPage = () => {
+  const navigate = useNavigate();
+  const { user, setUser } = useUser();
+  const [name, setName] = useState('Алишер Каримов');
+  const [phone, setPhone] = useState('+998 90 123 45 67');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const [language, setLanguage] = useState('ru');
+  const [notifications, setNotifications] = useState(true);
+
+  const handleLogout = () => {
+    setUser(null);
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => navigate(-1)}
+              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Назад
+            </Button>
+            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Настройки
+            </h1>
+            <div className="w-16"></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Profile Photo */}
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
+              <User className="h-5 w-5 mr-3 text-yoldosh-primary" />
+              Фото профиля
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PhotoUpload
+              value={photo}
+              onChange={setPhoto}
+              placeholder="Загрузите фото профиля"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Personal Info */}
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-slate-800">Личные данные</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <AnimatedInput
+              id="name"
+              label="Имя и фамилия"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              icon={<User className="h-4 w-4" />}
+            />
+            <AnimatedInput
+              id="phone"
+              label="Номер телефона"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              icon={<Phone className="h-4 w-4" />}
+            />
+            <Button className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl">
+              Сохранить изменения
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* App Settings */}
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-slate-800">Настройки приложения</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Theme Toggle */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-purple-50 rounded-2xl">
+              <div className="flex items-center space-x-3">
+                <Palette className="h-5 w-5 text-yoldosh-primary" />
+                <span className="font-medium text-slate-800">Темная тема</span>
+              </div>
+              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+            </div>
+
+            {/* Language */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700 flex items-center">
+                <Globe className="h-4 w-4 mr-2 text-yoldosh-primary" />
+                Язык приложения
+              </label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 backdrop-blur-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl bg-white/95 backdrop-blur-lg">
+                  <SelectItem value="ru">Русский</SelectItem>
+                  <SelectItem value="uz">O'zbekcha</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Notifications */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl">
+              <div className="flex items-center space-x-3">
+                <Bell className="h-5 w-5 text-yoldosh-primary" />
+                <span className="font-medium text-slate-800">Уведомления</span>
+              </div>
+              <Switch checked={notifications} onCheckedChange={setNotifications} />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <div className="space-y-4">
+          <Button
+            onClick={() => navigate('/ride-history')}
+            variant="outline"
+            className="w-full h-14 rounded-2xl border-2 border-yoldosh-accent text-yoldosh-accent hover:bg-yoldosh-accent/10"
+          >
+            <History className="h-5 w-5 mr-3" />
+            История поездок
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/my-reviews')}
+            variant="outline"
+            className="w-full h-14 rounded-2xl border-2 border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10"
+          >
+            <Star className="h-5 w-5 mr-3" />
+            Мои отзывы
+          </Button>
+          
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full h-14 rounded-2xl border-2 border-red-300 text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Выйти из аккаунта
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SettingsPage;

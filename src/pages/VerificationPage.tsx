@@ -3,332 +3,225 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Upload, Camera, CheckCircle, AlertCircle } from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
-import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Shield, Camera, FileText, CheckCircle, Upload } from 'lucide-react';
+import PhotoUpload from '@/components/PhotoUpload';
 
 const VerificationPage = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const [selfieWithLicense, setSelfieWithLicense] = useState<string | null>(null);
+  const [carDocuments, setCarDocuments] = useState<string | null>(null);
+  const [additionalDocs, setAdditionalDocs] = useState<string[]>([]);
   const [step, setStep] = useState(1);
-  const [documents, setDocuments] = useState({
-    license: null as File | null,
-    registration: null as File | null,
-    selfie: null as File | null
-  });
 
-  const handleFileUpload = (type: keyof typeof documents) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setDocuments(prev => ({ ...prev, [type]: file }));
-      toast({
-        title: "Файл загружен",
-        description: `${file.name} успешно загружен`,
-      });
-    }
+  const handleAddAdditionalDoc = (doc: string) => {
+    setAdditionalDocs([...additionalDocs, doc]);
   };
 
-  const handleNext = () => {
-    if (step === 1 && !documents.license) {
-      toast({
-        title: "Ошибка",
-        description: "Загрузите фото водительских прав",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (step === 2 && !documents.registration) {
-      toast({
-        title: "Ошибка",
-        description: "Загрузите фото техпаспорта",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (step === 3 && !documents.selfie) {
-      toast({
-        title: "Ошибка",
-        description: "Сделайте селфи для верификации",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setStep(step + 1);
+  const handleRemoveAdditionalDoc = (index: number) => {
+    setAdditionalDocs(additionalDocs.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
-    // Simulate verification process
-    if (user) {
-      setUser({ ...user, isVerified: true });
-    }
-    
-    toast({
-      title: "Верификация отправлена!",
-      description: "Ваши документы отправлены на проверку. Результат придет в течение 24 часов.",
-    });
-    
+    // Simulate verification submission
+    alert('Документы отправлены на проверку!');
     navigate('/driver');
   };
 
-  const DocumentUpload = ({ 
-    title, 
-    description, 
-    icon: Icon, 
-    file, 
-    onUpload, 
-    accept = "image/*" 
-  }: {
-    title: string;
-    description: string;
-    icon: any;
-    file: File | null;
-    onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    accept?: string;
-  }) => (
-    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-yoldosh-blue transition-colors">
-      <Icon className={`h-12 w-12 mx-auto mb-4 ${file ? 'text-green-500' : 'text-gray-400'}`} />
-      <h3 className="font-medium mb-2">{title}</h3>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
-      
-      {file ? (
-        <div className="space-y-2">
-          <div className="flex items-center justify-center text-green-600">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            <span className="text-sm font-medium">Загружено: {file.name}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => document.getElementById(`upload-${title}`)?.click()}>
-            Заменить файл
-          </Button>
-        </div>
-      ) : (
-        <Button 
-          variant="outline" 
-          onClick={() => document.getElementById(`upload-${title}`)?.click()}
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Загрузить
-        </Button>
-      )}
-      
-      <input
-        id={`upload-${title}`}
-        type="file"
-        accept={accept}
-        onChange={onUpload}
-        className="hidden"
-      />
-    </div>
-  );
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
+                <Camera className="h-6 w-6 mr-3 text-yoldosh-primary" />
+                Селфи с водительскими правами
+              </CardTitle>
+              <p className="text-slate-600">
+                Сделайте селфи, держа водительские права рядом с лицом
+              </p>
+            </CardHeader>
+            <CardContent>
+              <PhotoUpload
+                value={selfieWithLicense}
+                onChange={setSelfieWithLicense}
+                placeholder="Сделайте селфи с правами"
+                cameraOnly={true}
+              />
+              {selfieWithLicense && (
+                <div className="mt-4 flex items-center space-x-2 text-yoldosh-success">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Фото загружено</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 2:
+        return (
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
+                <FileText className="h-6 w-6 mr-3 text-yoldosh-secondary" />
+                Документы на автомобиль
+              </CardTitle>
+              <p className="text-slate-600">
+                Загрузите технический паспорт автомобиля
+              </p>
+            </CardHeader>
+            <CardContent>
+              <PhotoUpload
+                value={carDocuments}
+                onChange={setCarDocuments}
+                placeholder="Загрузите техпаспорт"
+              />
+              {carDocuments && (
+                <div className="mt-4 flex items-center space-x-2 text-yoldosh-success">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Документ загружен</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 3:
+        return (
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
+                <Upload className="h-6 w-6 mr-3 text-yoldosh-accent" />
+                Дополнительные документы
+                <Badge className="ml-3 bg-slate-100 text-slate-600">Необязательно</Badge>
+              </CardTitle>
+              <p className="text-slate-600">
+                Загрузите любые дополнительные документы (страховка, справки и т.д.)
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <PhotoUpload
+                value={null}
+                onChange={(doc) => doc && handleAddAdditionalDoc(doc)}
+                placeholder="Загрузить дополнительный документ"
+              />
+              
+              {additionalDocs.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-slate-800">Загруженные документы:</h4>
+                  {additionalDocs.map((doc, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl">
+                      <img src={doc} alt={`Документ ${index + 1}`} className="w-12 h-12 object-cover rounded-lg" />
+                      <span className="flex-1 text-sm text-slate-600">Документ {index + 1}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRemoveAdditionalDoc(index)}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Удалить
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => step > 1 ? setStep(step - 1) : navigate('/driver')}
+              onClick={() => navigate(-1)}
+              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-5 w-5 mr-2" />
               Назад
             </Button>
-            <h1 className="text-xl font-bold">Верификация водителя</h1>
-            <div className="text-sm text-gray-500">{step}/4</div>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Верификация
+              </h1>
+              <p className="text-slate-600 mt-1">Шаг {step} из 3</p>
+            </div>
+            <div className="w-16"></div>
           </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            {[1, 2, 3, 4].map((num) => (
-              <div key={num} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  num <= step ? 'bg-yoldosh-blue text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {num}
-                </div>
-                {num < 4 && (
-                  <div className={`w-16 h-1 mx-2 ${
-                    num < step ? 'bg-yoldosh-blue' : 'bg-gray-200'
-                  }`} />
-                )}
+      <div className="container mx-auto px-6 py-8">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-4">
+            {[1, 2, 3].map((stepNum) => (
+              <div
+                key={stepNum}
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                  stepNum <= step
+                    ? 'bg-gradient-primary text-white'
+                    : 'bg-slate-200 text-slate-500'
+                }`}
+              >
+                {stepNum}
               </div>
             ))}
           </div>
+          <div className="w-full bg-slate-200 rounded-full h-2">
+            <div
+              className="bg-gradient-primary h-2 rounded-full transition-all duration-500"
+              style={{ width: `${(step / 3) * 100}%` }}
+            ></div>
+          </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Card className="max-w-2xl mx-auto">
-          {step === 1 && (
-            <>
-              <CardHeader>
-                <CardTitle>Шаг 1: Водительские права</CardTitle>
-                <p className="text-gray-600">Загрузите четкое фото ваших водительских прав</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <DocumentUpload
-                  title="Водительские права"
-                  description="Загрузите фото лицевой стороны прав"
-                  icon={Upload}
-                  file={documents.license}
-                  onUpload={handleFileUpload('license')}
-                />
-                
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Требования к фото:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Все данные должны быть четко видны</li>
-                        <li>Без бликов и размытости</li>
-                        <li>Формат JPG или PNG</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleNext} 
-                  className="w-full bg-yoldosh-blue hover:bg-blue-700"
-                  disabled={!documents.license}
-                >
-                  Далее
-                </Button>
-              </CardContent>
-            </>
-          )}
+        {/* Current Step */}
+        {renderStep()}
 
-          {step === 2 && (
-            <>
-              <CardHeader>
-                <CardTitle>Шаг 2: Техпаспорт автомобиля</CardTitle>
-                <p className="text-gray-600">Загрузите фото технического паспорта вашего автомобиля</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <DocumentUpload
-                  title="Техпаспорт"
-                  description="Загрузите фото первой страницы техпаспорта"
-                  icon={Upload}
-                  file={documents.registration}
-                  onUpload={handleFileUpload('registration')}
-                />
-                
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                    <div className="text-sm text-green-800">
-                      <p className="font-medium mb-1">Проверяемые данные:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Марка и модель автомобиля</li>
-                        <li>Государственный номер</li>
-                        <li>Данные владельца</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleNext} 
-                  className="w-full bg-yoldosh-blue hover:bg-blue-700"
-                  disabled={!documents.registration}
-                >
-                  Далее
-                </Button>
-              </CardContent>
-            </>
+        {/* Navigation Buttons */}
+        <div className="flex space-x-4 mt-8">
+          {step > 1 && (
+            <Button
+              variant="outline"
+              onClick={() => setStep(step - 1)}
+              className="flex-1 h-14 rounded-2xl"
+            >
+              Назад
+            </Button>
           )}
-
-          {step === 3 && (
-            <>
-              <CardHeader>
-                <CardTitle>Шаг 3: Селфи для верификации</CardTitle>
-                <p className="text-gray-600">Сделайте селфи с водительскими правами для подтверждения личности</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <DocumentUpload
-                  title="Селфи с правами"
-                  description="Сделайте селфи, держа права рядом с лицом"
-                  icon={Camera}
-                  file={documents.selfie}
-                  onUpload={handleFileUpload('selfie')}
-                  accept="image/*"
-                />
-                
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-start space-x-2">
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                    <div className="text-sm text-yellow-800">
-                      <p className="font-medium mb-1">Инструкции для селфи:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>Держите права рядом с лицом</li>
-                        <li>Убедитесь, что лицо и права хорошо видны</li>
-                        <li>Используйте хорошее освещение</li>
-                        <li>Не используйте маски или очки</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleNext} 
-                  className="w-full bg-yoldosh-blue hover:bg-blue-700"
-                  disabled={!documents.selfie}
-                >
-                  Далее
-                </Button>
-              </CardContent>
-            </>
+          
+          {step < 3 ? (
+            <Button
+              onClick={() => setStep(step + 1)}
+              disabled={
+                (step === 1 && !selfieWithLicense) ||
+                (step === 2 && !carDocuments)
+              }
+              className="flex-1 h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl"
+            >
+              Далее
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!selfieWithLicense || !carDocuments}
+              className="flex-1 h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl"
+            >
+              <Shield className="h-5 w-5 mr-2" />
+              Отправить на проверку
+            </Button>
           )}
-
-          {step === 4 && (
-            <>
-              <CardHeader>
-                <CardTitle>Шаг 4: Подтверждение</CardTitle>
-                <p className="text-gray-600">Проверьте загруженные документы перед отправкой</p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span>Водительские права</span>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span>Техпаспорт автомобиля</span>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span>Селфи для верификации</span>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  </div>
-                </div>
-                
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-medium">Важно:</span> Процесс верификации может занять до 24 часов. 
-                    Вы получите уведомление о результате проверки.
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={handleSubmit} 
-                  className="w-full bg-yoldosh-green hover:bg-green-700"
-                >
-                  Отправить на проверку
-                </Button>
-              </CardContent>
-            </>
-          )}
-        </Card>
+        </div>
       </div>
     </div>
   );
