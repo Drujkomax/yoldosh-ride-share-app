@@ -25,6 +25,11 @@ const SettingsPage = () => {
     navigate('/');
   };
 
+  const handleSaveProfile = () => {
+    // Save profile logic here
+    alert('Профиль обновлен!');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       {/* Header */}
@@ -85,7 +90,10 @@ const SettingsPage = () => {
               onChange={(e) => setPhone(e.target.value)}
               icon={<Phone className="h-4 w-4" />}
             />
-            <Button className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl">
+            <Button 
+              onClick={handleSaveProfile}
+              className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
+            >
               Сохранить изменения
             </Button>
           </CardContent>

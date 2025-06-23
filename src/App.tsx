@@ -15,6 +15,8 @@ import SearchRides from "./pages/SearchRides";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
+import RideHistoryPage from "./pages/RideHistoryPage";
+import MyReviewsPage from "./pages/MyReviewsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/verification" element={<VerificationPage />} />
+            <Route path="/ride-history" element={<RideHistoryPage />} />
+            <Route path="/my-reviews" element={<MyReviewsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

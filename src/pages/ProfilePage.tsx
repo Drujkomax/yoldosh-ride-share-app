@@ -1,15 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   // Mock profile data
   const profile = {
@@ -51,53 +53,61 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
+              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-5 w-5 mr-2" />
               Назад
             </Button>
-            <h1 className="text-xl font-bold">Профиль</h1>
+            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Профиль
+            </h1>
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => navigate('/settings')}
+              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Profile Info */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-10 w-10 text-gray-400" />
-              </div>
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+          <CardContent className="p-8">
+            <div className="flex items-center space-x-6 mb-8">
+              <Avatar className="w-24 h-24">
+                <AvatarImage src={profilePhoto || undefined} />
+                <AvatarFallback className="bg-gradient-primary text-white text-2xl">
+                  {profile.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h2 className="text-2xl font-bold">{profile.name}</h2>
+                <div className="flex items-center space-x-3 mb-3">
+                  <h2 className="text-3xl font-bold text-slate-800">{profile.name}</h2>
                   {user?.isVerified && (
-                    <Badge className="bg-green-100 text-green-800">
-                      <Shield className="h-3 w-3 mr-1" />
+                    <Badge className="bg-green-100 text-green-800 px-3 py-1">
+                      <Shield className="h-4 w-4 mr-1" />
                       Проверен
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center space-x-1 mb-2">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="font-medium">{profile.rating}</span>
-                  <span className="text-gray-500">({profile.reviews} отзывов)</span>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                  <span className="font-semibold text-lg">{profile.rating}</span>
+                  <span className="text-slate-600">({profile.reviews} отзывов)</span>
                 </div>
-                <div className="flex items-center text-gray-600">
+                <div className="flex items-center text-slate-600">
                   <Phone className="h-4 w-4 mr-2" />
                   <span>{user?.phone}</span>
                 </div>
@@ -105,40 +115,40 @@ const ProfilePage = () => {
             </div>
 
             {user?.role === 'driver' && profile.carInfo && (
-              <div className="flex items-center space-x-2 mb-4 p-3 bg-blue-50 rounded-lg">
-                <Car className="h-5 w-5 text-blue-600" />
-                <span className="font-medium text-blue-800">{profile.carInfo}</span>
+              <div className="flex items-center space-x-3 mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl">
+                <Car className="h-6 w-6 text-yoldosh-primary" />
+                <span className="font-medium text-slate-800">{profile.carInfo}</span>
               </div>
             )}
 
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-yoldosh-blue">{profile.completedRides}</div>
-                <div className="text-sm text-gray-600">Поездок</div>
+            <div className="grid grid-cols-3 gap-6 text-center">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-2xl">
+                <div className="text-3xl font-bold text-yoldosh-primary">{profile.completedRides}</div>
+                <div className="text-sm text-slate-600 font-medium">Поездок</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-yoldosh-green">{profile.rating}</div>
-                <div className="text-sm text-gray-600">Рейтинг</div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-2xl">
+                <div className="text-3xl font-bold text-yoldosh-accent">{profile.rating}</div>
+                <div className="text-sm text-slate-600 font-medium">Рейтинг</div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-yoldosh-orange">{profile.reviews}</div>
-                <div className="text-sm text-gray-600">Отзывов</div>
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-2xl">
+                <div className="text-3xl font-bold text-yoldosh-secondary">{profile.reviews}</div>
+                <div className="text-sm text-slate-600 font-medium">Отзывов</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Reviews Section */}
-        <Card>
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
           <CardHeader>
-            <CardTitle>Отзывы пассажиров</CardTitle>
+            <CardTitle className="text-2xl font-bold text-slate-800">Последние отзывы</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {recentReviews.map((review) => (
-              <div key={review.id} className="border-b pb-4 last:border-b-0">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium">{review.passenger}</span>
+              <div key={review.id} className="border-b border-slate-200 pb-6 last:border-b-0">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <span className="font-semibold text-slate-800">{review.passenger}</span>
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -150,40 +160,41 @@ const ProfilePage = () => {
                       ))}
                     </div>
                   </div>
-                  <span className="text-sm text-gray-500">{review.date}</span>
+                  <span className="text-sm text-slate-500">{review.date}</span>
                 </div>
-                <p className="text-gray-700">{review.comment}</p>
+                <p className="text-slate-700 leading-relaxed">{review.comment}</p>
               </div>
             ))}
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           {user?.role === 'driver' && !user?.isVerified && (
             <Button 
               onClick={() => navigate('/verification')}
-              className="w-full bg-yoldosh-blue hover:bg-blue-700"
+              className="w-full h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl"
             >
-              <Shield className="h-4 w-4 mr-2" />
+              <Shield className="h-5 w-5 mr-2" />
               Пройти верификацию
             </Button>
           )}
           
           <Button 
             variant="outline" 
-            className="w-full"
+            className="w-full h-14 rounded-2xl border-2 hover:scale-105 transition-all duration-300"
+            onClick={() => navigate('/settings')}
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-5 w-5 mr-2" />
             Настройки
           </Button>
           
           <Button 
             variant="outline" 
-            className="w-full text-red-600 border-red-200 hover:bg-red-50"
+            className="w-full h-14 text-red-600 border-red-200 hover:bg-red-50 rounded-2xl hover:scale-105 transition-all duration-300"
             onClick={handleLogout}
           >
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-5 w-5 mr-2" />
             Выйти из аккаунта
           </Button>
         </div>
