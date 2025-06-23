@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, MapPin, Calendar, Users, Settings, User, Star, Plus } from 'lucide-react';
+import { Search, MapPin, Calendar, Users, Settings, User, Star, Plus, FileText } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import CitySelect from '@/components/CitySelect';
 
@@ -32,7 +32,10 @@ const PassengerDashboard = () => {
       seats: 3,
       bookedSeats: 1,
       car: 'Chevrolet Lacetti',
-      comfort: 'Комфорт'
+      comfort: 'Комфорт',
+      passengers: [
+        { name: 'Жамшид', rating: 4.8 }
+      ]
     },
     {
       id: 2,
@@ -50,7 +53,8 @@ const PassengerDashboard = () => {
       seats: 2,
       bookedSeats: 0,
       car: 'Hyundai Accent',
-      comfort: 'Эконом'
+      comfort: 'Эконом',
+      passengers: []
     }
   ];
 
@@ -59,6 +63,10 @@ const PassengerDashboard = () => {
     { from: 'Ташкент', to: 'Бухара', count: '8 поездок' },
     { from: 'Самарканд', to: 'Бухара', count: '6 поездок' },
   ];
+
+  const handleBookRide = (rideId: number) => {
+    alert(`Поездка ${rideId} забронирована!`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -84,7 +92,7 @@ const PassengerDashboard = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate('/settings')}
                 className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
               >
                 <Settings className="h-5 w-5 text-yoldosh-primary" />
@@ -107,12 +115,12 @@ const PassengerDashboard = () => {
             </div>
           </Button>
           <Button
-            onClick={() => navigate('/create-ride')}
+            onClick={() => navigate('/create-request')}
             variant="outline"
             className="h-16 border-2 border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10 hover:scale-105 transition-all duration-300 rounded-2xl"
           >
             <div className="flex items-center">
-              <Plus className="h-5 w-5 mr-3" />
+              <FileText className="h-5 w-5 mr-3" />
               <span className="font-semibold">Создать заявку</span>
             </div>
           </Button>
@@ -226,6 +234,23 @@ const PassengerDashboard = () => {
                     </div>
                     <span className="font-medium bg-slate-100 px-2 py-1 rounded-lg">{ride.car}</span>
                   </div>
+                  
+                  {/* Passengers */}
+                  {ride.passengers.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200">
+                      <p className="text-xs text-slate-500 mb-2">Попутчики:</p>
+                      <div className="flex space-x-2">
+                        {ride.passengers.map((passenger, index) => (
+                          <div key={index} className="flex items-center space-x-1 bg-slate-100 px-2 py-1 rounded-lg text-xs">
+                            <User className="h-3 w-3" />
+                            <span>{passenger.name}</span>
+                            <Star className="h-3 w-3 text-amber-400 fill-current" />
+                            <span>{passenger.rating}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-3">
@@ -236,6 +261,7 @@ const PassengerDashboard = () => {
                     Подробнее
                   </Button>
                   <Button 
+                    onClick={() => handleBookRide(ride.id)}
                     className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
                   >
                     Забронировать
