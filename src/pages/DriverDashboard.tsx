@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Car } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 
 const DriverDashboard = () => {
@@ -39,129 +39,128 @@ const DriverDashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-yoldosh-success/10 text-yoldosh-success border-0';
+      case 'completed': return 'bg-slate-100 text-slate-800 border-0';
+      case 'cancelled': return 'bg-yoldosh-error/10 text-yoldosh-error border-0';
+      default: return 'bg-slate-100 text-slate-800 border-0';
     }
   };
 
-  if (!user?.isVerified) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="container mx-auto max-w-md">
-          <Card className="mt-20">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-                <Car className="h-8 w-8 text-yellow-600" />
-              </div>
-              <CardTitle>Требуется верификация</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                Для создания поездок необходимо пройти верификацию водителя
-              </p>
-              <Button 
-                onClick={() => navigate('/verification')}
-                className="w-full bg-yoldosh-blue hover:bg-blue-700"
-              >
-                Пройти верификацию
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Панель водителя</h1>
-              <p className="text-gray-600">Добро пожаловать, {user?.phone}</p>
+              <h1 className="text-3xl font-bold bg-gradient-secondary bg-clip-text text-transparent">
+                Панель водителя
+              </h1>
+              <p className="text-slate-600 mt-1">Управляйте своими поездками</p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/profile')}
+                className="rounded-xl hover:bg-yoldosh-secondary/10 p-3"
               >
-                <User className="h-4 w-4" />
+                <User className="h-5 w-5 text-yoldosh-secondary" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/profile')}
+                className="rounded-xl hover:bg-yoldosh-secondary/10 p-3"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-5 w-5 text-yoldosh-secondary" />
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Verification Status */}
+        {!user?.isVerified && (
+          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-0 rounded-3xl shadow-xl animate-bounce-soft">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-slate-800">Пройдите верификацию</h3>
+                  <p className="text-slate-600 text-sm mt-1">
+                    Для создания поездок требуется верификация водителя
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate('/verification')}
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 hover:scale-105 transition-all duration-300 rounded-xl"
+                >
+                  Пройти
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Быстрые действия</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                onClick={() => navigate('/create-ride')}
-                className="h-20 bg-yoldosh-green hover:bg-green-700"
-              >
-                <div className="flex flex-col items-center">
-                  <Plus className="h-6 w-6 mb-2" />
-                  <span>Создать поездку</span>
-                </div>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/search-rides')}
-                className="h-20 border-yoldosh-blue text-yoldosh-blue hover:bg-blue-50"
-              >
-                <div className="flex flex-col items-center">
-                  <MapPin className="h-6 w-6 mb-2" />
-                  <span>Найти поездку</span>
-                </div>
-              </Button>
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            onClick={() => user?.isVerified ? navigate('/create-ride') : navigate('/verification')}
+            className="h-16 bg-gradient-secondary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg relative"
+          >
+            <div className="flex items-center">
+              <Plus className="h-5 w-5 mr-3" />
+              <span className="font-semibold">Создать поездку</span>
             </div>
-          </CardContent>
-        </Card>
+            {!user?.isVerified && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-yoldosh-warning rounded-full animate-pulse"></div>
+            )}
+          </Button>
+          <Button
+            onClick={() => navigate('/search-rides')}
+            variant="outline"
+            className="h-16 border-2 border-yoldosh-accent text-yoldosh-accent hover:bg-yoldosh-accent/10 hover:scale-105 transition-all duration-300 rounded-2xl"
+          >
+            <div className="flex items-center">
+              <Search className="h-5 w-5 mr-3" />
+              <span className="font-semibold">Найти заявки</span>
+            </div>
+          </Button>
+        </div>
 
         {/* My Rides */}
-        <Card>
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl animate-fade-in">
           <CardHeader>
-            <CardTitle>Мои поездки</CardTitle>
+            <CardTitle className="text-xl font-bold text-slate-800">Мои поездки</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {myRides.map((ride) => (
-              <div key={ride.id} className="border rounded-lg p-4 bg-white">
-                <div className="flex justify-between items-start mb-3">
+              <div key={ride.id} className="bg-gradient-to-r from-white to-slate-50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border border-slate-100">
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium">{ride.from} → {ride.to}</span>
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-secondary rounded-xl flex items-center justify-center">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      <span className="font-bold text-slate-800 text-lg">{ride.from} → {ride.to}</span>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-1">
+                    <div className="flex items-center space-x-6 text-sm text-slate-600">
+                      <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
                         <span>{ride.date} в {ride.time}</span>
                       </div>
-                      <div className="flex items-center space-x-1">
+                      <div className="flex items-center space-x-2">
                         <Users className="h-4 w-4" />
-                        <span>{ride.bookedSeats}/{ride.seats} мест</span>
+                        <span>{ride.bookedSeats}/{ride.seats} мест забронировано</span>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-lg text-yoldosh-green">
+                    <div className="font-bold text-2xl text-yoldosh-success">
                       {ride.price.toLocaleString()} сум
                     </div>
                     <Badge className={getStatusColor(ride.status)}>
@@ -169,29 +168,44 @@ const DriverDashboard = () => {
                     </Badge>
                   </div>
                 </div>
+                
+                <div className="flex space-x-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 rounded-xl border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10"
+                  >
+                    Подробнее
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="flex-1 rounded-xl border-slate-300 text-slate-600 hover:bg-slate-50"
+                  >
+                    Редактировать
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yoldosh-blue">12</div>
-              <div className="text-sm text-gray-600">Поездок</div>
+        <div className="grid grid-cols-3 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yoldosh-primary mb-2">12</div>
+              <div className="text-sm text-slate-600 font-medium">Поездок</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yoldosh-green">4.8</div>
-              <div className="text-sm text-gray-600">Рейтинг</div>
+          <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yoldosh-success mb-2">4.8</div>
+              <div className="text-sm text-slate-600 font-medium">Рейтинг</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yoldosh-orange">42</div>
-              <div className="text-sm text-gray-600">Пассажиров</div>
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="text-3xl font-bold text-yoldosh-warning mb-2">42</div>
+              <div className="text-sm text-slate-600 font-medium">Пассажиров</div>
             </CardContent>
           </Card>
         </div>
