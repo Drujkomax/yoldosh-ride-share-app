@@ -89,7 +89,7 @@ const SearchRides = () => {
   };
 
   const handleBookRide = (rideId: number) => {
-    navigate(`/ride-details/${rideId}`);
+    navigate(`/book-ride/${rideId}`);
   };
 
   return (
@@ -256,6 +256,7 @@ const SearchRides = () => {
                   <Button 
                     variant="outline" 
                     className="flex-1 rounded-xl border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    onClick={() => navigate(`/ride-details/${ride.id}`)}
                   >
                     {t('details')}
                   </Button>
