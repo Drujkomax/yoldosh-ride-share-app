@@ -9,6 +9,7 @@ interface User {
   role: UserRole;
   isVerified: boolean;
   name?: string;
+  totalRides: number;
 }
 
 interface UserContextType {
