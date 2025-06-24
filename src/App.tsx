@@ -11,6 +11,7 @@ import RegistrationPage from "./pages/RegistrationPage";
 import DriverDashboard from "./pages/DriverDashboard";
 import PassengerDashboard from "./pages/PassengerDashboard";
 import CreateRide from "./pages/CreateRide";
+import EditRide from "./pages/EditRide";
 import CreateRequest from "./pages/CreateRequest";
 import SearchRides from "./pages/SearchRides";
 import SearchRequests from "./pages/SearchRequests";
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/driver" element={<DriverDashboard />} />
               <Route path="/passenger" element={<PassengerDashboard />} />
               <Route path="/create-ride" element={<CreateRide />} />
+              <Route path="/edit-ride/:id" element={<EditRide />} />
               <Route path="/create-request" element={<CreateRequest />} />
               <Route path="/search-rides" element={<SearchRides />} />
               <Route path="/search-requests" element={<SearchRequests />} />
