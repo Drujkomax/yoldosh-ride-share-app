@@ -59,7 +59,7 @@ const PassengerProfile = () => {
   };
 
   const handleChat = () => {
-    alert('Открытие чата с пассажиром');
+    navigate(`/chat/${passenger.name}`);
   };
 
   return (

@@ -18,6 +18,7 @@ import RideDetails from "./pages/RideDetails";
 import RequestDetails from "./pages/RequestDetails";
 import BookRide from "./pages/BookRide";
 import PassengerProfile from "./pages/PassengerProfile";
+import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/request-details/:id" element={<RequestDetails />} />
               <Route path="/book-ride/:id" element={<BookRide />} />
               <Route path="/passenger-profile/:name" element={<PassengerProfile />} />
+              <Route path="/chat/:name" element={<ChatPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/verification" element={<VerificationPage />} />
