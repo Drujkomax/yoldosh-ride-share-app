@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search, Bell, Edit, Eye } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search, Bell, Edit, Eye, X } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 
 const DriverDashboard = () => {
@@ -93,6 +94,17 @@ const DriverDashboard = () => {
       if (confirm('Для отклика на заявки необходима верификация. Пройти верификацию сейчас?')) {
         navigate('/verification');
       }
+    }
+  };
+
+  const handleRejectRequest = (requestId: number, passengerName: string) => {
+    if (confirm(`Вы уверены, что хотите отказать пассажиру ${passengerName}?`)) {
+      // Здесь будет логика отправки сообщения в чат
+      console.log(`Отказ пассажиру ${passengerName} по заявке ${requestId}`);
+      alert(`Отказ отправлен пассажиру ${passengerName}. Уведомление отправлено в чат.`);
+      
+      // TODO: Отправить сообщение в чат пассажиру
+      // chatService.sendMessage(passengerName, `Водитель отказал в вашей заявке #${requestId}`);
     }
   };
 
@@ -251,8 +263,16 @@ const DriverDashboard = () => {
                     Подробнее
                   </Button>
                   <Button 
+                    onClick={() => handleRejectRequest(request.id, request.passenger.name)}
+                    variant="outline"
+                    className="flex-1 rounded-xl border-red-500 text-red-500 hover:bg-red-50 hover:border-red-600 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Отказать
+                  </Button>
+                  <Button 
                     onClick={() => handleRespondToRequest(request.id)}
-                    className="flex-1 bg-gradient-accent hover:scale-105 transition-all duration-300 rounded-xl"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
                   >
                     {user?.isVerified ? 'Откликнуться' : 'Откликнуться (нужна верификация)'}
                   </Button>
