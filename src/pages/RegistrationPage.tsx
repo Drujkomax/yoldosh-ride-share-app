@@ -53,6 +53,7 @@ const RegistrationPage = () => {
       phone,
       role: selectedRole!,
       isVerified: selectedRole === 'passenger',
+      totalRides: 0,
     };
 
     setUser(newUser);
