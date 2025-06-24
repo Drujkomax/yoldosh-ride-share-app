@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -79,6 +78,10 @@ const RideDetails = () => {
 
   const handleChatWithDriver = () => {
     alert('Открытие чата с водителем');
+  };
+
+  const handleViewPassengerProfile = (passengerName: string) => {
+    navigate(`/passenger-profile/${passengerName}`);
   };
 
   return (
@@ -256,7 +259,11 @@ const RideDetails = () => {
             <CardContent>
               <div className="space-y-3">
                 {ride.passengers.map((passenger, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => handleViewPassengerProfile(passenger.name)}
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                         <User className="h-5 w-5 text-gray-400" />
