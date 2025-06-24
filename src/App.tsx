@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import WelcomePage from "./pages/WelcomePage";
 import RegistrationPage from "./pages/RegistrationPage";
 import DriverDashboard from "./pages/DriverDashboard";
@@ -14,6 +15,7 @@ import CreateRequest from "./pages/CreateRequest";
 import SearchRides from "./pages/SearchRides";
 import SearchRequests from "./pages/SearchRequests";
 import RideDetails from "./pages/RideDetails";
+import RequestDetails from "./pages/RequestDetails";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
@@ -25,31 +27,34 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <UserProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<WelcomePage />} />
-            <Route path="/register" element={<RegistrationPage />} />
-            <Route path="/driver" element={<DriverDashboard />} />
-            <Route path="/passenger" element={<PassengerDashboard />} />
-            <Route path="/create-ride" element={<CreateRide />} />
-            <Route path="/create-request" element={<CreateRequest />} />
-            <Route path="/search-rides" element={<SearchRides />} />
-            <Route path="/search-requests" element={<SearchRequests />} />
-            <Route path="/ride-details/:id" element={<RideDetails />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/verification" element={<VerificationPage />} />
-            <Route path="/ride-history" element={<RideHistoryPage />} />
-            <Route path="/my-reviews" element={<MyReviewsPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </UserProvider>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <UserProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<WelcomePage />} />
+              <Route path="/register" element={<RegistrationPage />} />
+              <Route path="/driver" element={<DriverDashboard />} />
+              <Route path="/passenger" element={<PassengerDashboard />} />
+              <Route path="/create-ride" element={<CreateRide />} />
+              <Route path="/create-request" element={<CreateRequest />} />
+              <Route path="/search-rides" element={<SearchRides />} />
+              <Route path="/search-requests" element={<SearchRequests />} />
+              <Route path="/ride-details/:id" element={<RideDetails />} />
+              <Route path="/request-details/:id" element={<RequestDetails />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/verification" element={<VerificationPage />} />
+              <Route path="/ride-history" element={<RideHistoryPage />} />
+              <Route path="/my-reviews" element={<MyReviewsPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </UserProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

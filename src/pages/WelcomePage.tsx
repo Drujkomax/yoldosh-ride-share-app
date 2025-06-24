@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,6 @@ const WelcomePage = () => {
       role: role,
       phone: '+998901234567',
       isVerified: false,
-      rating: 0,
       totalRides: 0
     });
     
