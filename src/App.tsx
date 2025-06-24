@@ -17,6 +17,7 @@ import SearchRequests from "./pages/SearchRequests";
 import RideDetails from "./pages/RideDetails";
 import RequestDetails from "./pages/RequestDetails";
 import BookRide from "./pages/BookRide";
+import PassengerProfile from "./pages/PassengerProfile";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
