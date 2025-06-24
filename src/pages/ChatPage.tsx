@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, User, Send, MapPin, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, User, Send, MapPin, Clock, Car, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface Message {
@@ -21,6 +22,7 @@ interface Message {
 const ChatPage = () => {
   const navigate = useNavigate();
   const { name } = useParams();
+  const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -38,6 +40,14 @@ const ChatPage = () => {
   const [inputText, setInputText] = useState('');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Получаем детали поездки из URL параметров
+  const chatType = searchParams.get('type'); // 'driver' или 'passenger'
+  const rideId = searchParams.get('rideId');
+  const from = searchParams.get('from');
+  const to = searchParams.get('to');
+  const date = searchParams.get('date');
+  const time = searchParams.get('time');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -69,7 +79,6 @@ const ChatPage = () => {
         (position) => {
           const { latitude, longitude } = position.coords;
           
-          // Simulate reverse geocoding
           const mockAddress = `ул. Примерная, ${Math.floor(Math.random() * 100)}, Ташкент`;
           
           const locationMessage: Message = {
@@ -128,12 +137,49 @@ const ChatPage = () => {
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-gray-400" />
               </div>
-              <h1 className="text-lg font-semibold">{name}</h1>
+              <div className="text-center">
+                <h1 className="text-lg font-semibold">{name}</h1>
+                <div className="flex items-center space-x-2">
+                  <Badge variant={chatType === 'driver' ? 'default' : 'secondary'} className="text-xs">
+                    {chatType === 'driver' ? (
+                      <>
+                        <Car className="h-3 w-3 mr-1" />
+                        Водитель
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-3 w-3 mr-1" />
+                        Пассажир
+                      </>
+                    )}
+                  </Badge>
+                </div>
+              </div>
             </div>
             <div></div>
           </div>
         </div>
       </div>
+
+      {/* Trip Info */}
+      {from && to && (
+        <div className="bg-blue-50 border-b p-3">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">{from} → {to}</span>
+              </div>
+              {date && time && (
+                <div className="flex items-center space-x-2 text-blue-700">
+                  <Calendar className="h-4 w-4" />
+                  <span>{date} в {time}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

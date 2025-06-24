@@ -77,7 +77,7 @@ const RideDetails = () => {
   };
 
   const handleChatWithDriver = () => {
-    alert('Открытие чата с водителем');
+    navigate(`/chat/${ride.driver.name}?type=driver&rideId=${id}&from=${ride.from}&to=${ride.to}&date=${ride.date}&time=${ride.time}`);
   };
 
   const handleViewPassengerProfile = (passengerName: string) => {

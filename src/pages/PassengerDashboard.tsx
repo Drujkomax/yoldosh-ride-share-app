@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, MapPin, Calendar, Users, Settings, User, Star, Plus, FileText } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import CitySelect from '@/components/CitySelect';
+import ChatPanel from '@/components/ChatPanel';
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
@@ -272,6 +272,9 @@ const PassengerDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chat Panel */}
+      <ChatPanel />
     </div>
   );
 };
