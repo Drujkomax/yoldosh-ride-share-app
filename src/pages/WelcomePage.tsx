@@ -1,28 +1,14 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Car, Users, MapPin, Star, Shield, Sparkles } from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
 
-  const selectRole = (role: 'driver' | 'passenger') => {
-    setUser({
-      id: '1',
-      name: role === 'driver' ? 'Водитель' : 'Пассажир',
-      role: role,
-      phone: '+998901234567',
-      isVerified: false,
-      totalRides: 0
-    });
-    
-    if (role === 'driver') {
-      navigate('/driver');
-    } else {
-      navigate('/passenger');
-    }
+  const handleGetStarted = () => {
+    navigate('/register');
   };
 
   return (
@@ -86,27 +72,15 @@ const WelcomePage = () => {
               Присоединяйтесь
             </h2>
             
-            <div className="space-y-6">
-              <Button
-                onClick={() => selectRole('passenger')}
-                className="w-full h-16 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
-              >
-                <div className="flex items-center justify-center">
-                  <Users className="mr-3 h-6 w-6" />
-                  <span className="font-semibold">Я пассажир</span>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => selectRole('driver')}
-                className="w-full h-16 text-lg bg-gradient-secondary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
-              >
-                <div className="flex items-center justify-center">
-                  <Car className="mr-3 h-6 w-6" />
-                  <span className="font-semibold">Я водитель</span>
-                </div>
-              </Button>
-            </div>
+            <Button
+              onClick={handleGetStarted}
+              className="w-full h-16 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
+            >
+              <div className="flex items-center justify-center">
+                <Users className="mr-3 h-6 w-6" />
+                <span className="font-semibold">Начать</span>
+              </div>
+            </Button>
           </div>
         </div>
       </div>

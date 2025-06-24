@@ -6,21 +6,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, Phone, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Minus, Plus } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useUser } from '@/contexts/UserContext';
 
 const BookRide = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useTheme();
+  const { user } = useUser();
   const [bookingData, setBookingData] = useState({
     seats: 1,
-    passengerName: '',
-    passengerPhone: '',
     comment: ''
   });
 
-  // Mock ride data (same as in RideDetails)
+  // Mock ride data
   const ride = {
     id: 1,
     driver: {
@@ -41,12 +41,33 @@ const BookRide = () => {
     features: ['Кондиционер', 'Музыка', 'Некурящий']
   };
 
+  const quickComments = [
+    'Буду вовремя',
+    'С багажом',
+    'Без багажа',
+    'Могу подождать 5-10 минут',
+    'Нужна остановка по пути'
+  ];
+
   const handleInputChange = (field: string, value: string | number) => {
     setBookingData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSeatsChange = (increment: boolean) => {
+    if (increment && bookingData.seats < ride.availableSeats) {
+      setBookingData(prev => ({ ...prev, seats: prev.seats + 1 }));
+    } else if (!increment && bookingData.seats > 1) {
+      setBookingData(prev => ({ ...prev, seats: prev.seats - 1 }));
+    }
+  };
+
+  const handleQuickComment = (comment: string) => {
+    const currentComment = bookingData.comment;
+    const newComment = currentComment ? `${currentComment}, ${comment}` : comment;
+    setBookingData(prev => ({ ...prev, comment: newComment }));
+  };
+
   const handleBooking = () => {
-    // Here you would normally send the booking data to your backend
     console.log('Booking data:', bookingData);
     alert('Запрос на бронирование отправлен! Водитель свяжется с вами в ближайшее время.');
     navigate('/passenger');
@@ -63,7 +84,7 @@ const BookRide = () => {
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="hover:bg-yoldosh-primary/10"
+              className="hover:bg-yoldosh-primary/10 hover:scale-105 transition-all duration-300"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('back')}
@@ -76,7 +97,7 @@ const BookRide = () => {
 
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Ride Info */}
-        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
@@ -136,47 +157,77 @@ const BookRide = () => {
           <CardHeader>
             <CardTitle className="text-slate-800 dark:text-slate-200">Данные для бронирования</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* User Info Display */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
+              <div className="text-sm text-slate-600 dark:text-slate-400 mb-1">Пассажир</div>
+              <div className="font-medium text-slate-800 dark:text-slate-200">{user?.name}</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">{user?.phone}</div>
+            </div>
+
+            {/* Seats Selection */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
+              <label className="block text-sm font-medium mb-3 text-slate-700 dark:text-slate-300">
                 Количество мест
               </label>
-              <Input
-                type="number"
-                min="1"
-                max={ride.availableSeats}
-                value={bookingData.seats}
-                onChange={(e) => handleInputChange('seats', parseInt(e.target.value) || 1)}
-                className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80"
-              />
+              <div className="flex items-center space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSeatsChange(false)}
+                  disabled={bookingData.seats <= 1}
+                  className="h-10 w-10 rounded-full hover:scale-110 transition-all duration-300"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  max={ride.availableSeats}
+                  value={bookingData.seats}
+                  onChange={(e) => {
+                    const value = Math.max(1, Math.min(ride.availableSeats, parseInt(e.target.value) || 1));
+                    handleInputChange('seats', value);
+                  }}
+                  className="w-20 text-center h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80 font-bold text-lg"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSeatsChange(true)}
+                  disabled={bookingData.seats >= ride.availableSeats}
+                  className="h-10 w-10 rounded-full hover:scale-110 transition-all duration-300"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-slate-500">из {ride.availableSeats} доступных</span>
+              </div>
             </div>
 
+            {/* Quick Comment Buttons */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Ваше имя
+              <label className="block text-sm font-medium mb-3 text-slate-700 dark:text-slate-300">
+                Быстрые комментарии
               </label>
-              <Input
-                type="text"
-                placeholder="Введите ваше имя"
-                value={bookingData.passengerName}
-                onChange={(e) => handleInputChange('passengerName', e.target.value)}
-                className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80"
-              />
+              <div className="flex flex-wrap gap-2">
+                {quickComments.map((comment, index) => (
+                  <Button
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickComment(comment)}
+                    className="text-xs hover:scale-105 transition-all duration-300 rounded-full"
+                  >
+                    {comment}
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Номер телефона
-              </label>
-              <Input
-                type="tel"
-                placeholder="+998 90 123 45 67"
-                value={bookingData.passengerPhone}
-                onChange={(e) => handleInputChange('passengerPhone', e.target.value)}
-                className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80"
-              />
-            </div>
-
+            {/* Comment Field */}
             <div>
               <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
                 Комментарий (необязательно)
@@ -210,7 +261,6 @@ const BookRide = () => {
         <Button 
           onClick={handleBooking}
           className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
-          disabled={!bookingData.passengerName || !bookingData.passengerPhone}
         >
           Отправить запрос на бронирование
         </Button>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, Users, ArrowLeft, Phone } from 'lucide-react';
+import { Car, Users, ArrowLeft, Phone, User } from 'lucide-react';
 import { useUser, UserRole } from '@/contexts/UserContext';
 import { toast } from '@/hooks/use-toast';
 import AnimatedInput from '@/components/AnimatedInput';
@@ -14,6 +14,7 @@ const RegistrationPage = () => {
   const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
+  const [name, setName] = useState('');
   const [code, setCode] = useState('');
 
   const handleRoleSelect = (role: UserRole) => {
@@ -22,10 +23,10 @@ const RegistrationPage = () => {
   };
 
   const handlePhoneSubmit = () => {
-    if (phone.length < 13) {
+    if (phone.length < 13 || !name.trim()) {
       toast({
         title: "Ошибка",
-        description: "Введите корректный номер телефона",
+        description: "Заполните все поля корректно",
         variant: "destructive"
       });
       return;
@@ -51,6 +52,7 @@ const RegistrationPage = () => {
     const newUser = {
       id: Date.now().toString(),
       phone,
+      name,
       role: selectedRole!,
       isVerified: selectedRole === 'passenger',
       totalRides: 0,
@@ -94,7 +96,7 @@ const RegistrationPage = () => {
             variant="ghost"
             size="sm"
             onClick={() => step === 'role' ? navigate('/') : setStep(step === 'code' ? 'phone' : 'role')}
-            className="text-white hover:bg-white/10 rounded-xl p-3"
+            className="text-white hover:bg-white/10 rounded-xl p-3 hover:scale-105 transition-all duration-300"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
             Назад
@@ -145,13 +147,23 @@ const RegistrationPage = () => {
           <Card className="animate-slide-up bg-white/95 backdrop-blur-lg border-0 rounded-3xl shadow-2xl">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold text-slate-800">
-                Номер телефона
+                Регистрация
               </CardTitle>
               <p className="text-slate-600 mt-2">
-                Введите номер для подтверждения
+                Введите ваши данные для регистрации
               </p>
             </CardHeader>
-            <CardContent className="space-y-8 p-8">
+            <CardContent className="space-y-6 p-8">
+              <AnimatedInput
+                id="name"
+                label="Имя и фамилия"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Введите ваше имя"
+                icon={<User className="h-4 w-4" />}
+              />
+              
               <AnimatedInput
                 id="phone"
                 label="Номер телефона"
@@ -205,9 +217,9 @@ const RegistrationPage = () => {
               
               <button 
                 onClick={() => setStep('phone')}
-                className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2"
+                className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2 hover:scale-105"
               >
-                Изменить номер телефона
+                Изменить данные
               </button>
             </CardContent>
           </Card>
