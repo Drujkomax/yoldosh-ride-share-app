@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -113,7 +112,7 @@ const DriverDashboard = () => {
   };
 
   const handleViewRideDetails = (rideId: number) => {
-    navigate(`/ride-details/${rideId}`);
+    navigate(`/driver-ride-details/${rideId}`);
   };
 
   const handleEditRide = (rideId: number) => {

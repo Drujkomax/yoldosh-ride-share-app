@@ -16,6 +16,7 @@ import CreateRequest from "./pages/CreateRequest";
 import SearchRides from "./pages/SearchRides";
 import SearchRequests from "./pages/SearchRequests";
 import RideDetails from "./pages/RideDetails";
+import DriverRideDetails from "./pages/DriverRideDetails";
 import RequestDetails from "./pages/RequestDetails";
 import BookRide from "./pages/BookRide";
 import PassengerProfile from "./pages/PassengerProfile";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/search-rides" element={<SearchRides />} />
               <Route path="/search-requests" element={<SearchRequests />} />
               <Route path="/ride-details/:id" element={<RideDetails />} />
+              <Route path="/driver-ride-details/:id" element={<DriverRideDetails />} />
               <Route path="/request-details/:id" element={<RequestDetails />} />
               <Route path="/book-ride/:id" element={<BookRide />} />
               <Route path="/passenger-profile/:name" element={<PassengerProfile />} />
