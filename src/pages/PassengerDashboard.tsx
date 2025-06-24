@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, MapPin, Calendar, Users, Settings, User, Star, Plus, FileText } from 'lucide-react';
+import { Search, MapPin, Calendar, Users, Settings, User, Star } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import SearchableSelect from '@/components/SearchableSelect';
 import { DatePicker } from '@/components/ui/datepicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ChatPanel from '@/components/ChatPanel';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ const PassengerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
         <div className="container mx-auto px-6 py-6">
@@ -122,29 +122,6 @@ const PassengerDashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <Button
-            onClick={() => navigate('/search-rides')}
-            className="h-16 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
-          >
-            <div className="flex items-center">
-              <Search className="h-5 w-5 mr-3" />
-              <span className="font-semibold">Найти поездку</span>
-            </div>
-          </Button>
-          <Button
-            onClick={() => navigate('/create-request')}
-            variant="outline"
-            className="h-16 border-2 border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10 hover:scale-105 transition-all duration-300 rounded-2xl"
-          >
-            <div className="flex items-center">
-              <FileText className="h-5 w-5 mr-3" />
-              <span className="font-semibold">Создать заявку</span>
-            </div>
-          </Button>
-        </div>
-
         {/* Search Form */}
         <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl animate-fade-in">
           <CardHeader>
@@ -320,8 +297,7 @@ const PassengerDashboard = () => {
         </Card>
       </div>
 
-      {/* Chat Panel */}
-      <ChatPanel />
+      <BottomNavigation />
     </div>
   );
 };
