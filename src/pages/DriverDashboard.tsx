@@ -108,6 +108,10 @@ const DriverDashboard = () => {
     }
   };
 
+  const handleViewRequestDetails = (requestId: number) => {
+    navigate(`/request-details/${requestId}`);
+  };
+
   const handleViewRideDetails = (rideId: number) => {
     navigate(`/ride-details/${rideId}`);
   };
@@ -257,6 +261,7 @@ const DriverDashboard = () => {
 
                 <div className="flex space-x-3">
                   <Button 
+                    onClick={() => handleViewRequestDetails(request.id)}
                     variant="outline" 
                     className="flex-1 rounded-xl border-yoldosh-accent text-yoldosh-accent hover:bg-yoldosh-accent/10"
                   >
