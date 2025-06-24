@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Search, MapPin, Calendar, Users, Star, User, Filter, Eye } from 'lucide-react';
+import { ArrowLeft, Search, MapPin, Calendar, Users, Star, User, Filter, MessageCircle } from 'lucide-react';
 
-const SearchRides = () => {
+const SearchRequests = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
     from: '',
@@ -23,61 +23,58 @@ const SearchRides = () => {
     'Фергана', 'Карши', 'Термез', 'Ургенч', 'Нукус'
   ];
 
-  // Mock search results
-  const searchResults = [
+  // Mock passenger requests
+  const passengerRequests = [
     {
       id: 1,
-      driver: {
-        name: 'Алишер',
-        rating: 4.9,
-        reviews: 24,
+      passenger: {
+        name: 'Азиз',
+        rating: 4.6,
+        reviews: 12,
         isVerified: true
       },
       from: 'Ташкент',
       to: 'Самарканд',
       date: '25 декабря',
-      time: '09:00',
-      price: 50000,
-      seats: 3,
-      car: 'Chevrolet Lacetti',
-      comfort: 'Комфорт',
-      duration: '4ч 30м'
+      preferredTime: 'Утром',
+      passengers: 2,
+      maxPrice: 45000,
+      comment: 'Предпочитаю ехать утром, готов подождать',
+      createdAt: '2 часа назад'
     },
     {
       id: 2,
-      driver: {
-        name: 'Жасур',
-        rating: 4.7,
-        reviews: 18,
+      passenger: {
+        name: 'Нодира',
+        rating: 4.9,
+        reviews: 28,
         isVerified: true
       },
       from: 'Ташкент',
-      to: 'Самарканд',
-      date: '25 декабря',
-      time: '14:30',
-      price: 45000,
-      seats: 2,
-      car: 'Hyundai Accent',
-      comfort: 'Эконом',
-      duration: '4ч 45м'
+      to: 'Бухара',
+      date: '26 декабря',
+      preferredTime: 'Вечером',
+      passengers: 1,
+      maxPrice: 60000,
+      comment: 'Могу подождать до вечера, багажа мало',
+      createdAt: '4 часа назад'
     },
     {
       id: 3,
-      driver: {
-        name: 'Дильшод',
-        rating: 4.8,
-        reviews: 31,
-        isVerified: true
+      passenger: {
+        name: 'Жамшид',
+        rating: 4.3,
+        reviews: 8,
+        isVerified: false
       },
       from: 'Ташкент',
       to: 'Самарканд',
-      date: '26 декабря',
-      time: '08:00',
-      price: 55000,
-      seats: 4,
-      car: 'Toyota Camry',
-      comfort: 'Бизнес',
-      duration: '4ч 15м'
+      date: '27 декабря',
+      preferredTime: 'Любое время',
+      passengers: 3,
+      maxPrice: 40000,
+      comment: 'Семьей едем, есть дети',
+      createdAt: '1 день назад'
     }
   ];
 
@@ -85,21 +82,8 @@ const SearchRides = () => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
-  const getComfortColor = (comfort: string) => {
-    switch (comfort) {
-      case 'Эконом': return 'bg-blue-100 text-blue-800';
-      case 'Комфорт': return 'bg-green-100 text-green-800';
-      case 'Бизнес': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const handleViewDetails = (rideId: number) => {
-    navigate(`/ride-details/${rideId}`);
-  };
-
-  const handleBookRide = (rideId: number) => {
-    alert(`Поездка ${rideId} забронирована!`);
+  const handleRespondToRequest = (requestId: number) => {
+    alert(`Отклик на заявку ${requestId} отправлен!`);
   };
 
   return (
@@ -115,7 +99,7 @@ const SearchRides = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
-            <h1 className="text-xl font-bold">Поиск поездок</h1>
+            <h1 className="text-xl font-bold">Заявки пассажиров</h1>
             <div></div>
           </div>
         </div>
@@ -171,10 +155,10 @@ const SearchRides = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Макс. цена (сум)</label>
+                <label className="block text-sm font-medium mb-2">Мин. цена (сум)</label>
                 <Input
                   type="number"
-                  placeholder="100000"
+                  placeholder="30000"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                 />
@@ -204,11 +188,11 @@ const SearchRides = () => {
         {/* Search Results */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Найдено {searchResults.length} поездок</h2>
+            <h2 className="text-lg font-semibold">Найдено {passengerRequests.length} заявок</h2>
           </div>
           
-          {searchResults.map((ride) => (
-            <Card key={ride.id} className="hover:shadow-md transition-shadow cursor-pointer">
+          {passengerRequests.map((request) => (
+            <Card key={request.id} className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
@@ -217,8 +201,8 @@ const SearchRides = () => {
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium">{ride.driver.name}</span>
-                        {ride.driver.isVerified && (
+                        <span className="font-medium">{request.passenger.name}</span>
+                        {request.passenger.isVerified && (
                           <Badge variant="secondary" className="text-xs">
                             ✓ Проверен
                           </Badge>
@@ -226,58 +210,59 @@ const SearchRides = () => {
                       </div>
                       <div className="flex items-center space-x-1 text-sm">
                         <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                        <span>{ride.driver.rating}</span>
-                        <span className="text-gray-500">({ride.driver.reviews})</span>
+                        <span>{request.passenger.rating}</span>
+                        <span className="text-gray-500">({request.passenger.reviews})</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="text-right">
                     <div className="font-bold text-xl text-yoldosh-green">
-                      {ride.price.toLocaleString()} сум
+                      до {request.maxPrice.toLocaleString()} сум
                     </div>
-                    <Badge className={getComfortColor(ride.comfort)}>
-                      {ride.comfort}
-                    </Badge>
+                    <div className="text-sm text-gray-500">{request.createdAt}</div>
                   </div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium">{ride.from} → {ride.to}</span>
-                    <span className="text-sm text-gray-500">({ride.duration})</span>
+                    <span className="font-medium">{request.from} → {request.to}</span>
                   </div>
                   
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-4 w-4" />
-                        <span>{ride.date} в {ride.time}</span>
+                        <span>{request.date} ({request.preferredTime})</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4" />
-                        <span>{ride.seats} мест</span>
+                        <span>{request.passengers} пассажир(ов)</span>
                       </div>
                     </div>
-                    <span className="font-medium">{ride.car}</span>
                   </div>
+                  
+                  {request.comment && (
+                    <div className="bg-gray-50 p-3 rounded-lg flex items-start space-x-2">
+                      <MessageCircle className="h-4 w-4 text-gray-400 mt-0.5" />
+                      <p className="text-sm text-gray-700 italic">"{request.comment}"</p>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="flex space-x-3 mt-4 pt-4 border-t">
                   <Button 
-                    onClick={() => handleViewDetails(ride.id)}
                     variant="outline" 
                     className="flex-1"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
                     Подробнее
                   </Button>
                   <Button 
-                    onClick={() => handleBookRide(ride.id)}
+                    onClick={() => handleRespondToRequest(request.id)}
                     className="flex-1 bg-yoldosh-green hover:bg-green-700"
                   >
-                    Забронировать
+                    Откликнуться
                   </Button>
                 </div>
               </CardContent>
@@ -289,4 +274,4 @@ const SearchRides = () => {
   );
 };
 
-export default SearchRides;
+export default SearchRequests;

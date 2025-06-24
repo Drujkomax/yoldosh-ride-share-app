@@ -3,9 +3,29 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Car, Users, MapPin, Star, Shield, Sparkles } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 
 const WelcomePage = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
+
+  const selectRole = (role: 'driver' | 'passenger') => {
+    setUser({
+      id: '1',
+      name: role === 'driver' ? 'Водитель' : 'Пассажир',
+      role: role,
+      phone: '+998901234567',
+      isVerified: false,
+      rating: 0,
+      totalRides: 0
+    });
+    
+    if (role === 'driver') {
+      navigate('/driver');
+    } else {
+      navigate('/passenger');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-dark relative overflow-hidden">
@@ -70,7 +90,7 @@ const WelcomePage = () => {
             
             <div className="space-y-6">
               <Button
-                onClick={() => navigate('/register')}
+                onClick={() => selectRole('passenger')}
                 className="w-full h-16 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
               >
                 <div className="flex items-center justify-center">
@@ -80,7 +100,7 @@ const WelcomePage = () => {
               </Button>
               
               <Button
-                onClick={() => navigate('/register')}
+                onClick={() => selectRole('driver')}
                 className="w-full h-16 text-lg bg-gradient-secondary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
               >
                 <div className="flex items-center justify-center">
@@ -89,16 +109,6 @@ const WelcomePage = () => {
                 </div>
               </Button>
             </div>
-            
-            <p className="text-slate-600 text-sm text-center mt-8">
-              Уже есть аккаунт?{' '}
-              <button 
-                onClick={() => navigate('/register')}
-                className="text-yoldosh-primary font-semibold hover:underline transition-all duration-200"
-              >
-                Войти
-              </button>
-            </p>
           </div>
         </div>
       </div>

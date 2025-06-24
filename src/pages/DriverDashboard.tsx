@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search, Bell } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search, Bell, Edit, Eye } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 
 const DriverDashboard = () => {
@@ -97,6 +96,14 @@ const DriverDashboard = () => {
     }
   };
 
+  const handleViewRideDetails = (rideId: number) => {
+    navigate(`/ride-details/${rideId}`);
+  };
+
+  const handleEditRide = (rideId: number) => {
+    navigate(`/edit-ride/${rideId}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       {/* Header */}
@@ -172,7 +179,7 @@ const DriverDashboard = () => {
             )}
           </Button>
           <Button
-            onClick={() => navigate('/search-rides')}
+            onClick={() => navigate('/search-requests')}
             variant="outline"
             className="h-16 border-2 border-yoldosh-accent text-yoldosh-accent hover:bg-yoldosh-accent/10 hover:scale-105 transition-all duration-300 rounded-2xl"
           >
@@ -294,15 +301,19 @@ const DriverDashboard = () => {
                 
                 <div className="flex space-x-3">
                   <Button 
+                    onClick={() => handleViewRideDetails(ride.id)}
                     variant="outline" 
                     className="flex-1 rounded-xl border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10"
                   >
+                    <Eye className="h-4 w-4 mr-2" />
                     Подробнее
                   </Button>
                   <Button 
+                    onClick={() => handleEditRide(ride.id)}
                     variant="outline"
                     className="flex-1 rounded-xl border-slate-300 text-slate-600 hover:bg-slate-50"
                   >
+                    <Edit className="h-4 w-4 mr-2" />
                     Редактировать
                   </Button>
                 </div>

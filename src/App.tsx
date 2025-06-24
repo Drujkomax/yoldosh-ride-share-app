@@ -12,6 +12,8 @@ import PassengerDashboard from "./pages/PassengerDashboard";
 import CreateRide from "./pages/CreateRide";
 import CreateRequest from "./pages/CreateRequest";
 import SearchRides from "./pages/SearchRides";
+import SearchRequests from "./pages/SearchRequests";
+import RideDetails from "./pages/RideDetails";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/create-ride" element={<CreateRide />} />
             <Route path="/create-request" element={<CreateRequest />} />
             <Route path="/search-rides" element={<SearchRides />} />
+            <Route path="/search-requests" element={<SearchRequests />} />
+            <Route path="/ride-details/:id" element={<RideDetails />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/verification" element={<VerificationPage />} />
