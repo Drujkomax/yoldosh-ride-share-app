@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import WelcomePage from "./pages/WelcomePage";
-import RegistrationPage from "./pages/RegistrationPage";
 import DriverDashboard from "./pages/DriverDashboard";
 import PassengerDashboard from "./pages/PassengerDashboard";
 import CreateRide from "./pages/CreateRide";
@@ -41,7 +40,6 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<WelcomePage />} />
-              <Route path="/register" element={<RegistrationPage />} />
               <Route path="/driver" element={<DriverDashboard />} />
               <Route path="/passenger" element={<PassengerDashboard />} />
               <Route path="/create-ride" element={<CreateRide />} />
