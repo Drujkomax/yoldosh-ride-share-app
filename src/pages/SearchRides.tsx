@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, Search, MapPin, Calendar, Users, Star, User, Filter, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Clock } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { DatePicker } from '@/components/ui/datepicker';
-import SearchableSelect from '@/components/SearchableSelect';
 
 const SearchRides = () => {
   const navigate = useNavigate();
   const { t } = useTheme();
-  const [filters, setFilters] = useState({
+  const [searchParams] = useSearchParams();
+  const [searchCriteria, setSearchCriteria] = useState({
     from: '',
     to: '',
-    date: undefined as Date | undefined,
-    maxPrice: '',
-    sortBy: 'time'
+    date: '',
+    seats: ''
   });
 
-  const cities = [
-    'Ташкент', 'Самарканд', 'Бухара', 'Андижан', 'Наманган', 
-    'Фергана', 'Карши', 'Термез', 'Ургенч', 'Нукус'
-  ];
+  useEffect(() => {
+    setSearchCriteria({
+      from: searchParams.get('from') || '',
+      to: searchParams.get('to') || '',
+      date: searchParams.get('date') || '',
+      seats: searchParams.get('seats') || ''
+    });
+  }, [searchParams]);
 
   // Mock driver rides data
   const driverRides = [
@@ -84,13 +85,17 @@ const SearchRides = () => {
     }
   ];
 
-  const handleFilterChange = (field: string, value: any) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  };
-
   const handleBookRide = (rideId: number) => {
     navigate(`/book-ride/${rideId}`);
   };
+
+  // Filter rides based on search criteria
+  const filteredRides = driverRides.filter(ride => {
+    const matchesFrom = !searchCriteria.from || ride.from.toLowerCase().includes(searchCriteria.from.toLowerCase());
+    const matchesTo = !searchCriteria.to || ride.to.toLowerCase().includes(searchCriteria.to.toLowerCase());
+    const matchesSeats = !searchCriteria.seats || ride.availableSeats >= parseInt(searchCriteria.seats);
+    return matchesFrom && matchesTo && matchesSeats;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
@@ -113,80 +118,46 @@ const SearchRides = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Search Filters */}
-        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center text-slate-800 dark:text-slate-200">
-              <Filter className="h-5 w-5 mr-2" />
-              {t('filters')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SearchableSelect
-                value={filters.from}
-                onValueChange={(value) => handleFilterChange('from', value)}
-                placeholder={t('select_city')}
-                options={cities}
-                label={t('from')}
-              />
-              <SearchableSelect
-                value={filters.to}
-                onValueChange={(value) => handleFilterChange('to', value)}
-                placeholder={t('select_city')}
-                options={cities}
-                label={t('to')}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('date')}</label>
-                <DatePicker
-                  value={filters.date}
-                  onChange={(date) => handleFilterChange('date', date)}
-                  placeholder={t('select_date')}
-                />
+        {/* Search Criteria Display */}
+        {(searchCriteria.from || searchCriteria.to || searchCriteria.date || searchCriteria.seats) && (
+          <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">Параметры поиска:</h3>
+              <div className="flex flex-wrap gap-2">
+                {searchCriteria.from && (
+                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0">
+                    Откуда: {searchCriteria.from}
+                  </Badge>
+                )}
+                {searchCriteria.to && (
+                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0">
+                    Куда: {searchCriteria.to}
+                  </Badge>
+                )}
+                {searchCriteria.date && (
+                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0">
+                    Дата: {new Date(searchCriteria.date).toLocaleDateString('ru-RU')}
+                  </Badge>
+                )}
+                {searchCriteria.seats && (
+                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0">
+                    Мест: {searchCriteria.seats}
+                  </Badge>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('max_price')} ({t('sum')})</label>
-                <Input
-                  type="number"
-                  placeholder="50000"
-                  value={filters.maxPrice}
-                  onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                  className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('sort_by')}</label>
-                <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange('sortBy', value)}>
-                  <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
-                    <SelectItem value="time">{t('by_time')}</SelectItem>
-                    <SelectItem value="price">{t('by_price')}</SelectItem>
-                    <SelectItem value="rating">{t('by_rating')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <Button className="w-full bg-yoldosh-blue hover:bg-blue-700 h-12 rounded-xl">
-              <Search className="h-4 w-4 mr-2" />
-              {t('apply_filters')}
-            </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search Results */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">{t('found_rides')}: {driverRides.length}</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+              {t('found_rides')}: {filteredRides.length}
+            </h2>
           </div>
           
-          {driverRides.map((ride) => (
+          {filteredRides.map((ride) => (
             <Card key={ride.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
@@ -270,6 +241,15 @@ const SearchRides = () => {
               </CardContent>
             </Card>
           ))}
+          
+          {filteredRides.length === 0 && (
+            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+              <CardContent className="p-12 text-center">
+                <div className="text-slate-400 text-lg mb-2">Поездки не найдены</div>
+                <div className="text-slate-500 text-sm">Попробуйте изменить параметры поиска</div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, MapPin, Calendar, Users, Settings, User, Star, Plus, FileText } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import CitySelect from '@/components/CitySelect';
+import SearchableSelect from '@/components/SearchableSelect';
+import { DatePicker } from '@/components/ui/datepicker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ChatPanel from '@/components/ChatPanel';
 
 const PassengerDashboard = () => {
@@ -13,6 +15,13 @@ const PassengerDashboard = () => {
   const { user } = useUser();
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
+  const [searchDate, setSearchDate] = useState<Date | undefined>(undefined);
+  const [searchSeats, setSearchSeats] = useState('');
+
+  const cities = [
+    'Ташкент', 'Самарканд', 'Бухара', 'Андижан', 'Наманган', 
+    'Фергана', 'Карши', 'Термез', 'Ургенч', 'Нукус'
+  ];
 
   // Mock data for available rides
   const availableRides = [
@@ -66,6 +75,16 @@ const PassengerDashboard = () => {
 
   const handleBookRide = (rideId: number) => {
     alert(`Поездка ${rideId} забронирована!`);
+  };
+
+  const handleQuickSearch = () => {
+    const searchParams = new URLSearchParams();
+    if (searchFrom) searchParams.append('from', searchFrom);
+    if (searchTo) searchParams.append('to', searchTo);
+    if (searchDate) searchParams.append('date', searchDate.toISOString().split('T')[0]);
+    if (searchSeats) searchParams.append('seats', searchSeats);
+    
+    navigate(`/search-rides?${searchParams.toString()}`);
   };
 
   return (
@@ -133,21 +152,49 @@ const PassengerDashboard = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CitySelect
+              <SearchableSelect
                 value={searchFrom}
                 onValueChange={setSearchFrom}
-                placeholder="Город отправления"
+                placeholder="Выберите город отправления"
+                options={cities}
                 label="Откуда"
               />
-              <CitySelect
+              <SearchableSelect
                 value={searchTo}
                 onValueChange={setSearchTo}
-                placeholder="Город назначения"
+                placeholder="Выберите город назначения"
+                options={cities}
                 label="Куда"
               />
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700">Дата поездки</label>
+                <DatePicker
+                  value={searchDate}
+                  onChange={setSearchDate}
+                  placeholder="Выберите дату"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-slate-700">Количество мест</label>
+                <Select value={searchSeats} onValueChange={setSearchSeats}>
+                  <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80">
+                    <SelectValue placeholder="Выберите количество мест" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl bg-white/95 backdrop-blur-lg">
+                    <SelectItem value="1">1 место</SelectItem>
+                    <SelectItem value="2">2 места</SelectItem>
+                    <SelectItem value="3">3 места</SelectItem>
+                    <SelectItem value="4">4 места</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
             <Button 
-              onClick={() => navigate('/search-rides')}
+              onClick={handleQuickSearch}
               className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
             >
               <Search className="h-5 w-5 mr-3" />
