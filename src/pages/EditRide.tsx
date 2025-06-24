@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -138,7 +137,7 @@ const EditRide = () => {
                 <Label htmlFor="from" className="text-sm font-medium text-slate-700">Откуда</Label>
                 <CitySelect
                   value={formData.from}
-                  onChange={(value) => handleInputChange('from', value)}
+                  onValueChange={(value) => handleInputChange('from', value)}
                   placeholder="Выберите город отправления"
                 />
               </div>
@@ -146,7 +145,7 @@ const EditRide = () => {
                 <Label htmlFor="to" className="text-sm font-medium text-slate-700">Куда</Label>
                 <CitySelect
                   value={formData.to}
-                  onChange={(value) => handleInputChange('to', value)}
+                  onValueChange={(value) => handleInputChange('to', value)}
                   placeholder="Выберите город назначения"
                 />
               </div>
