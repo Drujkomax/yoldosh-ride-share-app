@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Search, MapPin, Calendar, Users, Star, User, Filter, Clock } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { DatePicker } from '@/components/ui/datepicker';
+import SearchableSelect from '@/components/SearchableSelect';
 
 const SearchRides = () => {
   const navigate = useNavigate();
@@ -123,32 +123,20 @@ const SearchRides = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('from')}</label>
-                <Select value={filters.from} onValueChange={(value) => handleFilterChange('from', value)}>
-                  <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80">
-                    <SelectValue placeholder={t('select_city')} />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('to')}</label>
-                <Select value={filters.to} onValueChange={(value) => handleFilterChange('to', value)}>
-                  <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80">
-                    <SelectValue placeholder={t('select_city')} />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>{city}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <SearchableSelect
+                value={filters.from}
+                onValueChange={(value) => handleFilterChange('from', value)}
+                placeholder={t('select_city')}
+                options={cities}
+                label={t('from')}
+              />
+              <SearchableSelect
+                value={filters.to}
+                onValueChange={(value) => handleFilterChange('to', value)}
+                placeholder={t('select_city')}
+                options={cities}
+                label={t('to')}
+              />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
