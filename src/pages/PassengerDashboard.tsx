@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, Users, Search, Clock, ArrowRight, Car, UserCheck, RefreshCw } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useRides } from '@/hooks/useRides';
 import BottomNavigation from '@/components/BottomNavigation';
 import CityMapSelector from '@/components/CityMapSelector';
 import FullScreenDatePicker from '@/components/FullScreenDatePicker';
@@ -14,47 +15,102 @@ import { ru } from 'date-fns/locale';
 const PassengerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { searchRides } = useRides();
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
   const [date, setDate] = useState<Date>();
   const [passengers, setPassengers] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Modal states
   const [showFromCitySelector, setShowFromCitySelector] = useState(false);
   const [showToCitySelector, setShowToCitySelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Mock search history
-  const searchHistory = [
-    {
-      id: 1,
-      from: 'Ташкент',
-      to: 'Самарканд',
-      date: '23 декабря',
-      passengers: 2,
-      searchTime: '2 часа назад'
-    },
-    {
-      id: 2,
-      from: 'Ташкент',
-      to: 'Бухара',
-      date: '20 декабря',
-      passengers: 1,
-      searchTime: '1 день назад'
-    },
-    {
-      id: 3,
-      from: 'Самарканд',
-      to: 'Ташкент',
-      date: '18 декабря',
-      passengers: 3,
-      searchTime: '3 дня назад'
+  // Search history from localStorage
+  const getSearchHistory = () => {
+    try {
+      const history = localStorage.getItem('searchHistory');
+      return history ? JSON.parse(history) : [
+        {
+          id: 1,
+          from: 'Ташкент',
+          to: 'Самарканд',
+          date: '23 декабря',
+          passengers: 2,
+          searchTime: '2 часа назад'
+        },
+        {
+          id: 2,
+          from: 'Ташкент',
+          to: 'Бухара',
+          date: '20 декабря',
+          passengers: 1,
+          searchTime: '1 день назад'
+        },
+        {
+          id: 3,
+          from: 'Самарканд',
+          to: 'Ташкент',
+          date: '18 декабря',
+          passengers: 3,
+          searchTime: '3 дня назад'
+        }
+      ];
+    } catch {
+      return [];
     }
-  ];
+  };
 
-  const handleSearch = () => {
+  const searchHistory = getSearchHistory();
+
+  const saveToSearchHistory = (searchData: any) => {
+    try {
+      const newEntry = {
+        id: Date.now(),
+        from: searchData.from_city,
+        to: searchData.to_city,
+        date: searchData.departure_date ? format(new Date(searchData.departure_date), 'dd MMMM', { locale: ru }) : 'Любая дата',
+        passengers: passengers,
+        searchTime: 'Только что'
+      };
+      
+      const history = getSearchHistory();
+      const updatedHistory = [newEntry, ...history.slice(0, 4)]; // Keep only 5 recent searches
+      localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  };
+
+  const handleSearch = async () => {
     if (fromCity && toCity && date) {
-      navigate('/search-rides');
+      setIsSearching(true);
+      try {
+        const searchData = {
+          from_city: fromCity,
+          to_city: toCity,
+          departure_date: format(date, 'yyyy-MM-dd')
+        };
+        
+        const results = await searchRides(searchData);
+        console.log('Search results:', results);
+        
+        saveToSearchHistory(searchData);
+        
+        // Navigate to search results with params
+        const params = new URLSearchParams({
+          from: fromCity,
+          to: toCity,
+          date: format(date, 'yyyy-MM-dd'),
+          seats: passengers.toString()
+        });
+        navigate(`/search-rides?${params.toString()}`);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setIsSearching(false);
+      }
     }
   };
 
@@ -68,6 +124,18 @@ const PassengerDashboard = () => {
     setFromCity(historyItem.from);
     setToCity(historyItem.to);
     setPassengers(historyItem.passengers);
+    // Try to parse the date from history if possible
+    try {
+      if (historyItem.date !== 'Любая дата') {
+        const currentYear = new Date().getFullYear();
+        const parsedDate = new Date(`${historyItem.date} ${currentYear}`);
+        if (!isNaN(parsedDate.getTime())) {
+          setDate(parsedDate);
+        }
+      }
+    } catch (error) {
+      console.log('Could not parse date from history:', error);
+    }
   };
 
   return (
@@ -216,11 +284,11 @@ const PassengerDashboard = () => {
 
               <Button
                 onClick={handleSearch}
-                disabled={!fromCity || !toCity || !date}
+                disabled={!fromCity || !toCity || !date || isSearching}
                 className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-medium"
               >
                 <Search className="h-5 w-5 mr-2" />
-                Найти поездку
+                {isSearching ? 'Поиск...' : 'Найти поездку'}
               </Button>
             </div>
           </CardContent>
@@ -228,44 +296,46 @@ const PassengerDashboard = () => {
       </div>
 
       {/* Search History */}
-      <div className="px-6 mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">
-            История поиска
-          </h3>
-          <Clock className="h-5 w-5 text-slate-400" />
-        </div>
-        
-        <div className="space-y-3">
-          {searchHistory.map((item) => (
-            <Card
-              key={item.id}
-              className="bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 cursor-pointer"
-              onClick={() => handleSearchHistoryClick(item)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                      <span className="font-medium text-slate-900">{item.from}</span>
-                      <ArrowRight className="h-4 w-4 text-slate-400" />
-                      <span className="font-medium text-slate-900">{item.to}</span>
-                      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+      {searchHistory.length > 0 && (
+        <div className="px-6 mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              История поиска
+            </h3>
+            <Clock className="h-5 w-5 text-slate-400" />
+          </div>
+          
+          <div className="space-y-3">
+            {searchHistory.map((item) => (
+              <Card
+                key={item.id}
+                className="bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-200 cursor-pointer"
+                onClick={() => handleSearchHistoryClick(item)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="font-medium text-slate-900">{item.from}</span>
+                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                        <span className="font-medium text-slate-900">{item.to}</span>
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-slate-600">{item.date}</div>
+                      <div className="text-xs text-slate-400">
+                        {item.passengers} пас. • {item.searchTime}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-600">{item.date}</div>
-                    <div className="text-xs text-slate-400">
-                      {item.passengers} пас. • {item.searchTime}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* City Selectors */}
       <CityMapSelector
