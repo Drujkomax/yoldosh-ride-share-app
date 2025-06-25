@@ -14,7 +14,6 @@ interface AnimatedInputProps {
   maxLength?: number;
   icon?: React.ReactNode;
   className?: string;
-  disabled?: boolean;
 }
 
 const AnimatedInput = ({ 
@@ -26,8 +25,7 @@ const AnimatedInput = ({
   placeholder, 
   maxLength, 
   icon,
-  className,
-  disabled = false
+  className 
 }: AnimatedInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -60,14 +58,12 @@ const AnimatedInput = ({
             onBlur={() => setIsFocused(false)}
             placeholder={isFocused ? placeholder : ""}
             maxLength={maxLength}
-            disabled={disabled}
             className={cn(
               "h-12 rounded-xl border-2 transition-all duration-300 bg-white/80 backdrop-blur-sm",
               "focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20",
               "hover:border-slate-300 animate-input-focus",
               icon && "pl-10",
-              isFocused && !disabled && "scale-[1.02] shadow-lg",
-              disabled && "opacity-60 cursor-not-allowed",
+              isFocused && "scale-[1.02] shadow-lg",
               className
             )}
           />

@@ -2,21 +2,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from '@/hooks/use-toast';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, signOut } = useUser();
+  const { user, setUser } = useUser();
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   // Mock profile data
   const profile = {
-    name: user?.name || 'Пользователь',
+    name: 'Алишер Каримов',
     rating: 4.8,
     reviews: 24,
     completedRides: 12,
@@ -48,36 +47,10 @@ const ProfilePage = () => {
     }
   ];
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Выход выполнен",
-        description: "Вы успешно вышли из аккаунта",
-      });
-      navigate('/');
-    } catch (error: any) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось выйти из аккаунта",
-        variant: "destructive"
-      });
-    }
+  const handleLogout = () => {
+    setUser(null);
+    navigate('/');
   };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
-          <CardContent className="text-center">
-            <h2 className="text-xl font-semibold mb-4">Требуется авторизация</h2>
-            <Button onClick={() => navigate('/')}>Войти</Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
@@ -122,7 +95,7 @@ const ProfilePage = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-3">
                   <h2 className="text-3xl font-bold text-slate-800">{profile.name}</h2>
-                  {user?.is_verified && (
+                  {user?.isVerified && (
                     <Badge className="bg-green-100 text-green-800 px-3 py-1">
                       <Shield className="h-4 w-4 mr-1" />
                       Проверен
@@ -167,37 +140,37 @@ const ProfilePage = () => {
 
         {/* Reviews Section */}
         <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-          <CardContent className="p-8">
-            <h3 className="text-2xl font-bold text-slate-800 mb-6">Последние отзывы</h3>
-            <div className="space-y-6">
-              {recentReviews.map((review) => (
-                <div key={review.id} className="border-b border-slate-200 pb-6 last:border-b-0">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <span className="font-semibold text-slate-800">{review.passenger}</span>
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-slate-800">Последние отзывы</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {recentReviews.map((review) => (
+              <div key={review.id} className="border-b border-slate-200 pb-6 last:border-b-0">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <span className="font-semibold text-slate-800">{review.passenger}</span>
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
                     </div>
-                    <span className="text-sm text-slate-500">{review.date}</span>
                   </div>
-                  <p className="text-slate-700 leading-relaxed">{review.comment}</p>
+                  <span className="text-sm text-slate-500">{review.date}</span>
                 </div>
-              ))}
-            </div>
+                <p className="text-slate-700 leading-relaxed">{review.comment}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
         {/* Action Buttons */}
         <div className="space-y-4">
-          {user?.role === 'driver' && !user?.is_verified && (
+          {user?.role === 'driver' && !user?.isVerified && (
             <Button 
               onClick={() => navigate('/verification')}
               className="w-full h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl"
