@@ -2,13 +2,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Plus, Search, MapPin, Calendar, Users, Star, User, Clock, Minus } from 'lucide-react';
+import { Plus, Search, MapPin, Calendar, Users, Star, User, Clock, Minus, MessageCircle, FileText } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import BottomNavigation from '@/components/BottomNavigation';
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
@@ -82,39 +80,39 @@ const PassengerDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900 pb-20">
+    <div className="min-h-screen bg-slate-50 pb-24 relative">
       {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
-        <div className="container mx-auto px-6 py-6">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-slate-900">
                 Привет, {user?.name || 'Пассажир'}!
               </h1>
-              <p className="text-slate-600 dark:text-slate-400 mt-1">Найдите идеальную поездку</p>
+              <p className="text-slate-600 text-sm">Найдите идеальную поездку</p>
             </div>
             <Button
               variant="ghost"
               onClick={() => navigate('/profile')}
-              className="rounded-full hover:bg-yoldosh-primary/10 hover:scale-110 transition-all duration-300"
+              className="rounded-full w-12 h-12 p-0 hover:bg-slate-100"
             >
-              <User className="h-6 w-6" />
+              <User className="h-6 w-6 text-slate-600" />
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Quick Search */}
-        <Card className="mb-8 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300">
-          <CardContent className="p-8">
+      <div className="px-4 py-6">
+        {/* Quick Search Card */}
+        <Card className="mb-6 shadow-sm border-0 bg-white">
+          <CardContent className="p-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-6">Быстрый поиск поездки</h2>
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Быстрый поиск поездки</h2>
               <Button
                 onClick={() => navigate('/search-rides')}
-                className="bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl px-8 py-4 text-lg"
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
               >
-                <Search className="h-5 w-5 mr-3" />
+                <Search className="h-5 w-5 mr-2" />
                 Найти поездку
               </Button>
             </div>
@@ -122,60 +120,60 @@ const PassengerDashboard = () => {
         </Card>
 
         {/* Available Rides */}
-        <div className="space-y-6">
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200">Доступные поездки</h3>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-slate-900 px-1">Доступные поездки</h3>
           
           {availableRides.map((ride) => (
-            <Card key={ride.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start mb-4">
+            <Card key={ride.id} className="shadow-sm border-0 bg-white">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="font-medium text-slate-800 dark:text-slate-200">{ride.driver.name}</span>
+                        <span className="font-medium text-slate-900 text-sm">{ride.driver.name}</span>
                         {ride.driver.isVerified && (
-                          <Badge variant="secondary" className="text-xs bg-yoldosh-success/20 text-yoldosh-success">
-                            ✓ Проверен
+                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 px-2 py-0.5">
+                            ✓
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center space-x-1 text-sm">
+                      <div className="flex items-center space-x-1 text-xs">
                         <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                        <span className="text-slate-600 dark:text-slate-400">{ride.driver.rating}</span>
-                        <span className="text-gray-500">({ride.driver.reviews} отзывов)</span>
+                        <span className="text-slate-600">{ride.driver.rating}</span>
+                        <span className="text-gray-400">({ride.driver.reviews})</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="text-right">
-                    <div className="font-bold text-2xl text-yoldosh-success">
+                    <div className="font-bold text-lg text-slate-900">
                       {ride.price.toLocaleString()} сум
                     </div>
-                    <div className="text-sm text-slate-500">{ride.availableSeats} из {ride.totalSeats} мест</div>
+                    <div className="text-xs text-slate-500">{ride.availableSeats} из {ride.totalSeats} мест</div>
                   </div>
                 </div>
                 
-                <div className="space-y-3">
+                <div className="space-y-2 mb-3">
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium text-slate-800 dark:text-slate-200">{ride.from} → {ride.to}</span>
+                    <span className="font-medium text-slate-900 text-sm">{ride.from} → {ride.to}</span>
                   </div>
                   
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-3 w-3" />
                         <span>{ride.date}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
+                        <Clock className="h-3 w-3" />
                         <span>{ride.time}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3 w-3" />
                         <span>{ride.availableSeats} мест</span>
                       </div>
                     </div>
@@ -183,118 +181,119 @@ const PassengerDashboard = () => {
                   
                   <div className="flex flex-wrap gap-1">
                     {ride.features.map((feature, index) => (
-                      <Badge key={index} variant="outline" className="text-xs bg-slate-100 dark:bg-slate-700">
+                      <Badge key={index} variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200">
                         {feature}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 
-                <div className="flex space-x-3 mt-4 pt-4 border-t dark:border-slate-600">
+                <div className="flex space-x-2 pt-2 border-t border-slate-100">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button 
                         variant="outline" 
-                        className="flex-1 rounded-xl border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-105 transition-all duration-300"
+                        size="sm"
+                        className="flex-1 h-10 text-sm border-slate-300 hover:bg-slate-50"
                         onClick={() => setSelectedRide(ride)}
                       >
                         Подробнее
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md rounded-3xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
+                    <DialogContent className="max-w-sm rounded-2xl bg-white">
                       <DialogHeader>
-                        <DialogTitle className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                        <DialogTitle className="text-lg font-semibold text-slate-900">
                           Информация о поездке
                         </DialogTitle>
                       </DialogHeader>
                       {selectedRide && (
-                        <div className="space-y-6">
+                        <div className="space-y-4">
                           {/* Driver Info */}
-                          <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
-                            <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">О водителе</h4>
-                            <div className="space-y-2 text-sm">
+                          <div className="p-3 bg-slate-50 rounded-xl">
+                            <h4 className="font-medium text-slate-900 mb-2 text-sm">О водителе</h4>
+                            <div className="space-y-1 text-xs">
                               <div className="flex justify-between">
-                                <span>Имя:</span>
-                                <span className="font-medium">{selectedRide.driver.name}</span>
+                                <span className="text-slate-600">Имя:</span>
+                                <span className="font-medium text-slate-900">{selectedRide.driver.name}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Рейтинг:</span>
+                                <span className="text-slate-600">Рейтинг:</span>
                                 <span className="flex items-center">
                                   <Star className="h-3 w-3 text-yellow-400 fill-current mr-1" />
-                                  {selectedRide.driver.rating} ({selectedRide.driver.reviews})
+                                  <span className="text-slate-900">{selectedRide.driver.rating} ({selectedRide.driver.reviews})</span>
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Опыт:</span>
-                                <span>{selectedRide.driver.experience}</span>
+                                <span className="text-slate-600">Опыт:</span>
+                                <span className="text-slate-900">{selectedRide.driver.experience}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Автомобиль:</span>
-                                <span>{selectedRide.driver.car}</span>
+                                <span className="text-slate-600">Автомобиль:</span>
+                                <span className="text-slate-900">{selectedRide.driver.car}</span>
                               </div>
                             </div>
                           </div>
 
                           {/* Trip Info */}
-                          <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl">
-                            <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">О поездке</h4>
-                            <div className="space-y-2 text-sm">
+                          <div className="p-3 bg-slate-50 rounded-xl">
+                            <h4 className="font-medium text-slate-900 mb-2 text-sm">О поездке</h4>
+                            <div className="space-y-1 text-xs">
                               <div className="flex justify-between">
-                                <span>Маршрут:</span>
-                                <span className="font-medium">{selectedRide.from} → {selectedRide.to}</span>
+                                <span className="text-slate-600">Маршрут:</span>
+                                <span className="font-medium text-slate-900">{selectedRide.from} → {selectedRide.to}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Дата и время:</span>
-                                <span>{selectedRide.date} в {selectedRide.time}</span>
+                                <span className="text-slate-600">Дата и время:</span>
+                                <span className="text-slate-900">{selectedRide.date} в {selectedRide.time}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Цена за место:</span>
-                                <span className="font-bold text-yoldosh-success">{selectedRide.price.toLocaleString()} сум</span>
+                                <span className="text-slate-600">Цена за место:</span>
+                                <span className="font-bold text-blue-600">{selectedRide.price.toLocaleString()} сум</span>
                               </div>
-                              <div className="pt-2">
-                                <span className="text-slate-600 dark:text-slate-400">{selectedRide.description}</span>
+                              <div className="pt-1">
+                                <span className="text-slate-600 text-xs">{selectedRide.description}</span>
                               </div>
                             </div>
                           </div>
 
                           {/* Quick Booking */}
-                          <div className="p-4 bg-yoldosh-primary/5 rounded-2xl">
-                            <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">Быстрое бронирование</h4>
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm">Количество мест:</span>
-                              <div className="flex items-center space-x-3">
+                          <div className="p-3 bg-blue-50 rounded-xl">
+                            <h4 className="font-medium text-slate-900 mb-3 text-sm">Быстрое бронирование</h4>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-xs text-slate-600">Количество мест:</span>
+                              <div className="flex items-center space-x-2">
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSeatsChange(false, selectedRide.availableSeats)}
                                   disabled={bookingSeats <= 1}
-                                  className="h-8 w-8 rounded-full"
+                                  className="h-7 w-7 rounded-full p-0"
                                 >
                                   <Minus className="h-3 w-3" />
                                 </Button>
-                                <span className="font-bold text-lg w-8 text-center">{bookingSeats}</span>
+                                <span className="font-medium text-sm w-6 text-center">{bookingSeats}</span>
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleSeatsChange(true, selectedRide.availableSeats)}
                                   disabled={bookingSeats >= selectedRide.availableSeats}
-                                  className="h-8 w-8 rounded-full"
+                                  className="h-7 w-7 rounded-full p-0"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </div>
                             </div>
-                            <div className="flex justify-between items-center mb-4">
-                              <span className="text-sm">Общая стоимость:</span>
-                              <span className="font-bold text-xl text-yoldosh-success">
+                            <div className="flex justify-between items-center mb-3">
+                              <span className="text-xs text-slate-600">Общая стоимость:</span>
+                              <span className="font-bold text-lg text-blue-600">
                                 {(selectedRide.price * bookingSeats).toLocaleString()} сум
                               </span>
                             </div>
                             <Button
                               onClick={() => handleQuickBook(selectedRide)}
-                              className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
+                              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
                             >
                               Забронировать сейчас
                             </Button>
@@ -306,7 +305,8 @@ const PassengerDashboard = () => {
                   
                   <Button 
                     onClick={() => handleBookRide(ride.id)}
-                    className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
+                    size="sm"
+                    className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg"
                   >
                     Забронировать
                   </Button>
@@ -317,7 +317,37 @@ const PassengerDashboard = () => {
         </div>
       </div>
 
-      <BottomNavigation />
+      {/* Static Bottom Navigation - Figma Style */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 px-4 py-3">
+        <div className="flex justify-around items-center">
+          <Button
+            onClick={() => navigate('/search-rides')}
+            variant="ghost"
+            className="flex flex-col items-center justify-center h-14 px-6 rounded-xl hover:bg-blue-50 group transition-all duration-200"
+          >
+            <Search className="h-5 w-5 mb-1 text-slate-600 group-hover:text-blue-600 transition-colors" />
+            <span className="text-xs font-medium text-slate-600 group-hover:text-blue-600 transition-colors">Поиск</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/create-request')}
+            variant="ghost"
+            className="flex flex-col items-center justify-center h-14 px-6 rounded-xl hover:bg-green-50 group transition-all duration-200"
+          >
+            <FileText className="h-5 w-5 mb-1 text-slate-600 group-hover:text-green-600 transition-colors" />
+            <span className="text-xs font-medium text-slate-600 group-hover:text-green-600 transition-colors">Заявка</span>
+          </Button>
+          
+          <Button
+            onClick={() => navigate('/chats')}
+            variant="ghost"
+            className="flex flex-col items-center justify-center h-14 px-6 rounded-xl hover:bg-purple-50 group transition-all duration-200"
+          >
+            <MessageCircle className="h-5 w-5 mb-1 text-slate-600 group-hover:text-purple-600 transition-colors" />
+            <span className="text-xs font-medium text-slate-600 group-hover:text-purple-600 transition-colors">Чаты</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

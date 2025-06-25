@@ -11,15 +11,11 @@ import AnimatedInput from '@/components/AnimatedInput';
 const WelcomePage = () => {
   const navigate = useNavigate();
   const { setUser } = useUser();
-  const [step, setStep] = useState<'welcome' | 'role' | 'phone' | 'code'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'phone' | 'code'>('welcome');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-
-  const handleGetStarted = () => {
-    setStep('role');
-  };
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -88,8 +84,7 @@ const WelcomePage = () => {
   };
 
   const handleBack = () => {
-    if (step === 'role') setStep('welcome');
-    else if (step === 'phone') setStep('role');
+    if (step === 'phone') setStep('welcome');
     else if (step === 'code') setStep('phone');
   };
 
@@ -166,64 +161,44 @@ const WelcomePage = () => {
               </div>
             </div>
 
-            {/* CTA Section */}
+            {/* Role Selection */}
             <div className="max-w-lg mx-auto">
               <div className="bg-white/95 backdrop-blur-lg rounded-3xl p-10 shadow-2xl animate-scale-in border border-white/30">
                 <h2 className="text-3xl font-bold text-slate-800 text-center mb-8">
-                  Присоединяйтесь
+                  Выберите роль
                 </h2>
                 
-                <Button
-                  onClick={handleGetStarted}
-                  className="w-full h-16 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg border-0 animate-button-press active:scale-95"
-                >
-                  <div className="flex items-center justify-center">
-                    <Users className="mr-3 h-6 w-6" />
-                    <span className="font-semibold">Начать</span>
-                  </div>
-                </Button>
+                <div className="space-y-6">
+                  <Button
+                    onClick={() => handleRoleSelect('passenger')}
+                    variant="outline"
+                    className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-primary hover:bg-yoldosh-primary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <Users className="h-6 w-6 text-white" />
+                      </div>
+                      <span className="font-bold text-slate-800">Пассажир</span>
+                      <span className="text-sm text-slate-500 mt-1">Ищу поездку</span>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    onClick={() => handleRoleSelect('driver')}
+                    variant="outline"
+                    className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-secondary hover:bg-yoldosh-secondary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
+                  >
+                    <div className="flex flex-col items-center">
+                      <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
+                        <Car className="h-6 w-6 text-white" />
+                      </div>
+                      <span className="font-bold text-slate-800">Водитель</span>
+                      <span className="text-sm text-slate-500 mt-1">Предлагаю поездки</span>
+                    </div>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {step === 'role' && (
-          <div className="max-w-md mx-auto">
-            <Card className="animate-fade-in bg-white/95 backdrop-blur-lg border-0 rounded-3xl shadow-2xl">
-              <CardHeader className="text-center pb-6">
-                <CardTitle className="text-3xl font-bold text-slate-800">Выберите роль</CardTitle>
-                <p className="text-slate-600 mt-2">Как вы планируете использовать приложение?</p>
-              </CardHeader>
-              <CardContent className="space-y-6 p-8">
-                <Button
-                  onClick={() => handleRoleSelect('passenger')}
-                  variant="outline"
-                  className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-primary hover:bg-yoldosh-primary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <Users className="h-6 w-6 text-white" />
-                    </div>
-                    <span className="font-bold text-slate-800">Пассажир</span>
-                    <span className="text-sm text-slate-500 mt-1">Ищу поездку</span>
-                  </div>
-                </Button>
-                
-                <Button
-                  onClick={() => handleRoleSelect('driver')}
-                  variant="outline"
-                  className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-secondary hover:bg-yoldosh-secondary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                      <Car className="h-6 w-6 text-white" />
-                    </div>
-                    <span className="font-bold text-slate-800">Водитель</span>
-                    <span className="text-sm text-slate-500 mt-1">Предлагаю поездки</span>
-                  </div>
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         )}
 
