@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Search, FileText, MessageCircle } from 'lucide-react';
+import { Search, Plus, FileText, MessageCircle, User } from 'lucide-react';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
@@ -12,47 +12,76 @@ const BottomNavigation = () => {
     return location.pathname === path;
   };
 
+  const navItems = [
+    {
+      path: '/passenger',
+      icon: Search,
+      label: 'Поиск',
+      color: 'blue'
+    },
+    {
+      path: '/create-request',
+      icon: Plus,
+      label: 'Опубликовать',
+      color: 'green'
+    },
+    {
+      path: '/my-trips',
+      icon: FileText,
+      label: 'Мои поездки',
+      color: 'purple'
+    },
+    {
+      path: '/chats',
+      icon: MessageCircle,
+      label: 'Чаты',
+      color: 'orange'
+    },
+    {
+      path: '/profile',
+      icon: User,
+      label: 'Профиль',
+      color: 'slate'
+    }
+  ];
+
+  const getActiveStyles = (color: string, isActiveItem: boolean) => {
+    if (!isActiveItem) return 'text-slate-600 hover:bg-slate-100';
+    
+    const colorMap = {
+      blue: 'bg-blue-500/10 text-blue-600 scale-110',
+      green: 'bg-green-500/10 text-green-600 scale-110',
+      purple: 'bg-purple-500/10 text-purple-600 scale-110',
+      orange: 'bg-orange-500/10 text-orange-600 scale-110',
+      slate: 'bg-slate-500/10 text-slate-600 scale-110'
+    };
+    
+    return colorMap[color] || 'bg-blue-500/10 text-blue-600 scale-110';
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg">
-      <div className="flex justify-around items-center py-2 px-4">
-        <Button
-          onClick={() => navigate('/search-rides')}
-          variant="ghost"
-          className={`flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 hover:scale-110 ${
-            isActive('/search-rides') 
-              ? 'bg-yoldosh-primary/10 text-yoldosh-primary scale-110' 
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <Search className={`h-5 w-5 mb-1 transition-all duration-300 ${isActive('/search-rides') ? 'animate-pulse' : ''}`} />
-          <span className="text-xs font-medium">Поиск</span>
-        </Button>
-        
-        <Button
-          onClick={() => navigate('/create-request')}
-          variant="ghost"
-          className={`flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 hover:scale-110 ${
-            isActive('/create-request') 
-              ? 'bg-yoldosh-secondary/10 text-yoldosh-secondary scale-110' 
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <FileText className={`h-5 w-5 mb-1 transition-all duration-300 ${isActive('/create-request') ? 'animate-pulse' : ''}`} />
-          <span className="text-xs font-medium">Заявка</span>
-        </Button>
-        
-        <Button
-          onClick={() => navigate('/chats')}
-          variant="ghost"
-          className={`flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 hover:scale-110 ${
-            isActive('/chats') 
-              ? 'bg-blue-500/10 text-blue-600 scale-110' 
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <MessageCircle className={`h-5 w-5 mb-1 transition-all duration-300 ${isActive('/chats') ? 'animate-pulse' : ''}`} />
-          <span className="text-xs font-medium">Чаты</span>
-        </Button>
+      <div className="flex justify-around items-center py-2 px-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActiveItem = isActive(item.path);
+          
+          return (
+            <Button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              variant="ghost"
+              className={`flex-1 flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-300 hover:scale-105 ${
+                getActiveStyles(item.color, isActiveItem)
+              }`}
+            >
+              <Icon className={`h-5 w-5 mb-1 transition-all duration-300 ${
+                isActiveItem ? 'animate-pulse' : ''
+              }`} />
+              <span className="text-xs font-medium">{item.label}</span>
+            </Button>
+          );
+        })}
       </div>
     </div>
   );

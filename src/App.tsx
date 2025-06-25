@@ -26,6 +26,8 @@ import SettingsPage from "./pages/SettingsPage";
 import VerificationPage from "./pages/VerificationPage";
 import RideHistoryPage from "./pages/RideHistoryPage";
 import MyReviewsPage from "./pages/MyReviewsPage";
+import RegistrationPage from "./pages/RegistrationPage";
+import MyTripsPage from "./pages/MyTripsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<WelcomePage />} />
+              <Route path="/registration" element={<RegistrationPage />} />
               <Route path="/driver" element={<DriverDashboard />} />
               <Route path="/passenger" element={<PassengerDashboard />} />
               <Route path="/create-ride" element={<CreateRide />} />
@@ -54,6 +57,7 @@ const App = () => (
               <Route path="/passenger-profile/:name" element={<PassengerProfile />} />
               <Route path="/chat/:name" element={<ChatPage />} />
               <Route path="/chats" element={<ChatsListPage />} />
+              <Route path="/my-trips" element={<MyTripsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/verification" element={<VerificationPage />} />
