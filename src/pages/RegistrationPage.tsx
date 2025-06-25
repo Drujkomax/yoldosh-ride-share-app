@@ -1,28 +1,41 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Car, Users, ArrowLeft, Phone, User } from 'lucide-react';
 import { useUser, UserRole } from '@/contexts/UserContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import AnimatedInput from '@/components/AnimatedInput';
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { user } = useUser();
+  const { signUp, signIn, loading } = useAuth();
   const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [isSignUp, setIsSignUp] = useState(true);
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/passenger');
+      }
+    }
+  }, [user, navigate]);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setStep('phone');
   };
 
-  const handlePhoneSubmit = () => {
+  const handlePhoneSubmit = async () => {
     if (phone.length < 13 || !name.trim()) {
       toast({
         title: "Ошибка",
@@ -31,15 +44,36 @@ const RegistrationPage = () => {
       });
       return;
     }
+
+    // First try to sign in (existing user)
+    const signInResult = await signIn(phone);
     
-    toast({
-      title: "Код отправлен",
-      description: "SMS с кодом подтверждения отправлен на ваш номер",
-    });
-    setStep('code');
+    if (signInResult.error && signInResult.error.message.includes('Invalid login credentials')) {
+      // User doesn't exist, proceed with signup
+      setIsSignUp(true);
+      toast({
+        title: "Регистрация",
+        description: "Создаем новый аккаунт...",
+      });
+      setStep('code');
+    } else if (signInResult.error) {
+      // Other error
+      toast({
+        title: "Ошибка",
+        description: "Проблема с входом в систему",
+        variant: "destructive"
+      });
+    } else {
+      // Successful sign in
+      setIsSignUp(false);
+      toast({
+        title: "Вход выполнен",
+        description: "Добро пожаловать обратно!",
+      });
+    }
   };
 
-  const handleCodeSubmit = () => {
+  const handleCodeSubmit = async () => {
     if (code.length !== 4) {
       toast({
         title: "Ошибка",
@@ -49,21 +83,38 @@ const RegistrationPage = () => {
       return;
     }
 
-    const newUser = {
-      id: Date.now().toString(),
-      phone,
-      name,
-      role: selectedRole!,
-      isVerified: selectedRole === 'passenger',
-      totalRides: 0,
-    };
+    // Simulate SMS verification (in production, verify actual SMS code)
+    if (code !== '1234') {
+      toast({
+        title: "Ошибка",
+        description: "Неверный код подтверждения",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setUser(newUser);
-    
-    if (selectedRole === 'driver') {
-      navigate('/driver');
+    if (isSignUp && selectedRole) {
+      // Create new user
+      const result = await signUp(phone, name, selectedRole);
+      
+      if (result.error) {
+        toast({
+          title: "Ошибка регистрации",
+          description: result.error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Регистрация завершена",
+          description: "Добро пожаловать в Yoldosh!",
+        });
+      }
     } else {
-      navigate('/passenger');
+      // User already signed in during phone step
+      toast({
+        title: "Авторизация завершена",
+        description: "Добро пожаловать обратно!",
+      });
     }
   };
 
@@ -177,9 +228,10 @@ const RegistrationPage = () => {
               
               <Button 
                 onClick={handlePhoneSubmit}
+                disabled={loading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                Получить код
+                {loading ? 'Проверяем...' : 'Получить код'}
               </Button>
             </CardContent>
           </Card>
@@ -194,6 +246,9 @@ const RegistrationPage = () => {
               <p className="text-slate-600 mt-2">
                 Введите код из SMS на номер<br />
                 <span className="font-semibold text-yoldosh-primary">{phone}</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-2">
+                Для демо используйте код: 1234
               </p>
             </CardHeader>
             <CardContent className="space-y-8 p-8">
@@ -210,9 +265,10 @@ const RegistrationPage = () => {
               
               <Button 
                 onClick={handleCodeSubmit}
+                disabled={loading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                Подтвердить
+                {loading ? 'Подтверждаем...' : 'Подтвердить'}
               </Button>
               
               <button 
