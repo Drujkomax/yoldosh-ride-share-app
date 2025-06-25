@@ -31,8 +31,17 @@ export const useBookings = () => {
   const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ['bookings'],
     queryFn: async () => {
+      console.log('useBookings - Starting to fetch bookings');
+      
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user found');
+      console.log('useBookings - Current user:', user);
+      
+      if (!user) {
+        console.log('useBookings - No user found');
+        throw new Error('No user found');
+      }
+
+      console.log('useBookings - Fetching bookings for user:', user.id);
 
       const { data, error } = await supabase
         .from('bookings')
@@ -52,9 +61,14 @@ export const useBookings = () => {
         .eq('passenger_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('useBookings - Supabase response:', { data, error });
 
-      return data.map(booking => ({
+      if (error) {
+        console.error('useBookings - Supabase error:', error);
+        throw error;
+      }
+
+      const mappedBookings = data.map(booking => ({
         ...booking,
         ride: booking.rides ? {
           from_city: booking.rides.from_city,
@@ -67,19 +81,30 @@ export const useBookings = () => {
           },
         } : undefined,
       })) as Booking[];
+
+      console.log('useBookings - Mapped bookings:', mappedBookings);
+      return mappedBookings;
     },
     enabled: true,
+    retry: 1,
   });
 
   const createBookingMutation = useMutation({
     mutationFn: async (newBooking: Omit<Booking, 'id' | 'created_at' | 'ride'>) => {
+      console.log('useBookings - Creating booking:', newBooking);
+      
       const { data, error } = await supabase
         .from('bookings')
         .insert([newBooking])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useBookings - Create booking error:', error);
+        throw error;
+      }
+      
+      console.log('useBookings - Booking created:', data);
       return data;
     },
     onSuccess: () => {
@@ -102,6 +127,8 @@ export const useBookings = () => {
 
   const updateBookingMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Booking> }) => {
+      console.log('useBookings - Updating booking:', { id, updates });
+      
       const { data, error } = await supabase
         .from('bookings')
         .update(updates)
@@ -109,7 +136,12 @@ export const useBookings = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useBookings - Update booking error:', error);
+        throw error;
+      }
+      
+      console.log('useBookings - Booking updated:', data);
       return data;
     },
     onSuccess: () => {

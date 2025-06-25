@@ -13,15 +13,23 @@ import { ru } from 'date-fns/locale';
 
 const MyTripsPage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useUser();
-  const { bookings, isLoading } = useBookings();
+  const { user, isAuthenticated, loading: userLoading } = useUser();
+  const { bookings, isLoading, error } = useBookings();
+
+  console.log('MyTripsPage - User:', user);
+  console.log('MyTripsPage - isAuthenticated:', isAuthenticated);
+  console.log('MyTripsPage - userLoading:', userLoading);
+  console.log('MyTripsPage - bookings:', bookings);
+  console.log('MyTripsPage - isLoading:', isLoading);
+  console.log('MyTripsPage - error:', error);
 
   // Redirect to registration if not authenticated
   React.useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
+    if (!userLoading && !isAuthenticated) {
+      console.log('Redirecting to registration - not authenticated');
       navigate('/registration');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, userLoading, navigate]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -35,21 +43,6 @@ const MyTripsPage = () => {
         return <Badge className="bg-red-100 text-red-800">Отменена</Badge>;
       default:
         return <Badge variant="outline">Неизвестно</Badge>;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'Завершена';
-      case 'confirmed':
-        return 'Подтверждена';
-      case 'pending':
-        return 'Ожидает подтверждения';
-      case 'cancelled':
-        return 'Отменена';
-      default:
-        return 'Неизвестно';
     }
   };
 
@@ -70,8 +63,44 @@ const MyTripsPage = () => {
     }
   };
 
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 pb-24">
+        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/passenger')}
+                className="rounded-xl hover:bg-slate-100 p-3"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Назад
+              </Button>
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-slate-900">
+                  Мои поездки
+                </h1>
+                <p className="text-slate-600 mt-1">История ваших поездок</p>
+              </div>
+              <div className="w-16"></div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-slate-500">Загрузка...</div>
+          </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
   if (!isAuthenticated) {
-    return null; // Will redirect via useEffect
+    return null;
   }
 
   if (isLoading) {
@@ -102,6 +131,51 @@ const MyTripsPage = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-slate-500">Загрузка поездок...</div>
           </div>
+        </div>
+        <BottomNavigation />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 pb-24">
+        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/passenger')}
+                className="rounded-xl hover:bg-slate-100 p-3"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Назад
+              </Button>
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-slate-900">
+                  Мои поездки
+                </h1>
+                <p className="text-slate-600 mt-1">История ваших поездок</p>
+              </div>
+              <div className="w-16"></div>
+            </div>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 py-8">
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-2xl shadow-lg">
+            <CardContent className="p-12 text-center">
+              <div className="text-red-500 text-lg mb-2">Ошибка загрузки</div>
+              <div className="text-slate-500 text-sm mb-6">
+                Не удалось загрузить поездки. Попробуйте обновить страницу.
+              </div>
+              <Button 
+                onClick={() => window.location.reload()}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Обновить
+              </Button>
+            </CardContent>
+          </Card>
         </div>
         <BottomNavigation />
       </div>
