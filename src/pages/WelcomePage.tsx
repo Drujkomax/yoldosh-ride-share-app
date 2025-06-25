@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import AnimatedInput from '@/components/AnimatedInput';
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { signInWithPhone, verifyOtp } = useUser();
   const [step, setStep] = useState<'welcome' | 'phone' | 'code'>('welcome');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
@@ -22,7 +21,7 @@ const WelcomePage = () => {
     setStep('phone');
   };
 
-  const handlePhoneSubmit = () => {
+  const handlePhoneSubmit = async () => {
     if (phone.length < 13 || !name.trim()) {
       toast({
         title: "Ошибка",
@@ -32,14 +31,24 @@ const WelcomePage = () => {
       return;
     }
     
-    toast({
-      title: "Код отправлен",
-      description: "SMS с кодом подтверждения отправлен на ваш номер",
-    });
-    setStep('code');
+    try {
+      await signInWithPhone(phone);
+      toast({
+        title: "Код отправлен",
+        description: "SMS с кодом подтверждения отправлен на ваш номер",
+      });
+      setStep('code');
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить код. Попробуйте снова.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleCodeSubmit = () => {
+  const handleCodeSubmit = async () => {
     if (code.length !== 4) {
       toast({
         title: "Ошибка",
@@ -49,21 +58,24 @@ const WelcomePage = () => {
       return;
     }
 
-    const newUser = {
-      id: Date.now().toString(),
-      phone,
-      name,
-      role: selectedRole!,
-      isVerified: selectedRole === 'passenger',
-      totalRides: 0,
-    };
-
-    setUser(newUser);
-    
-    if (selectedRole === 'driver') {
-      navigate('/driver');
-    } else {
-      navigate('/passenger');
+    try {
+      await verifyOtp(phone, code, {
+        name,
+        role: selectedRole!
+      });
+      
+      if (selectedRole === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/passenger');
+      }
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      toast({
+        title: "Ошибка",
+        description: "Неверный код. Попробуйте снова.",
+        variant: "destructive"
+      });
     }
   };
 

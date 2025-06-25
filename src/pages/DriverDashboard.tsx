@@ -9,7 +9,7 @@ import { useUser } from '@/contexts/UserContext';
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, signOut } = useUser();
 
   // Mock data for driver's rides and passenger requests specifically for this driver
   const myRides = [
@@ -83,7 +83,7 @@ const DriverDashboard = () => {
   };
 
   const handleCreateRide = () => {
-    if (user?.isVerified) {
+    if (user?.is_verified) {
       navigate('/create-ride');
     } else {
       if (confirm('Для создания поездки необходима верификация. Пройти верификацию сейчас?')) {
@@ -93,7 +93,7 @@ const DriverDashboard = () => {
   };
 
   const handleAcceptRequest = (requestId: number, passengerName: string) => {
-    if (user?.isVerified) {
+    if (user?.is_verified) {
       alert(`Заявка от ${passengerName} принята! Пассажир получит уведомление.`);
     } else {
       if (confirm('Для принятия заявок необходима верификация. Пройти верификацию сейчас?')) {
@@ -161,7 +161,7 @@ const DriverDashboard = () => {
 
       <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Verification Status */}
-        {!user?.isVerified && (
+        {!user?.is_verified && (
           <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-0 rounded-3xl shadow-xl animate-fade-in">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
@@ -373,7 +373,7 @@ const DriverDashboard = () => {
           >
             <Plus className="h-5 w-5 mb-1" />
             <span className="text-xs font-medium">Создать</span>
-            {!user?.isVerified && (
+            {!user?.is_verified && (
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-yoldosh-warning rounded-full animate-pulse"></div>
             )}
           </Button>

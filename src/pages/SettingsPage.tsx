@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,16 +12,20 @@ import PhotoUpload from '@/components/PhotoUpload';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const { user, signOut } = useUser();
   const { theme, language, setTheme, setLanguage, t } = useTheme();
-  const [name, setName] = useState('Алишер Каримов');
-  const [phone, setPhone] = useState('+998 90 123 45 67');
+  const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [photo, setPhoto] = useState<string | null>(null);
   const [notifications, setNotifications] = useState(true);
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleSaveProfile = () => {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,12 +9,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useUser();
+  const { user, signOut } = useUser();
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   // Mock profile data
   const profile = {
-    name: 'Алишер Каримов',
+    name: user?.name || 'Пользователь',
     rating: 4.8,
     reviews: 24,
     completedRides: 12,
@@ -47,9 +46,13 @@ const ProfilePage = () => {
     }
   ];
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -95,7 +98,7 @@ const ProfilePage = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-3">
                   <h2 className="text-3xl font-bold text-slate-800">{profile.name}</h2>
-                  {user?.isVerified && (
+                  {user?.is_verified && (
                     <Badge className="bg-green-100 text-green-800 px-3 py-1">
                       <Shield className="h-4 w-4 mr-1" />
                       Проверен
@@ -170,7 +173,7 @@ const ProfilePage = () => {
 
         {/* Action Buttons */}
         <div className="space-y-4">
-          {user?.role === 'driver' && !user?.isVerified && (
+          {user?.role === 'driver' && !user?.is_verified && (
             <Button 
               onClick={() => navigate('/verification')}
               className="w-full h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl"
