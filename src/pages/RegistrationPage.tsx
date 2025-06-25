@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,19 +9,20 @@ import AnimatedInput from '@/components/AnimatedInput';
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const { signInWithPhone, verifyOtp } = useUser();
   const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setStep('phone');
   };
 
-  const handlePhoneSubmit = () => {
+  const handlePhoneSubmit = async () => {
     if (phone.length < 13 || !name.trim()) {
       toast({
         title: "Ошибка",
@@ -32,38 +32,52 @@ const RegistrationPage = () => {
       return;
     }
     
-    toast({
-      title: "Код отправлен",
-      description: "SMS с кодом подтверждения отправлен на ваш номер",
-    });
-    setStep('code');
-  };
-
-  const handleCodeSubmit = () => {
-    if (code.length !== 4) {
+    setLoading(true);
+    try {
+      await signInWithPhone(phone);
+      toast({
+        title: "Код отправлен",
+        description: "SMS с кодом подтверждения отправлен на ваш номер",
+      });
+      setStep('code');
+    } catch (error: any) {
       toast({
         title: "Ошибка",
-        description: "Введите 4-значный код",
+        description: error.message || "Не удалось отправить код",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCodeSubmit = async () => {
+    if (code.length !== 6) {
+      toast({
+        title: "Ошибка",
+        description: "Введите 6-значный код",
         variant: "destructive"
       });
       return;
     }
 
-    const newUser = {
-      id: Date.now().toString(),
-      phone,
-      name,
-      role: selectedRole!,
-      isVerified: selectedRole === 'passenger',
-      totalRides: 0,
-    };
-
-    setUser(newUser);
-    
-    if (selectedRole === 'driver') {
-      navigate('/driver');
-    } else {
-      navigate('/passenger');
+    setLoading(true);
+    try {
+      await verifyOtp(phone, code, { name, role: selectedRole! });
+      
+      if (selectedRole === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/passenger');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Неверный код",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -177,9 +191,10 @@ const RegistrationPage = () => {
               
               <Button 
                 onClick={handlePhoneSubmit}
+                disabled={loading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                Получить код
+                {loading ? 'Отправляем...' : 'Получить код'}
               </Button>
             </CardContent>
           </Card>
@@ -202,17 +217,18 @@ const RegistrationPage = () => {
                 label="Код подтверждения"
                 type="text"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="XXXX"
-                maxLength={4}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="XXXXXX"
+                maxLength={6}
                 className="text-center text-2xl tracking-widest font-bold"
               />
               
               <Button 
                 onClick={handleCodeSubmit}
+                disabled={loading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                Подтвердить
+                {loading ? 'Проверяем...' : 'Подтвердить'}
               </Button>
               
               <button 

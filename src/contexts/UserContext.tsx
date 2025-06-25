@@ -1,40 +1,21 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 export type UserRole = 'driver' | 'passenger';
 
-interface User {
-  id: string;
-  phone: string;
-  role: UserRole;
-  isVerified: boolean;
-  name?: string;
-  totalRides: number;
-}
-
-interface UserContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
-  isAuthenticated: boolean;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
+// Re-export the auth hook data
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const auth = useAuth();
 
   return (
-    <UserContext.Provider 
-      value={{ 
-        user, 
-        setUser, 
-        isAuthenticated: !!user 
-      }}
-    >
+    <UserContext.Provider value={auth}>
       {children}
     </UserContext.Provider>
   );
 };
+
+const UserContext = createContext<ReturnType<typeof useAuth> | undefined>(undefined);
 
 export const useUser = () => {
   const context = useContext(UserContext);
