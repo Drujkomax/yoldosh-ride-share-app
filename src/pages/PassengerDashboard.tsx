@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { DatePicker } from '@/components/ui/datepicker';
-import CitySelect from '@/components/CitySelect';
-import { MapPin, Calendar, Users, Search, Clock, ArrowRight, Car, UserCheck } from 'lucide-react';
+import { MapPin, Calendar, Users, Search, Clock, ArrowRight, Car, UserCheck, RefreshCw } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import CityMapSelector from '@/components/CityMapSelector';
+import FullScreenDatePicker from '@/components/FullScreenDatePicker';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +18,11 @@ const PassengerDashboard = () => {
   const [toCity, setToCity] = useState('');
   const [date, setDate] = useState<Date>();
   const [passengers, setPassengers] = useState(1);
+  
+  // Modal states
+  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
+  const [showToCitySelector, setShowToCitySelector] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Mock search history
   const searchHistory = [
@@ -51,11 +58,16 @@ const PassengerDashboard = () => {
     }
   };
 
+  const handleSwapCities = () => {
+    const temp = fromCity;
+    setFromCity(toCity);
+    setToCity(temp);
+  };
+
   const handleSearchHistoryClick = (historyItem: any) => {
     setFromCity(historyItem.from);
     setToCity(historyItem.to);
     setPassengers(historyItem.passengers);
-    // Note: date would need to be parsed properly in real implementation
   };
 
   return (
@@ -111,30 +123,50 @@ const PassengerDashboard = () => {
             </h2>
             
             <div className="space-y-4">
-              {/* Cities */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-blue-600" />
-                    Откуда
-                  </label>
-                  <CitySelect
-                    value={fromCity}
-                    onValueChange={setFromCity}
-                    placeholder="Выберите город"
-                  />
+              {/* Cities with Swap Button */}
+              <div className="relative">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 text-blue-600" />
+                      Откуда
+                    </label>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowFromCitySelector(true)}
+                      className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                    >
+                      <MapPin className="h-4 w-4 mr-2 text-slate-400" />
+                      {fromCity || 'Выберите город отправления'}
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700 flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 text-purple-600" />
+                      Куда
+                    </label>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowToCitySelector(true)}
+                      className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                    >
+                      <MapPin className="h-4 w-4 mr-2 text-slate-400" />
+                      {toCity || 'Выберите город назначения'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 flex items-center">
-                    <MapPin className="h-4 w-4 mr-2 text-purple-600" />
-                    Куда
-                  </label>
-                  <CitySelect
-                    value={toCity}
-                    onValueChange={setToCity}
-                    placeholder="Выберите город"
-                  />
-                </div>
+                
+                {/* Swap Button */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleSwapCities}
+                  disabled={!fromCity || !toCity}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md hover:shadow-lg rounded-full w-10 h-10"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </div>
 
               {/* Date and Passengers */}
@@ -144,11 +176,14 @@ const PassengerDashboard = () => {
                     <Calendar className="h-4 w-4 mr-2 text-green-600" />
                     Дата поездки
                   </label>
-                  <DatePicker
-                    value={date}
-                    onChange={setDate}
-                    placeholder="Выберите дату"
-                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDatePicker(true)}
+                    className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                  >
+                    <Calendar className="h-4 w-4 mr-2 text-slate-400" />
+                    {date ? format(date, 'dd MMMM yyyy', { locale: ru }) : 'Выберите дату'}
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700 flex items-center">
@@ -231,6 +266,31 @@ const PassengerDashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* City Selectors */}
+      <CityMapSelector
+        isOpen={showFromCitySelector}
+        onClose={() => setShowFromCitySelector(false)}
+        onCitySelect={setFromCity}
+        title="Откуда вы едете?"
+        currentCity={fromCity}
+      />
+
+      <CityMapSelector
+        isOpen={showToCitySelector}
+        onClose={() => setShowToCitySelector(false)}
+        onCitySelect={setToCity}
+        title="Куда вы едете?"
+        currentCity={toCity}
+      />
+
+      {/* Date Picker */}
+      <FullScreenDatePicker
+        isOpen={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onDateSelect={setDate}
+        selectedDate={date}
+      />
 
       {/* Bottom Navigation */}
       <BottomNavigation />
