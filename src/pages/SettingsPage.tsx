@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import AnimatedInput from '@/components/AnimatedInput';
 import PhotoUpload from '@/components/PhotoUpload';
+import { toast } from '@/hooks/use-toast';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -22,15 +24,40 @@ const SettingsPage = () => {
   const handleLogout = async () => {
     try {
       await signOut();
+      toast({
+        title: "Выход выполнен",
+        description: "Вы успешно вышли из аккаунта",
+      });
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing out:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось выйти из аккаунта",
+        variant: "destructive"
+      });
     }
   };
 
   const handleSaveProfile = () => {
-    alert(t('profile_updated'));
+    toast({
+      title: "Профиль обновлен",
+      description: "Ваши данные успешно сохранены",
+    });
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
+          <CardContent className="text-center">
+            <h2 className="text-xl font-semibold mb-4">Требуется авторизация</h2>
+            <Button onClick={() => navigate('/')}>Войти</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
@@ -96,6 +123,7 @@ const SettingsPage = () => {
                 onChange={(e) => setPhone(e.target.value)}
                 icon={<Phone className="h-4 w-4" />}
                 className="w-full"
+                disabled
               />
             </div>
             <Button 

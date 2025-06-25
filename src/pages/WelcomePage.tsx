@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,12 +10,23 @@ import AnimatedInput from '@/components/AnimatedInput';
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { signInWithPhone, verifyOtp } = useUser();
+  const { user, signInWithPhone, verifyOtp, loading } = useUser();
   const [step, setStep] = useState<'welcome' | 'phone' | 'code'>('welcome');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/passenger');
+      }
+    }
+  }, [user, navigate]);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -38,21 +50,21 @@ const WelcomePage = () => {
         description: "SMS с кодом подтверждения отправлен на ваш номер",
       });
       setStep('code');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending OTP:', error);
       toast({
         title: "Ошибка",
-        description: "Не удалось отправить код. Попробуйте снова.",
+        description: error.message || "Не удалось отправить код. Попробуйте снова.",
         variant: "destructive"
       });
     }
   };
 
   const handleCodeSubmit = async () => {
-    if (code.length !== 4) {
+    if (code.length !== 6) {
       toast({
         title: "Ошибка",
-        description: "Введите 4-значный код",
+        description: "Введите 6-значный код",
         variant: "destructive"
       });
       return;
@@ -64,16 +76,15 @@ const WelcomePage = () => {
         role: selectedRole!
       });
       
-      if (selectedRole === 'driver') {
-        navigate('/driver');
-      } else {
-        navigate('/passenger');
-      }
-    } catch (error) {
+      toast({
+        title: "Добро пожаловать!",
+        description: "Регистрация успешно завершена",
+      });
+    } catch (error: any) {
       console.error('Error verifying OTP:', error);
       toast({
         title: "Ошибка",
-        description: "Неверный код. Попробуйте снова.",
+        description: error.message || "Неверный код. Попробуйте снова.",
         variant: "destructive"
       });
     }
@@ -116,6 +127,7 @@ const WelcomePage = () => {
               size="sm"
               onClick={handleBack}
               className="text-white hover:bg-white/10 rounded-xl p-3 hover:scale-105 transition-all duration-300"
+              disabled={loading}
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
               Назад
@@ -185,6 +197,7 @@ const WelcomePage = () => {
                     onClick={() => handleRoleSelect('passenger')}
                     variant="outline"
                     className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-primary hover:bg-yoldosh-primary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
+                    disabled={loading}
                   >
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -199,6 +212,7 @@ const WelcomePage = () => {
                     onClick={() => handleRoleSelect('driver')}
                     variant="outline"
                     className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-secondary hover:bg-yoldosh-secondary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
+                    disabled={loading}
                   >
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -234,6 +248,7 @@ const WelcomePage = () => {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Введите ваше имя"
                   icon={<User className="h-4 w-4" />}
+                  disabled={loading}
                 />
                 
                 <AnimatedInput
@@ -245,13 +260,15 @@ const WelcomePage = () => {
                   placeholder="+998 (XX) XXX-XX-XX"
                   maxLength={19}
                   icon={<Phone className="h-4 w-4" />}
+                  disabled={loading}
                 />
                 
                 <Button 
                   onClick={handlePhoneSubmit}
                   className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
+                  disabled={loading || !name.trim() || phone.length < 13}
                 >
-                  Получить код
+                  {loading ? 'Отправка...' : 'Получить код'}
                 </Button>
               </CardContent>
             </Card>
@@ -276,22 +293,25 @@ const WelcomePage = () => {
                   label="Код подтверждения"
                   type="text"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="XXXX"
-                  maxLength={4}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="XXXXXX"
+                  maxLength={6}
                   className="text-center text-2xl tracking-widest font-bold"
+                  disabled={loading}
                 />
                 
                 <Button 
                   onClick={handleCodeSubmit}
                   className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
+                  disabled={loading || code.length !== 6}
                 >
-                  Подтвердить
+                  {loading ? 'Проверка...' : 'Подтвердить'}
                 </Button>
                 
                 <button 
                   onClick={() => setStep('phone')}
                   className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2 hover:scale-105"
+                  disabled={loading}
                 >
                   Изменить данные
                 </button>

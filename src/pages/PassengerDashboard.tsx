@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const PassengerDashboard = () => {
   const [date, setDate] = useState<Date>();
   const [passengers, setPassengers] = useState(1);
   const [searchHistory, setSearchHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   
   // Modal states
   const [showFromCitySelector, setShowFromCitySelector] = useState(false);
@@ -42,42 +44,61 @@ const PassengerDashboard = () => {
   };
 
   const handleSearch = async () => {
-    if (fromCity && toCity && date) {
-      try {
-        const searchData = {
-          id: Date.now(),
-          from: fromCity,
-          to: toCity,
-          date: format(date, 'dd MMMM', { locale: ru }),
-          passengers,
-          searchTime: 'Только что'
-        };
+    if (!fromCity || !toCity || !date) {
+      toast({
+        title: "Ошибка",
+        description: "Пожалуйста, заполните все поля",
+        variant: "destructive"
+      });
+      return;
+    }
 
-        // Save to history
-        saveSearchToHistory(searchData);
+    setLoading(true);
+    try {
+      const searchData = {
+        id: Date.now(),
+        from: fromCity,
+        to: toCity,
+        date: format(date, 'dd MMMM', { locale: ru }),
+        passengers,
+        searchTime: 'Только что'
+      };
 
-        // Create ride request in database
-        await createRequest({
-          from_city: fromCity,
-          to_city: toCity,
-          preferred_date: format(date, 'yyyy-MM-dd'),
-          passengers_count: passengers,
-          status: 'active'
-        });
+      // Save to history
+      saveSearchToHistory(searchData);
 
-        toast({
-          title: "Заявка создана",
-          description: "Ваша заявка на поездку отправлена водителям",
-        });
+      // Create ride request in database
+      await createRequest({
+        from_city: fromCity,
+        to_city: toCity,
+        preferred_date: format(date, 'yyyy-MM-dd'),
+        passengers_count: passengers,
+        status: 'active'
+      });
 
-        navigate('/search-rides');
-      } catch (error: any) {
-        toast({
-          title: "Ошибка",
-          description: error.message || "Не удалось создать заявку",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Заявка создана",
+        description: "Ваша заявка на поездку отправлена водителям",
+      });
+
+      // Navigate to search results with params
+      const searchParams = new URLSearchParams({
+        from: fromCity,
+        to: toCity,
+        date: format(date, 'yyyy-MM-dd'),
+        seats: passengers.toString()
+      });
+      
+      navigate(`/search-rides?${searchParams.toString()}`);
+    } catch (error: any) {
+      console.error('Error creating request:', error);
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось создать заявку",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,7 +112,22 @@ const PassengerDashboard = () => {
     setFromCity(historyItem.from);
     setToCity(historyItem.to);
     setPassengers(historyItem.passengers);
+    // Auto-set today's date for quick search
+    setDate(new Date());
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
+          <CardContent className="text-center">
+            <h2 className="text-xl font-semibold mb-4">Требуется авторизация</h2>
+            <Button onClick={() => navigate('/')}>Войти</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20">
@@ -158,6 +194,7 @@ const PassengerDashboard = () => {
                       variant="outline"
                       onClick={() => setShowFromCitySelector(true)}
                       className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                      disabled={loading}
                     >
                       <MapPin className="h-4 w-4 mr-2 text-slate-400" />
                       {fromCity || 'Выберите город отправления'}
@@ -173,6 +210,7 @@ const PassengerDashboard = () => {
                       variant="outline"
                       onClick={() => setShowToCitySelector(true)}
                       className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                      disabled={loading}
                     >
                       <MapPin className="h-4 w-4 mr-2 text-slate-400" />
                       {toCity || 'Выберите город назначения'}
@@ -185,7 +223,7 @@ const PassengerDashboard = () => {
                   variant="outline"
                   size="icon"
                   onClick={handleSwapCities}
-                  disabled={!fromCity || !toCity}
+                  disabled={!fromCity || !toCity || loading}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md hover:shadow-lg rounded-full w-10 h-10"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -203,6 +241,7 @@ const PassengerDashboard = () => {
                     variant="outline"
                     onClick={() => setShowDatePicker(true)}
                     className="w-full h-12 justify-start text-left rounded-xl border-2 bg-white/80 backdrop-blur-sm"
+                    disabled={loading}
                   >
                     <Calendar className="h-4 w-4 mr-2 text-slate-400" />
                     {date ? format(date, 'dd MMMM yyyy', { locale: ru }) : 'Выберите дату'}
@@ -219,6 +258,7 @@ const PassengerDashboard = () => {
                       variant="outline"
                       onClick={() => setPassengers(Math.max(1, passengers - 1))}
                       className="h-10 w-10 rounded-full p-0"
+                      disabled={loading}
                     >
                       -
                     </Button>
@@ -230,6 +270,7 @@ const PassengerDashboard = () => {
                       variant="outline"
                       onClick={() => setPassengers(Math.min(8, passengers + 1))}
                       className="h-10 w-10 rounded-full p-0"
+                      disabled={loading}
                     >
                       +
                     </Button>
@@ -239,11 +280,11 @@ const PassengerDashboard = () => {
 
               <Button
                 onClick={handleSearch}
-                disabled={!fromCity || !toCity || !date}
+                disabled={!fromCity || !toCity || !date || loading}
                 className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-medium"
               >
                 <Search className="h-5 w-5 mr-2" />
-                Найти поездку
+                {loading ? 'Поиск...' : 'Найти поездку'}
               </Button>
             </div>
           </CardContent>
