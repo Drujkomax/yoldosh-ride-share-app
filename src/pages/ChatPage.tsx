@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Send, User } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { useChats } from '@/hooks/useChats';
+import { useMessages } from '@/hooks/useChats';
+import { supabase } from '@/integrations/supabase/client';
 import ChatRideInfo from '@/components/ChatRideInfo';
 import { toast } from 'sonner';
 
@@ -13,9 +14,51 @@ const ChatPage = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
-  const { messages, sendMessage, chat, isLoading } = useChats(chatId);
+  const { messages, sendMessage, isLoading } = useMessages(chatId || '');
   const [newMessage, setNewMessage] = useState('');
+  const [chat, setChat] = useState<any>(null);
+  const [chatLoading, setChatLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Загружаем информацию о чате
+  useEffect(() => {
+    const loadChat = async () => {
+      if (!chatId) return;
+      
+      setChatLoading(true);
+      try {
+        const { data: chatData, error } = await supabase
+          .from('chats')
+          .select(`
+            *,
+            participant1:profiles!chats_participant1_id_fkey (
+              name, phone, rating, total_rides, is_verified
+            ),
+            participant2:profiles!chats_participant2_id_fkey (
+              name, phone, rating, total_rides, is_verified
+            ),
+            ride:rides!chats_ride_id_fkey (
+              id, from_city, to_city, departure_date, departure_time, available_seats
+            )
+          `)
+          .eq('id', chatId)
+          .single();
+
+        if (error) {
+          console.error('Ошибка загрузки чата:', error);
+          return;
+        }
+
+        setChat(chatData);
+      } catch (error) {
+        console.error('Ошибка загрузки чата:', error);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    loadChat();
+  }, [chatId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,7 +72,7 @@ const ChatPage = () => {
     if (!newMessage.trim() || !chatId) return;
     
     try {
-      await sendMessage(newMessage);
+      await sendMessage({ content: newMessage });
       setNewMessage('');
     } catch (error) {
       console.error('Ошибка отправки сообщения:', error);
@@ -64,7 +107,7 @@ const ChatPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || chatLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Загрузка чата...</p>
