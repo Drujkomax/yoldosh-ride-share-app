@@ -67,42 +67,45 @@ export const useChats = () => {
         return [];
       }
 
+      // Упрощенный запрос без сложных join'ов
       const { data, error } = await supabase
         .from('chats')
-        .select(`
-          *,
-          participant1:profiles!chats_participant1_id_fkey (
-            name,
-            phone,
-            rating,
-            total_rides,
-            is_verified
-          ),
-          participant2:profiles!chats_participant2_id_fkey (
-            name,
-            phone,
-            rating,
-            total_rides,
-            is_verified
-          ),
-          ride:rides (
-            from_city,
-            to_city,
-            departure_date,
-            departure_time
-          )
-        `)
+        .select('*')
         .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (error) {
         console.error('useChats - Ошибка загрузки чатов:', error);
-        throw error;
+        return [];
       }
 
-      // Загружаем последние сообщения и подсчитываем непрочитанные
-      const chatsWithMessages = await Promise.all(
+      // Загружаем участников и поездки отдельно
+      const chatsWithData = await Promise.all(
         (data || []).map(async (chat) => {
+          // Загружаем участников
+          const { data: participant1 } = await supabase
+            .from('profiles')
+            .select('name, phone, rating, total_rides, is_verified')
+            .eq('id', chat.participant1_id)
+            .single();
+
+          const { data: participant2 } = await supabase
+            .from('profiles')
+            .select('name, phone, rating, total_rides, is_verified')
+            .eq('id', chat.participant2_id)
+            .single();
+
+          // Загружаем поездку если есть
+          let ride = null;
+          if (chat.ride_id) {
+            const { data: rideData } = await supabase
+              .from('rides')
+              .select('from_city, to_city, departure_date, departure_time')
+              .eq('id', chat.ride_id)
+              .single();
+            ride = rideData;
+          }
+
           // Последнее сообщение
           const { data: lastMessage } = await supabase
             .from('messages')
@@ -122,14 +125,17 @@ export const useChats = () => {
 
           return {
             ...chat,
+            participant1,
+            participant2,
+            ride,
             lastMessage,
             unreadCount: unreadCount || 0
           };
         })
       );
 
-      console.log('useChats - Загружено чатов:', chatsWithMessages.length);
-      return chatsWithMessages as Chat[];
+      console.log('useChats - Загружено чатов:', chatsWithData.length);
+      return chatsWithData as Chat[];
     },
     enabled: !!user,
   });
@@ -208,47 +214,71 @@ export const useMessages = (chatId: string) => {
     queryFn: async () => {
       console.log('useMessages - Загрузка сообщений для чата:', chatId);
       
+      if (!chatId) {
+        return [];
+      }
+
+      // Упрощенный запрос
       const { data, error } = await supabase
         .from('messages')
-        .select(`
-          *,
-          sender:profiles!messages_sender_id_fkey (
-            name
-          )
-        `)
+        .select('*')
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true });
 
       if (error) {
         console.error('useMessages - Ошибка загрузки сообщений:', error);
-        throw error;
+        return [];
       }
 
-      console.log('useMessages - Загружено сообщений:', data.length);
-      return data as Message[];
+      // Загружаем информацию об отправителях отдельно
+      const messagesWithSenders = await Promise.all(
+        (data || []).map(async (message) => {
+          const { data: sender } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', message.sender_id)
+            .single();
+
+          return {
+            ...message,
+            sender
+          };
+        })
+      );
+
+      console.log('useMessages - Загружено сообщений:', messagesWithSenders.length);
+      return messagesWithSenders as Message[];
     },
     enabled: !!chatId,
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({ content, messageType = 'text' }: { content: string; messageType?: 'text' | 'location' }) => {
-      console.log('useMessages - Отправка сообщения:', { content, messageType });
+      console.log('useMessages - Отправка сообщения:', { content, messageType, chatId, userId: user?.id });
       
       if (!user) {
         throw new Error('Пользователь не авторизован');
       }
 
-      // Сначала проверяем, существует ли чат
-      const { data: chatExists } = await supabase
+      if (!chatId) {
+        throw new Error('Chat ID не указан');
+      }
+
+      // Проверяем, существует ли чат
+      const { data: chatExists, error: chatError } = await supabase
         .from('chats')
         .select('id')
         .eq('id', chatId)
         .single();
 
-      if (!chatExists) {
+      if (chatError || !chatExists) {
+        console.error('useMessages - Чат не найден:', chatError);
         throw new Error('Чат не найден');
       }
 
+      console.log('useMessages - Чат найден, отправляем сообщение');
+
+      // Отправляем сообщение
       const { data, error } = await supabase
         .from('messages')
         .insert([{
@@ -265,28 +295,32 @@ export const useMessages = (chatId: string) => {
         throw error;
       }
 
+      console.log('useMessages - Сообщение отправлено:', data);
+
       // Обновляем время последнего сообщения в чате
       await supabase
         .from('chats')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', chatId);
 
-      console.log('useMessages - Сообщение отправлено:', data);
       return data;
     },
     onSuccess: () => {
+      console.log('useMessages - Сообщение успешно отправлено, обновляем кэш');
       queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
       queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
     onError: (error) => {
       console.error('Send message error:', error);
-      toast.error("Не удалось отправить сообщение");
+      toast.error(`Не удалось отправить сообщение: ${error.message}`);
     },
   });
 
   const markAsReadMutation = useMutation({
     mutationFn: async (messageIds: string[]) => {
       console.log('useMessages - Отмечаем сообщения как прочитанные:', messageIds);
+      
+      if (!messageIds.length) return;
       
       const { error } = await supabase
         .from('messages')

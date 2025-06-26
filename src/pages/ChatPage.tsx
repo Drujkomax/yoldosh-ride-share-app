@@ -27,6 +27,16 @@ const ChatPage = () => {
   const { messages, isLoading, sendMessage, markAsRead, isSending } = useMessages(chatId);
   const [inputText, setInputText] = useState('');
 
+  // Добавляем отладочную информацию
+  useEffect(() => {
+    console.log('ChatPage - Данные чата:', {
+      chatId,
+      user: user?.id,
+      chatType,
+      messagesCount: messages.length
+    });
+  }, [chatId, user, chatType, messages]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -51,15 +61,33 @@ const ChatPage = () => {
   const handleSendMessage = async () => {
     if (!inputText.trim() || isSending) return;
 
+    console.log('ChatPage - Отправка сообщения:', { inputText, chatId, userId: user?.id });
+
+    if (!user) {
+      toast.error("Необходимо войти в систему");
+      return;
+    }
+
+    if (!chatId) {
+      toast.error("ID чата не найден");
+      return;
+    }
+
     try {
       await sendMessage({ content: inputText });
       setInputText('');
+      console.log('ChatPage - Сообщение успешно отправлено');
     } catch (error) {
-      console.error('Ошибка отправки сообщения:', error);
+      console.error('ChatPage - Ошибка отправки сообщения:', error);
     }
   };
 
   const handleSendLocation = async () => {
+    if (!user) {
+      toast.error("Необходимо войти в систему");
+      return;
+    }
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -107,6 +135,32 @@ const ChatPage = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Необходимо войти в систему</p>
+          <Button onClick={() => navigate('/')} className="mt-4">
+            На главную
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!chatId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">ID чата не найден</p>
+          <Button onClick={() => navigate(-1)} className="mt-4">
+            Назад
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -125,7 +179,7 @@ const ChatPage = () => {
                 <User className="h-4 w-4 text-gray-400" />
               </div>
               <div className="text-center">
-                <h1 className="text-lg font-semibold">{name}</h1>
+                <h1 className="text-lg font-semibold">{decodeURIComponent(name || 'Чат')}</h1>
                 <div className="flex items-center space-x-2">
                   <Badge variant={chatType === 'driver' ? 'default' : 'secondary'} className="text-xs">
                     {chatType === 'driver' ? (
@@ -155,12 +209,12 @@ const ChatPage = () => {
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">{from} → {to}</span>
+                <span className="font-medium">{decodeURIComponent(from)} → {decodeURIComponent(to)}</span>
               </div>
               {date && time && (
                 <div className="flex items-center space-x-2 text-blue-700">
                   <Calendar className="h-4 w-4" />
-                  <span>{date} в {time}</span>
+                  <span>{decodeURIComponent(date)} в {decodeURIComponent(time)}</span>
                 </div>
               )}
             </div>
