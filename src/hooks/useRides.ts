@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,8 @@ export interface Ride {
   description?: string;
   car_model?: string;
   car_color?: string;
+  duration_hours?: number;
+  estimated_arrival_time?: string;
   status: 'active' | 'cancelled' | 'completed' | 'full';
   created_at: string;
   driver?: {
@@ -117,7 +120,7 @@ export const useRides = () => {
   };
 
   const createRideMutation = useMutation({
-    mutationFn: async (newRide: Omit<Ride, 'id' | 'created_at' | 'driver'>) => {
+    mutationFn: async (newRide: Omit<Ride, 'id' | 'created_at' | 'driver' | 'estimated_arrival_time'>) => {
       console.log('=== НАЧАЛО СОЗДАНИЯ ПОЕЗДКИ ===');
       console.log('useRides - Данные новой поездки:', newRide);
       
@@ -144,11 +147,14 @@ export const useRides = () => {
 
       console.log('useRides - Базовая валидация пройдена');
 
-      // Попытка создать поездку напрямую (без предварительной проверки профиля)
+      // Попытка создать поездку напрямую
       console.log('useRides - Попытка создания поездки...');
       const { data, error } = await supabase
         .from('rides')
-        .insert([newRide])
+        .insert([{
+          ...newRide,
+          duration_hours: newRide.duration_hours || 2
+        }])
         .select()
         .single();
 

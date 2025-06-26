@@ -23,6 +23,7 @@ const CreateRide = () => {
     time: '',
     seats: '',
     price: '',
+    duration: '2',
     car: '',
     description: ''
   });
@@ -117,6 +118,7 @@ const CreateRide = () => {
         departure_time: formData.time,
         available_seats: parseInt(formData.seats),
         price_per_seat: parseFloat(formData.price),
+        duration_hours: parseInt(formData.duration),
         description: formData.description || undefined,
         car_model: formData.car || undefined,
         car_color: undefined,
@@ -279,6 +281,19 @@ const CreateRide = () => {
                   </Select>
                 </div>
                 <div>
+                  <Label>Длительность поездки (часы)</Label>
+                  <Select value={formData.duration} onValueChange={(value) => handleInputChange('duration', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите длительность" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>{num} ч.</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label>Цена за место (сум)</Label>
                   <Input
                     type="number"
@@ -322,6 +337,7 @@ const CreateRide = () => {
                   <h3 className="font-medium">Сводка поездки:</h3>
                   <p className="text-sm"><span className="font-medium">Маршрут:</span> {formData.from} → {formData.to}</p>
                   <p className="text-sm"><span className="font-medium">Дата:</span> {formData.date} в {formData.time}</p>
+                  <p className="text-sm"><span className="font-medium">Длительность:</span> {formData.duration} часов</p>
                   <p className="text-sm"><span className="font-medium">Мест:</span> {formData.seats}</p>
                   <p className="text-sm"><span className="font-medium">Цена:</span> {formData.price} сум за место</p>
                   <p className="text-sm"><span className="font-medium">Автомобиль:</span> {formData.car}</p>

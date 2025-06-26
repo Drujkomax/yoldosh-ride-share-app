@@ -363,6 +363,8 @@ export type Database = {
           departure_time: string
           description: string | null
           driver_id: string
+          duration_hours: number | null
+          estimated_arrival_time: string | null
           from_city: string
           id: string
           price_per_seat: number
@@ -379,6 +381,8 @@ export type Database = {
           departure_time: string
           description?: string | null
           driver_id: string
+          duration_hours?: number | null
+          estimated_arrival_time?: string | null
           from_city: string
           id?: string
           price_per_seat: number
@@ -395,6 +399,8 @@ export type Database = {
           departure_time?: string
           description?: string | null
           driver_id?: string
+          duration_hours?: number | null
+          estimated_arrival_time?: string | null
           from_city?: string
           id?: string
           price_per_seat?: number
@@ -417,7 +423,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_finished_rides: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      deactivate_expired_rides: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
