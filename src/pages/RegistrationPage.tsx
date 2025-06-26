@@ -12,7 +12,7 @@ import AnimatedInput from '@/components/AnimatedInput';
 const RegistrationPage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
-  const { signUp, signIn, loading } = useAuth();
+  const { register, login, isLoading } = useAuth();
   const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [phone, setPhone] = useState('+998');
@@ -49,17 +49,16 @@ const RegistrationPage = () => {
 
     // Проверяем, существует ли пользователь
     console.log('Checking if user exists for phone:', phone);
-    const result = await signIn(phone);
+    const result = await login(phone);
     
-    if (result.exists && result.user) {
-      // Пользователь существует
-      setExistingUser(result.user);
-      setIsNewUser(false);
-      setStep('code');
+    if (result) {
+      // Пользователь существует и успешно вошел
       toast({
         title: "Пользователь найден",
         description: "Введите код подтверждения для входа",
       });
+      setIsNewUser(false);
+      setStep('code');
     } else {
       // Новый пользователь
       setIsNewUser(true);
@@ -94,26 +93,9 @@ const RegistrationPage = () => {
     if (isNewUser && selectedRole) {
       // Создаем нового пользователя
       console.log('Creating new user:', { phone, name, role: selectedRole });
-      const result = await signUp(phone, name, selectedRole);
+      const result = await register(phone, name, selectedRole);
       
-      if (result.error) {
-        console.error('Registration error:', result.error);
-        return; // Toast уже показан в useAuth
-      } else if (result.data) {
-        // Устанавливаем пользователя в контекст
-        const newUser = {
-          id: result.data.id,
-          phone: result.data.phone,
-          role: result.data.role as UserRole,
-          isVerified: result.data.is_verified,
-          name: result.data.name,
-          totalRides: result.data.total_rides,
-          rating: result.data.rating,
-          avatarUrl: result.data.avatar_url
-        };
-        
-        setUser(newUser);
-        
+      if (result) {
         // Перенаправляем в зависимости от роли
         if (selectedRole === 'driver') {
           navigate('/driver');
@@ -121,28 +103,15 @@ const RegistrationPage = () => {
           navigate('/passenger');
         }
       }
-    } else if (!isNewUser && existingUser) {
-      // Входим существующим пользователем
-      const userForContext = {
-        id: existingUser.id,
-        phone: existingUser.phone,
-        role: existingUser.role as UserRole,
-        isVerified: existingUser.is_verified,
-        name: existingUser.name,
-        totalRides: existingUser.total_rides,
-        rating: existingUser.rating,
-        avatarUrl: existingUser.avatar_url
-      };
-      
-      setUser(userForContext);
-      
+    } else {
+      // Входим существующим пользователем (уже вошли в handlePhoneSubmit)
       toast({
         title: "Добро пожаловать!",
         description: "Вы успешно вошли в систему",
       });
       
       // Перенаправляем в зависимости от роли
-      if (existingUser.role === 'driver') {
+      if (user?.role === 'driver') {
         navigate('/driver');
       } else {
         navigate('/passenger');
@@ -260,10 +229,10 @@ const RegistrationPage = () => {
               
               <Button 
                 onClick={handlePhoneSubmit}
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                {loading ? 'Проверяем...' : 'Продолжить'}
+                {isLoading ? 'Проверяем...' : 'Продолжить'}
               </Button>
             </CardContent>
           </Card>
@@ -297,15 +266,15 @@ const RegistrationPage = () => {
               
               <Button 
                 onClick={handleCodeSubmit}
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                {loading ? 'Подтверждаем...' : 'Подтвердить'}
+                {isLoading ? 'Подтверждаем...' : 'Подтвердить'}
               </Button>
               
               <button 
                 onClick={() => setStep('phone')}
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2 hover:scale-105 disabled:opacity-50"
               >
                 Изменить данные
