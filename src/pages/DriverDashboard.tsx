@@ -1,15 +1,15 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye, X, MessageCircle, Power } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Bell, Edit, Eye, X, Power } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useDriverBookings } from '@/hooks/useDriverBookings';
 import BookingRequestCard from '@/components/BookingRequestCard';
 import ChatPanel from '@/components/ChatPanel';
+import DriverBottomNavigation from '@/components/DriverBottomNavigation';
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
@@ -89,24 +89,6 @@ const DriverDashboard = () => {
                 Добро пожаловать, {user?.name || 'Водитель'}!
               </h1>
               <p className="text-slate-700 mt-1">Управляйте своими поездками</p>
-            </div>
-            <div className="flex space-x-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/profile')}
-                className="rounded-xl hover:bg-yoldosh-secondary/10 p-3 hover:scale-110 transition-all duration-300"
-              >
-                <User className="h-5 w-5 yoldosh-secondary" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/settings')}
-                className="rounded-xl hover:bg-yoldosh-secondary/10 p-3 hover:scale-110 transition-all duration-300"
-              >
-                <Settings className="h-5 w-5 yoldosh-secondary" />
-              </Button>
             </div>
           </div>
         </div>
@@ -266,37 +248,8 @@ const DriverDashboard = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation for Driver */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg">
-        <div className="flex justify-around items-center py-2 px-4">
-          <Button
-            onClick={handleCreateRide}
-            variant="ghost"
-            className="flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 text-slate-600 hover:bg-yoldosh-primary/10 hover:text-yoldosh-primary hover:scale-110"
-          >
-            <Plus className="h-5 w-5 mb-1" />
-            <span className="text-xs font-medium">Создать</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/search-requests')}
-            variant="ghost"
-            className="flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 text-slate-600 hover:bg-yoldosh-secondary/10 hover:text-yoldosh-secondary hover:scale-110"
-          >
-            <Search className="h-5 w-5 mb-1" />
-            <span className="text-xs font-medium">Заявки</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/chats')}
-            variant="ghost"
-            className="flex-1 flex flex-col items-center py-3 px-2 rounded-xl transition-all duration-300 text-slate-600 hover:bg-blue-500/10 hover:text-blue-600 hover:scale-110"
-          >
-            <MessageCircle className="h-5 w-5 mb-1" />
-            <span className="text-xs font-medium">Чаты</span>
-          </Button>
-        </div>
-      </div>
+      {/* Driver Bottom Navigation */}
+      <DriverBottomNavigation />
 
       {/* Chat Panel */}
       <ChatPanel />
