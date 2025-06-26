@@ -39,6 +39,10 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
   onReject,
   isUpdating
 }) => {
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('ru-RU', {
@@ -55,6 +59,60 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
       return timeStr.slice(0, 5);
     } catch {
       return timeStr;
+    }
+  };
+
+  const handleContactPassenger = async () => {
+    if (!user) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+
+    setIsCreatingChat(true);
+    try {
+      // Проверяем, существует ли уже чат между пользователями для этой поездки
+      const { data: existingChat } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('ride_id', booking.ride_id)
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${booking.passenger_id}),and(participant1_id.eq.${booking.passenger_id},participant2_id.eq.${user.id})`)
+        .single();
+
+      let chatId = existingChat?.id;
+
+      // Если чат не существует, создаем новый
+      if (!chatId) {
+        const { data: newChat, error } = await supabase
+          .from('chats')
+          .insert([{
+            ride_id: booking.ride_id,
+            participant1_id: user.id,
+            participant2_id: booking.passenger_id,
+          }])
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        chatId = newChat.id;
+      }
+
+      // Переходим к чату
+      const params = new URLSearchParams({
+        chatId: chatId,
+        type: 'passenger',
+        rideId: booking.ride_id,
+        from: booking.ride.from_city,
+        to: booking.ride.to_city,
+        date: new Date(booking.ride.departure_date).toLocaleDateString('ru-RU'),
+        time: booking.ride.departure_time
+      });
+      
+      navigate(`/chat/${booking.passenger.name}?${params.toString()}`);
+    } catch (error) {
+      console.error('Chat creation error:', error);
+      toast.error('Не удалось создать чат');
+    } finally {
+      setIsCreatingChat(false);
     }
   };
 
@@ -114,7 +172,7 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
           </div>
         )}
 
-        <div className="flex space-x-3">
+        <div className="flex space-x-3 mb-3">
           <Button 
             onClick={() => onReject(booking.id)}
             variant="outline"
@@ -133,6 +191,25 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
             Принять
           </Button>
         </div>
+
+        <Button
+          onClick={handleContactPassenger}
+          disabled={isCreatingChat}
+          variant="outline"
+          className="w-full rounded-xl border-yoldosh-blue text-yoldosh-blue hover:bg-yoldosh-blue hover:text-white transition-all duration-300"
+        >
+          {isCreatingChat ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Создание чата...
+            </>
+          ) : (
+            <>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Связаться с пассажиром
+            </>
+          )}
+        </Button>
       </CardContent>
     </Card>
   );
