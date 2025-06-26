@@ -124,7 +124,7 @@ export const useAuth = () => {
       toast({
         title: "Профиль обновлен",
         description: "Ваши данные успешно сохранены",
-      );
+      });
 
       return { error: null };
     } catch (error: any) {
