@@ -8,10 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, MapPin, Calendar, Users, Car } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { useRides } from '@/hooks/useRides';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 const CreateRide = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { createRide, isCreating } = useRides();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     from: '',
@@ -44,41 +48,25 @@ const CreateRide = () => {
   const handleNext = () => {
     if (step === 1) {
       if (!formData.from || !formData.to) {
-        toast({
-          title: "Ошибка",
-          description: "Выберите города отправления и назначения",
-          variant: "destructive"
-        });
+        toast.error("Выберите города отправления и назначения");
         return;
       }
       if (formData.from === formData.to) {
-        toast({
-          title: "Ошибка",
-          description: "Города отправления и назначения должны отличаться",
-          variant: "destructive"
-        });
+        toast.error("Города отправления и назначения должны отличаться");
         return;
       }
     }
     
     if (step === 2) {
       if (!formData.date || !formData.time) {
-        toast({
-          title: "Ошибка",
-          description: "Выберите дату и время",
-          variant: "destructive"
-        });
+        toast.error("Выберите дату и время");
         return;
       }
     }
     
     if (step === 3) {
       if (!formData.seats || !formData.price || !formData.car) {
-        toast({
-          title: "Ошибка",
-          description: "Заполните все поля",
-          variant: "destructive"
-        });
+        toast.error("Заполните все поля");
         return;
       }
     }
@@ -87,10 +75,26 @@ const CreateRide = () => {
   };
 
   const handleSubmit = () => {
-    toast({
-      title: "Поездка создана!",
-      description: "Ваша поездка успешно опубликована",
-    });
+    if (!user) {
+      toast.error("Необходимо войти в систему");
+      return;
+    }
+
+    const rideData = {
+      driver_id: user.id,
+      from_city: formData.from,
+      to_city: formData.to,
+      departure_date: formData.date,
+      departure_time: formData.time,
+      available_seats: parseInt(formData.seats),
+      price_per_seat: parseFloat(formData.price),
+      description: formData.description || undefined,
+      car_model: formData.car || undefined,
+      car_color: undefined,
+      status: 'active' as const
+    };
+
+    createRide(rideData);
     navigate('/driver');
   };
 
@@ -283,8 +287,12 @@ const CreateRide = () => {
                   <p className="text-sm"><span className="font-medium">Автомобиль:</span> {formData.car}</p>
                 </div>
                 
-                <Button onClick={handleSubmit} className="w-full bg-yoldosh-green hover:bg-green-700">
-                  Создать поездку
+                <Button 
+                  onClick={handleSubmit} 
+                  disabled={isCreating}
+                  className="w-full bg-yoldosh-green hover:bg-green-700"
+                >
+                  {isCreating ? 'Создание...' : 'Создать поездку'}
                 </Button>
               </CardContent>
             </>
