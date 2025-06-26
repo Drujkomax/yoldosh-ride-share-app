@@ -13,6 +13,28 @@ import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Extended interface to include all driver properties
+interface ExtendedRide {
+  id: string;
+  from_city: string;
+  to_city: string;
+  departure_date: string;
+  departure_time: string;
+  price_per_seat: number;
+  available_seats: number;
+  description?: string;
+  car_model?: string;
+  car_color?: string;
+  driver_id: string;
+  driver?: {
+    name: string;
+    phone?: string;
+    rating?: number;
+    total_rides: number;
+    is_verified?: boolean;
+  };
+}
+
 const BookRide = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -25,7 +47,7 @@ const BookRide = () => {
   const [notes, setNotes] = useState('');
   const [isCreatingChat, setIsCreatingChat] = useState(false);
 
-  const ride = rides.find(r => r.id === id);
+  const ride = rides.find(r => r.id === id) as ExtendedRide | undefined;
 
   if (ridesLoading) {
     return (
