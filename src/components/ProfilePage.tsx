@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Phone, Star, MapPin, Calendar, MessageSquare } from 'lucide-react';
+import { ArrowLeft, User, Phone, Star, MapPin, Calendar, MessageSquare, Car } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useReviews } from '@/hooks/useReviews';
 
@@ -71,14 +71,27 @@ const ProfilePage = () => {
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="h-10 w-10 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-800">{user.name}</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-800">{user.name || 'Пользователь'}</CardTitle>
             <div className="flex items-center justify-center space-x-2 mt-2">
               <Phone className="h-4 w-4 text-blue-500" />
               <span className="text-gray-600">{user.phone}</span>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            {/* Car Info for Drivers */}
+            {user.role === 'driver' && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-xl">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Car className="h-5 w-5 text-blue-600" />
+                  <span className="font-semibold text-blue-800">Информация о машине</span>
+                </div>
+                <p className="text-gray-700">
+                  Информация будет отображаться после добавления данных о машине
+                </p>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center justify-center space-x-1 mb-1">
                   <Star className="h-5 w-5 text-amber-500" />
@@ -90,17 +103,23 @@ const ProfilePage = () => {
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-xl">
                 <div className="text-2xl font-bold text-gray-800 mb-1">
-                  {user.total_rides || 0}
+                  {user.totalRides || 0}
                 </div>
                 <p className="text-sm text-gray-600">Поездок</p>
+              </div>
+              <div className="text-center p-4 bg-gray-50 rounded-xl">
+                <div className="text-2xl font-bold text-gray-800 mb-1">
+                  {reviews.length}
+                </div>
+                <p className="text-sm text-gray-600">Отзывов</p>
               </div>
             </div>
             
             <div className="mt-4 text-center">
               <Badge variant="outline" className={`${
-                user.is_verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'
+                user.isVerified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'
               }`}>
-                {user.is_verified ? '✓ Верифицирован' : 'Не верифицирован'}
+                {user.isVerified ? '✓ Верифицирован' : 'Не верифицирован'}
               </Badge>
             </div>
           </CardContent>

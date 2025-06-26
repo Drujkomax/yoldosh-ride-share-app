@@ -86,7 +86,7 @@ const DriverDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-high-contrast">
-                Панель водителя
+                Добро пожаловать, {user?.name || 'Водитель'}!
               </h1>
               <p className="text-slate-700 mt-1">Управляйте своими поездками</p>
             </div>

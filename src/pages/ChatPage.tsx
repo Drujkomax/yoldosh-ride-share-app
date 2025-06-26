@@ -1,111 +1,40 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Send, MapPin, Clock, Car, Calendar, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useMessages } from '@/hooks/useChats';
+import { ArrowLeft, Send, User } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useChats } from '@/hooks/useChats';
+import ChatRideInfo from '@/components/ChatRideInfo';
 import { toast } from 'sonner';
 
 const ChatPage = () => {
+  const { chatId } = useParams();
   const navigate = useNavigate();
-  const { name } = useParams();
-  const [searchParams] = useSearchParams();
   const { user } = useUser();
+  const { messages, sendMessage, chat, isLoading } = useChats(chatId);
+  const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Получаем ID чата и детали из URL параметров
-  const chatId = searchParams.get('chatId') || '';
-  const chatType = searchParams.get('type'); // 'driver' или 'passenger'
-  const rideId = searchParams.get('rideId');
-  const from = searchParams.get('from');
-  const to = searchParams.get('to');
-  const date = searchParams.get('date');
-  const time = searchParams.get('time');
-
-  const { messages, isLoading, sendMessage, markAsRead, isSending } = useMessages(chatId);
-  const [inputText, setInputText] = useState('');
-
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Отмечаем сообщения как прочитанные при загрузке
-  useEffect(() => {
-    if (messages.length > 0 && user?.id) {
-      const unreadMessages = messages
-        .filter(msg => !msg.read_at && msg.sender_id !== user.id)
-        .map(msg => msg.id);
-      
-      if (unreadMessages.length > 0) {
-        markAsRead(unreadMessages).catch(console.error);
-      }
-    }
-  }, [messages, user?.id, markAsRead]);
-
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isSending) return;
-
-    if (!user?.id) {
-      toast.error("Необходимо войти в систему");
-      return;
-    }
-
-    if (!chatId) {
-      toast.error("ID чата не найден");
-      return;
-    }
-
+    if (!newMessage.trim() || !chatId) return;
+    
     try {
-      await sendMessage({ content: inputText });
-      setInputText('');
+      await sendMessage(newMessage);
+      setNewMessage('');
     } catch (error) {
-      console.error('ChatPage - Ошибка отправки сообщения:', error);
+      console.error('Ошибка отправки сообщения:', error);
+      toast.error('Не удалось отправить сообщение');
     }
-  };
-
-  const handleSendLocation = async () => {
-    if (!user?.id) {
-      toast.error("Необходимо войти в систему");
-      return;
-    }
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const locationText = `Мое местоположение: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-          
-          try {
-            await sendMessage({ 
-              content: locationText, 
-              messageType: 'location' 
-            });
-          } catch (error) {
-            console.error('Ошибка отправки геолокации:', error);
-          }
-        },
-        (error) => {
-          console.error('Ошибка получения геолокации:', error);
-          toast.error('Не удалось получить геолокацию. Проверьте разрешения браузера.');
-        }
-      );
-    } else {
-      toast.error('Геолокация не поддерживается вашим браузером');
-    }
-  };
-
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString('ru-RU', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -115,187 +44,142 @@ const ChatPage = () => {
     }
   };
 
-  // КРИТИЧЕСКИ ВАЖНО: обработка навигации назад с сохранением роли пользователя
-  const handleBackNavigation = () => {
-    console.log('ChatPage - Возврат назад, текущая роль пользователя:', user?.role);
-    
-    // Сохраняем роль пользователя перед навигацией
+  const handleBackClick = () => {
+    // Определяем куда возвращать пользователя в зависимости от его роли
     if (user?.role === 'driver') {
-      console.log('ChatPage - Возврат на панель водителя');
       navigate('/driver');
     } else {
-      console.log('ChatPage - Возврат на панель пассажира');
       navigate('/passenger');
+    }
+  };
+
+  const formatTime = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleTimeString('ru-RU', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '';
     }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-gray-600">Загрузка чата...</p>
       </div>
     );
   }
 
-  if (!user?.id) {
+  if (!chat) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg">Необходимо войти в систему</p>
-          <Button onClick={() => navigate('/')} className="mt-4">
-            На главную
+          <p className="text-gray-600 mb-4">Чат не найден</p>
+          <Button onClick={handleBackClick}>
+            Вернуться назад
           </Button>
         </div>
       </div>
     );
   }
 
-  if (!chatId) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg">ID чата не найден</p>
-          <Button onClick={handleBackNavigation} className="mt-4">
-            Назад
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const otherParticipant = chat.participant1_id === user?.id 
+    ? chat.participant2 
+    : chat.participant1;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
-              onClick={handleBackNavigation}
+              onClick={handleBackClick}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="text-center">
-                <h1 className="text-lg font-semibold text-high-contrast">{decodeURIComponent(name || 'Чат')}</h1>
-                <div className="flex items-center space-x-2">
-                  <Badge variant={chatType === 'driver' ? 'default' : 'secondary'} className="text-xs">
-                    {chatType === 'driver' ? (
-                      <>
-                        <Car className="h-3 w-3 mr-1" />
-                        Водитель
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-3 w-3 mr-1" />
-                        Пассажир
-                      </>
-                    )}
-                  </Badge>
+            <div className="flex-1">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
+                  <p className="text-sm text-gray-600">{otherParticipant?.phone}</p>
                 </div>
               </div>
             </div>
-            <div></div>
           </div>
         </div>
       </div>
 
-      {/* Trip Info */}
-      {from && to && (
-        <div className="bg-blue-50 border-b p-3">
-          <div className="container mx-auto">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-blue-600" />
-                <span className="font-medium text-high-contrast">{decodeURIComponent(from)} → {decodeURIComponent(to)}</span>
-              </div>
-              {date && time && (
-                <div className="flex items-center space-x-2 text-blue-700">
-                  <Calendar className="h-4 w-4" />
-                  <span>{decodeURIComponent(date)} в {decodeURIComponent(time)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+      {/* Ride Info */}
+      {chat.ride && (
+        <div className="bg-white border-b px-4 py-2">
+          <ChatRideInfo
+            rideId={chat.ride.id}
+            fromCity={chat.ride.from_city}
+            toCity={chat.ride.to_city}
+            departureDate={chat.ride.departure_date}
+            departureTime={chat.ride.departure_time}
+            availableSeats={chat.ride.available_seats}
+          />
         </div>
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
-            <p>Начните общение</p>
+            <p>Начните общение с вашим попутчиком</p>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-            >
+          messages.map((message) => {
+            const isMyMessage = message.sender_id === user?.id;
+            return (
               <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.sender_id === user?.id
-                    ? 'bg-yoldosh-blue text-white'
-                    : 'bg-white border shadow-sm'
-                }`}
+                key={message.id}
+                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm">{message.content}</p>
-                
-                <div className={`flex items-center justify-between space-x-2 mt-1 text-xs ${
-                  message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-3 w-3" />
-                    <span>{formatTime(message.created_at)}</span>
-                  </div>
-                  {message.sender_id === user?.id && (
-                    <span>{message.read_at ? '✓✓' : '✓'}</span>
-                  )}
+                <div
+                  className={`max-w-[70%] p-3 rounded-lg ${
+                    isMyMessage
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white text-gray-900 border'
+                  }`}
+                >
+                  <p className="text-sm">{message.content}</p>
+                  <p
+                    className={`text-xs mt-1 ${
+                      isMyMessage ? 'text-blue-100' : 'text-gray-500'
+                    }`}
+                  >
+                    {formatTime(message.created_at)}
+                  </p>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div className="bg-white border-t p-4">
-        <div className="flex items-center space-x-3">
-          <div className="flex-1">
-            <Input
-              placeholder="Напишите сообщение..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="w-full"
-              disabled={isSending}
-            />
-          </div>
-          <Button
-            onClick={handleSendLocation}
-            variant="outline"
-            size="icon"
-            disabled={isSending}
-            className="shrink-0"
-          >
-            <MapPin className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputText.trim() || isSending}
-            size="icon"
-            className="shrink-0 bg-yoldosh-blue hover:bg-blue-700"
-          >
-            {isSending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+        <div className="flex space-x-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Напишите сообщение..."
+            className="flex-1"
+          />
+          <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+            <Send className="h-4 w-4" />
           </Button>
         </div>
       </div>
