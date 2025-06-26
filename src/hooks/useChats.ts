@@ -71,21 +71,21 @@ export const useChats = () => {
         .from('chats')
         .select(`
           *,
-          participant1:participant1_id (
+          participant1:profiles!chats_participant1_id_fkey (
             name,
             phone,
             rating,
             total_rides,
             is_verified
           ),
-          participant2:participant2_id (
+          participant2:profiles!chats_participant2_id_fkey (
             name,
             phone,
             rating,
             total_rides,
             is_verified
           ),
-          ride:ride_id (
+          ride:rides (
             from_city,
             to_city,
             departure_date,
@@ -102,7 +102,7 @@ export const useChats = () => {
 
       // Загружаем последние сообщения и подсчитываем непрочитанные
       const chatsWithMessages = await Promise.all(
-        data.map(async (chat) => {
+        (data || []).map(async (chat) => {
           // Последнее сообщение
           const { data: lastMessage } = await supabase
             .from('messages')
@@ -212,7 +212,7 @@ export const useMessages = (chatId: string) => {
         .from('messages')
         .select(`
           *,
-          sender:sender_id (
+          sender:profiles!messages_sender_id_fkey (
             name
           )
         `)
