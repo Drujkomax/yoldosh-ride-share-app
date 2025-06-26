@@ -11,7 +11,7 @@ import AnimatedInput from '@/components/AnimatedInput';
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const { signUp, signIn, loading } = useAuth();
   const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -19,6 +19,7 @@ const RegistrationPage = () => {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [isNewUser, setIsNewUser] = useState(true);
+  const [existingUser, setExistingUser] = useState<any>(null);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -46,21 +47,21 @@ const RegistrationPage = () => {
       return;
     }
 
-    // Check if user exists by trying to sign in
+    // Проверяем, существует ли пользователь
     console.log('Checking if user exists for phone:', phone);
-    const signInResult = await signIn(phone);
+    const result = await signIn(phone);
     
-    if (signInResult.data && !signInResult.error) {
-      // User exists and signed in successfully
+    if (result.exists && result.user) {
+      // Пользователь существует
+      setExistingUser(result.user);
       setIsNewUser(false);
+      setStep('code');
       toast({
-        title: "Добро пожаловать!",
-        description: "Вы успешно вошли в систему",
+        title: "Пользователь найден",
+        description: "Введите код подтверждения для входа",
       });
-      // User will be redirected by the useEffect above
-      return;
     } else {
-      // User doesn't exist, proceed with registration flow
+      // Новый пользователь
       setIsNewUser(true);
       setStep('code');
       toast({
@@ -80,7 +81,7 @@ const RegistrationPage = () => {
       return;
     }
 
-    // For demo purposes, accept any 4-digit code
+    // Для демо принимаем любой 4-значный код
     if (!/^\d{4}$/.test(code)) {
       toast({
         title: "Ошибка",
@@ -91,7 +92,7 @@ const RegistrationPage = () => {
     }
 
     if (isNewUser && selectedRole) {
-      // Create new user
+      // Создаем нового пользователя
       console.log('Creating new user:', { phone, name, role: selectedRole });
       const result = await signUp(phone, name, selectedRole);
       
@@ -103,11 +104,57 @@ const RegistrationPage = () => {
           variant: "destructive"
         });
       } else {
+        // Устанавливаем пользователя в контекст
+        const newUser = {
+          id: result.data.id,
+          phone: result.data.phone,
+          role: result.data.role as UserRole,
+          isVerified: result.data.is_verified,
+          name: result.data.name,
+          totalRides: result.data.total_rides,
+          rating: result.data.rating,
+          avatarUrl: result.data.avatar_url
+        };
+        
+        setUser(newUser);
+        
         toast({
           title: "Регистрация завершена",
           description: "Добро пожаловать в Yoldosh!",
         });
-        // User will be redirected by the useEffect above
+        
+        // Перенаправляем в зависимости от роли
+        if (selectedRole === 'driver') {
+          navigate('/driver');
+        } else {
+          navigate('/passenger');
+        }
+      }
+    } else if (!isNewUser && existingUser) {
+      // Входим существующим пользователем
+      const userForContext = {
+        id: existingUser.id,
+        phone: existingUser.phone,
+        role: existingUser.role as UserRole,
+        isVerified: existingUser.is_verified,
+        name: existingUser.name,
+        totalRides: existingUser.total_rides,
+        rating: existingUser.rating,
+        avatarUrl: existingUser.avatar_url
+      };
+      
+      setUser(userForContext);
+      
+      toast({
+        title: "Добро пожаловать!",
+        description: "Вы успешно вошли в систему",
+      });
+      
+      // Перенаправляем в зависимости от роли
+      if (existingUser.role === 'driver') {
+        navigate('/driver');
+      } else {
+        navigate('/passenger');
       }
     }
   };
@@ -238,7 +285,7 @@ const RegistrationPage = () => {
                 Код подтверждения
               </CardTitle>
               <p className="text-slate-600 mt-2">
-                Для завершения регистрации<br />
+                {isNewUser ? 'Для завершения регистрации' : 'Для входа в аккаунт'}<br />
                 <span className="font-semibold text-yoldosh-primary">{phone}</span>
               </p>
               <p className="text-xs text-slate-400 mt-2">
