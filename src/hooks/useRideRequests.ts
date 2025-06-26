@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
+import { useEffect } from 'react';
 
 export interface RideRequest {
   id: string;
@@ -70,13 +71,47 @@ export const useRideRequests = () => {
     },
   });
 
+  // Realtime подписка на обновления заявок
+  useEffect(() => {
+    console.log('useRideRequests - Подписка на realtime обновления заявок');
+
+    const channel = supabase
+      .channel('ride-requests-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ride_requests'
+        },
+        (payload) => {
+          console.log('useRideRequests - Обновление заявки:', payload);
+          queryClient.invalidateQueries({ queryKey: ['ride-requests'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const createRequestMutation = useMutation({
     mutationFn: async (newRequest: Omit<RideRequest, 'id' | 'created_at' | 'updated_at' | 'passenger'>) => {
       console.log('useRideRequests - Создание заявки:', newRequest);
       
+      if (!user) {
+        throw new Error('Пользователь не авторизован');
+      }
+
+      const requestData = {
+        ...newRequest,
+        passenger_id: user.id
+      };
+      
       const { data, error } = await supabase
         .from('ride_requests')
-        .insert([newRequest])
+        .insert([requestData])
         .select()
         .single();
 
@@ -123,7 +158,7 @@ export const useRideRequests = () => {
         .from('chats')
         .select('id')
         .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${requestData.passenger_id}),and(participant1_id.eq.${requestData.passenger_id},participant2_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
 
       let chatId: string;
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
+import { useEffect } from 'react';
 
 export interface Booking {
   id: string;
@@ -33,14 +34,12 @@ export const useBookings = () => {
   const { data: bookings = [], isLoading, error } = useQuery({
     queryKey: ['bookings', user?.id],
     queryFn: async () => {
-      console.log('useBookings - Starting to fetch bookings');
+      console.log('useBookings - Загрузка бронирований для пользователя:', user?.id);
       
       if (!user) {
-        console.log('useBookings - No user found');
+        console.log('useBookings - Пользователь не найден');
         return [];
       }
-
-      console.log('useBookings - Fetching bookings for user:', user.id);
 
       const { data, error } = await supabase
         .from('bookings')
@@ -60,14 +59,14 @@ export const useBookings = () => {
         .eq('passenger_id', user.id)
         .order('created_at', { ascending: false });
 
-      console.log('useBookings - Supabase response:', { data, error });
+      console.log('useBookings - Результат запроса:', { data, error });
 
       if (error) {
-        console.error('useBookings - Supabase error:', error);
+        console.error('useBookings - Ошибка загрузки бронирований:', error);
         throw error;
       }
 
-      const mappedBookings = data.map(booking => ({
+      const mappedBookings = (data || []).map(booking => ({
         ...booking,
         ride: booking.rides ? {
           from_city: booking.rides.from_city,
@@ -75,23 +74,51 @@ export const useBookings = () => {
           departure_date: booking.rides.departure_date,
           departure_time: booking.rides.departure_time,
           driver: {
-            name: booking.rides.profiles?.name || 'Unknown',
+            name: booking.rides.profiles?.name || 'Неизвестный водитель',
             rating: booking.rides.profiles?.rating,
           },
         } : undefined,
       })) as Booking[];
 
-      console.log('useBookings - Mapped bookings:', mappedBookings);
+      console.log('useBookings - Обработанные бронирования:', mappedBookings);
       return mappedBookings;
     },
     enabled: !!user,
     retry: 1,
   });
 
+  // Realtime подписка на обновления бронирований
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('useBookings - Подписка на realtime обновления бронирований');
+
+    const channel = supabase
+      .channel('bookings-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `passenger_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('useBookings - Обновление бронирования:', payload);
+          queryClient.invalidateQueries({ queryKey: ['bookings'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
+
   const createBookingMutation = useMutation({
     mutationFn: async (newBooking: Omit<Booking, 'id' | 'created_at' | 'ride'>) => {
       console.log('=== СОЗДАНИЕ БРОНИРОВАНИЯ В БАЗЕ ДАННЫХ ===');
-      console.log('useBookings - Creating booking:', newBooking);
+      console.log('useBookings - Создание бронирования:', newBooking);
       
       if (!newBooking.ride_id || !newBooking.passenger_id) {
         throw new Error('Не заполнены обязательные поля: ride_id или passenger_id');
@@ -112,7 +139,7 @@ export const useBookings = () => {
         ...(newBooking.pickup_location && { pickup_location: newBooking.pickup_location })
       };
 
-      console.log('useBookings - Clean booking data:', cleanBooking);
+      console.log('useBookings - Данные для вставки:', cleanBooking);
       
       const { data, error } = await supabase
         .from('bookings')
@@ -121,22 +148,22 @@ export const useBookings = () => {
         .single();
 
       if (error) {
-        console.error('useBookings - Create booking error:', error);
+        console.error('useBookings - Ошибка создания бронирования:', error);
         throw error;
       }
       
-      console.log('useBookings - Booking created successfully:', data);
+      console.log('useBookings - Бронирование создано успешно:', data);
       return data;
     },
     onSuccess: () => {
-      console.log('useBookings - Booking creation successful, invalidating queries');
+      console.log('useBookings - Бронирование создано успешно, обновляем кэш');
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
       toast.success("Ваша заявка отправлена водителю");
     },
     onError: (error: any) => {
-      console.error('useBookings - Create booking mutation error:', error);
+      console.error('useBookings - Ошибка мутации создания бронирования:', error);
       
       let errorMessage = "Не удалось забронировать поездку";
       
@@ -156,7 +183,7 @@ export const useBookings = () => {
 
   const updateBookingMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Booking> }) => {
-      console.log('useBookings - Updating booking:', { id, updates });
+      console.log('useBookings - Обновление бронирования:', { id, updates });
       
       const { data, error } = await supabase
         .from('bookings')
@@ -166,11 +193,11 @@ export const useBookings = () => {
         .single();
 
       if (error) {
-        console.error('useBookings - Update booking error:', error);
+        console.error('useBookings - Ошибка обновления бронирования:', error);
         throw error;
       }
       
-      console.log('useBookings - Booking updated:', data);
+      console.log('useBookings - Бронирование обновлено:', data);
       return data;
     },
     onSuccess: () => {
@@ -178,10 +205,28 @@ export const useBookings = () => {
       toast.success("Изменения сохранены");
     },
     onError: (error) => {
-      console.error('Update booking error:', error);
+      console.error('Ошибка обновления бронирования:', error);
       toast.error("Не удалось обновить бронирование");
     },
   });
+
+  // Фильтрация бронирований по статусу
+  const getBookingsByStatus = (status?: string) => {
+    if (!status) return bookings;
+    return bookings.filter(booking => booking.status === status);
+  };
+
+  // Получение активных бронирований
+  const activeBookings = getBookingsByStatus('confirmed');
+  
+  // Получение ожидающих бронирований
+  const pendingBookings = getBookingsByStatus('pending');
+  
+  // Получение завершенных бронирований
+  const completedBookings = getBookingsByStatus('completed');
+  
+  // Получение отмененных бронирований
+  const cancelledBookings = getBookingsByStatus('cancelled');
 
   return {
     bookings,
@@ -191,5 +236,11 @@ export const useBookings = () => {
     updateBooking: updateBookingMutation.mutate,
     isCreating: createBookingMutation.isPending,
     isUpdating: updateBookingMutation.isPending,
+    // Фильтрованные списки
+    activeBookings,
+    pendingBookings,
+    completedBookings,
+    cancelledBookings,
+    getBookingsByStatus,
   };
 };
