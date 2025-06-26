@@ -90,30 +90,75 @@ export const useBookings = () => {
 
   const createBookingMutation = useMutation({
     mutationFn: async (newBooking: Omit<Booking, 'id' | 'created_at' | 'ride'>) => {
+      console.log('=== СОЗДАНИЕ БРОНИРОВАНИЯ В БАЗЕ ДАННЫХ ===');
       console.log('useBookings - Creating booking:', newBooking);
+      
+      // Проверяем, что все обязательные поля заполнены
+      if (!newBooking.ride_id || !newBooking.passenger_id) {
+        throw new Error('Не заполнены обязательные поля: ride_id или passenger_id');
+      }
+      
+      if (newBooking.seats_booked <= 0 || newBooking.total_price <= 0) {
+        throw new Error('Количество мест и сумма должны быть больше 0');
+      }
+
+      // Убираем undefined значения из объекта
+      const cleanBooking = {
+        ride_id: newBooking.ride_id,
+        passenger_id: newBooking.passenger_id,
+        seats_booked: newBooking.seats_booked,
+        total_price: newBooking.total_price,
+        status: newBooking.status || 'pending',
+        ...(newBooking.notes && { notes: newBooking.notes }),
+        ...(newBooking.pickup_location && { pickup_location: newBooking.pickup_location })
+      };
+
+      console.log('useBookings - Clean booking data:', cleanBooking);
       
       const { data, error } = await supabase
         .from('bookings')
-        .insert([newBooking])
+        .insert([cleanBooking])
         .select()
         .single();
 
       if (error) {
         console.error('useBookings - Create booking error:', error);
+        console.error('useBookings - Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         throw error;
       }
       
-      console.log('useBookings - Booking created:', data);
+      console.log('useBookings - Booking created successfully:', data);
+      console.log('=== БРОНИРОВАНИЕ СОЗДАНО УСПЕШНО ===');
       return data;
     },
     onSuccess: () => {
+      console.log('useBookings - Booking creation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['rides'] });
+      queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
       toast.success("Ваша заявка отправлена водителю");
     },
-    onError: (error) => {
-      console.error('Create booking error:', error);
-      toast.error("Не удалось забронировать поездку");
+    onError: (error: any) => {
+      console.error('useBookings - Create booking mutation error:', error);
+      
+      let errorMessage = "Не удалось забронировать поездку";
+      
+      if (error.code === '23503') {
+        if (error.message.includes('ride_id')) {
+          errorMessage = "Поездка не найдена или была удалена";
+        } else if (error.message.includes('passenger_id')) {
+          errorMessage = "Ошибка профиля пользователя. Попробуйте перезайти в приложение";
+        }
+      } else if (error.message?.includes('обязательные поля')) {
+        errorMessage = "Заполните все обязательные поля";
+      }
+      
+      toast.error(errorMessage);
     },
   });
 
@@ -150,7 +195,7 @@ export const useBookings = () => {
     bookings,
     isLoading,
     error,
-    createBooking: createBookingMutation.mutate,
+    createBooking: createBookingMutation.mutateAsync,
     updateBooking: updateBookingMutation.mutate,
     isCreating: createBookingMutation.isPending,
     isUpdating: updateBookingMutation.isPending,

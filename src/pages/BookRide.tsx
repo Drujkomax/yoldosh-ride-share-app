@@ -56,22 +56,47 @@ const BookRide = () => {
     setBookingData(prev => ({ ...prev, comment: newComment }));
   };
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
+    console.log('=== НАЧАЛО ПРОЦЕССА БРОНИРОВАНИЯ ===');
+    
     if (!ride || !user) {
+      console.error('Ошибка: отсутствуют данные поездки или пользователя', { ride: !!ride, user: !!user });
       toast.error('Ошибка: данные поездки или пользователя не найдены');
       return;
     }
 
-    const totalPrice = ride.price_per_seat * bookingData.seats;
-    
-    createBooking({
+    console.log('Данные для бронирования:', {
       ride_id: ride.id,
       passenger_id: user.id,
       seats_booked: bookingData.seats,
-      total_price: totalPrice,
-      status: 'pending',
-      notes: bookingData.comment || undefined,
+      total_price: ride.price_per_seat * bookingData.seats,
+      notes: bookingData.comment || null
     });
+
+    const totalPrice = ride.price_per_seat * bookingData.seats;
+    
+    try {
+      await createBooking({
+        ride_id: ride.id,
+        passenger_id: user.id,
+        seats_booked: bookingData.seats,
+        total_price: totalPrice,
+        status: 'pending',
+        notes: bookingData.comment || undefined,
+      });
+      
+      console.log('Бронирование успешно отправлено');
+      // После успешного создания заявки переходим на страницу пассажира
+      setTimeout(() => {
+        navigate('/passenger');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Ошибка при создании бронирования:', error);
+      toast.error('Не удалось отправить заявку на бронирование');
+    }
+    
+    console.log('=== КОНЕЦ ПРОЦЕССА БРОНИРОВАНИЯ ===');
   };
 
   if (ridesLoading) {
