@@ -8,6 +8,7 @@ import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye,
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useDriverBookings } from '@/hooks/useDriverBookings';
+import BookingRequestCard from '@/components/BookingRequestCard';
 import ChatPanel from '@/components/ChatPanel';
 
 const DriverDashboard = () => {
@@ -149,63 +150,13 @@ const DriverDashboard = () => {
               </div>
             ) : (
               bookings.map((booking) => (
-                <div key={booking.id} className="bg-gradient-to-r from-white to-slate-50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-slate-100 animate-fade-in">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-accent rounded-2xl flex items-center justify-center animate-pulse">
-                        <User className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-800 text-lg">{booking.passenger.name}</div>
-                        <div className="flex items-center space-x-2 mt-1 text-sm">
-                          <span className="text-amber-500">★ {booking.passenger.rating || 0}</span>
-                          <span className="text-slate-500">({booking.passenger.total_rides} поездок)</span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          {new Date(booking.created_at).toLocaleString('ru-RU')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-xl text-yoldosh-success">
-                        {booking.total_price.toLocaleString()} сум
-                      </div>
-                      <div className="text-sm text-slate-600">{booking.seats_booked} место(а)</div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-blue-50 p-3 rounded-xl mb-4">
-                    <div className="text-sm font-semibold text-blue-800">Поездка</div>
-                    <div className="text-sm text-blue-600">
-                      {booking.ride.from_city} → {booking.ride.to_city} • {formatDate(booking.ride.departure_date)} в {formatTime(booking.ride.departure_time)}
-                    </div>
-                  </div>
-                  
-                  {booking.notes && (
-                    <div className="bg-slate-100 p-3 rounded-xl mb-4">
-                      <p className="text-sm text-slate-700 italic">"{booking.notes}"</p>
-                    </div>
-                  )}
-
-                  <div className="flex space-x-3">
-                    <Button 
-                      onClick={() => handleRejectRequest(booking.id)}
-                      variant="outline"
-                      disabled={isUpdating}
-                      className="flex-1 rounded-xl border-red-500 text-red-500 hover:bg-red-50 hover:border-red-600 hover:text-red-600 hover:scale-105 transition-all duration-300"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Отказать
-                    </Button>
-                    <Button 
-                      onClick={() => handleAcceptRequest(booking.id)}
-                      disabled={isUpdating}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
-                    >
-                      Принять
-                    </Button>
-                  </div>
-                </div>
+                <BookingRequestCard
+                  key={booking.id}
+                  booking={booking}
+                  onAccept={handleAcceptRequest}
+                  onReject={handleRejectRequest}
+                  isUpdating={isUpdating}
+                />
               ))
             )}
           </CardContent>

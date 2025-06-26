@@ -47,14 +47,14 @@ export const useDriverBookings = () => {
         .from('bookings')
         .select(`
           *,
-          rides!inner (
+          ride:rides!inner (
             from_city,
             to_city,
             departure_date,
             departure_time,
             driver_id
           ),
-          profiles:passenger_id (
+          passenger:profiles!bookings_passenger_id_fkey (
             name,
             phone,
             rating,
@@ -62,7 +62,7 @@ export const useDriverBookings = () => {
           )
         `)
         .eq('rides.driver_id', user.id)
-        .eq('status', 'pending')
+        .in('status', ['pending'])
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -71,11 +71,12 @@ export const useDriverBookings = () => {
       }
 
       console.log('useDriverBookings - Загружено заявок:', data?.length || 0);
+      console.log('useDriverBookings - Данные заявок:', data);
 
       return data.map(booking => ({
         ...booking,
-        ride: booking.rides,
-        passenger: booking.profiles
+        ride: Array.isArray(booking.ride) ? booking.ride[0] : booking.ride,
+        passenger: Array.isArray(booking.passenger) ? booking.passenger[0] : booking.passenger
       })) as DriverBooking[];
     },
     enabled: !!user,
@@ -102,6 +103,7 @@ export const useDriverBookings = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
       if (variables.status === 'confirmed') {
         toast.success("Заявка принята");
       } else {
