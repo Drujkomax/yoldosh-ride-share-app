@@ -23,6 +23,15 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Функция для генерации UUID v4
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +59,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUser = (updatedUser: UserProfile | null) => {
     console.log('Updating user:', updatedUser);
+    
+    // Если это новый пользователь без правильного UUID, генерируем новый
+    if (updatedUser && (!updatedUser.id || !updatedUser.id.includes('-'))) {
+      updatedUser = {
+        ...updatedUser,
+        id: generateUUID()
+      };
+      console.log('Generated new UUID for user:', updatedUser.id);
+    }
+    
     setUser(updatedUser);
     
     // Сохраняем в localStorage

@@ -1,21 +1,32 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useUser, UserRole } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 
-export const useAuth = () => {
-  const [loading, setLoading] = useState(false);
+// Функция для генерации UUID v4
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
-  const createUserProfile = async (phone: string, name: string, role: 'driver' | 'passenger') => {
-    setLoading(true);
+export const useAuth = () => {
+  const { setUser } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const register = async (phone: string, name: string, role: UserRole) => {
+    setIsLoading(true);
     try {
-      console.log('Creating user profile:', { phone, name, role });
+      console.log('Attempting to register user:', { phone, name, role });
       
-      // Генерируем уникальный ID для пользователя
-      const userId = crypto.randomUUID();
+      const userId = generateUUID();
+      console.log('Generated UUID:', userId);
       
-      // Создаем профиль пользователя напрямую в базе данных
-      const { data, error } = await supabase
+      // Создаем профиль пользователя в базе данных
+      const { data: profile, error } = await supabase
         .from('profiles')
         .insert([
           {
@@ -23,7 +34,7 @@ export const useAuth = () => {
             phone,
             name,
             role,
-            is_verified: true,
+            is_verified: false,
             total_rides: 0,
             rating: 0.0
           }
@@ -32,110 +43,88 @@ export const useAuth = () => {
         .single();
 
       if (error) {
-        console.error('Profile creation error:', error);
-        toast.error("Не удалось создать аккаунт. Попробуйте еще раз.");
-        return { data: null, error };
+        console.error('Registration error:', error);
+        toast.error('Ошибка при регистрации');
+        return false;
       }
 
-      console.log('Profile created successfully:', data);
-      toast.success("Аккаунт успешно создан!");
-      
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Create profile error:', error);
-      toast.error("Произошла ошибка при создании аккаунта.");
-      return { data: null, error };
+      console.log('Profile created successfully:', profile);
+
+      // Сохраняем пользователя в контексте
+      const userProfile = {
+        id: profile.id,
+        phone: profile.phone,
+        name: profile.name,
+        role: profile.role as UserRole,
+        isVerified: profile.is_verified || false,
+        totalRides: profile.total_rides || 0,
+        rating: profile.rating || 0.0,
+        avatarUrl: profile.avatar_url
+      };
+
+      setUser(userProfile);
+      toast.success('Регистрация прошла успешно!');
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Ошибка при регистрации');
+      return false;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const checkUserExists = async (phone: string) => {
+  const login = async (phone: string) => {
+    setIsLoading(true);
     try {
-      console.log('Checking if user exists for phone:', phone);
+      console.log('Attempting to login user:', phone);
       
-      const { data, error } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('phone', phone)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Check user error:', error);
-        return { exists: false, user: null };
-      }
-
-      return { exists: !!data, user: data };
-    } catch (error: any) {
-      console.error('Check user error:', error);
-      return { exists: false, user: null };
-    }
-  };
-
-  const signUp = async (phone: string, name: string, role: 'driver' | 'passenger') => {
-    return await createUserProfile(phone, name, role);
-  };
-
-  const signIn = async (phone: string) => {
-    return await checkUserExists(phone);
-  };
-
-  const signOut = async () => {
-    setLoading(true);
-    try {
-      // Очищаем localStorage
-      localStorage.removeItem('yoldosh_user');
-      
-      toast.success("Вы успешно вышли из аккаунта");
-      return { error: null };
-    } catch (error: any) {
-      console.error('Signout error:', error);
-      toast.error("Не удалось выйти из аккаунта");
-      return { error };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (userId: string, updates: {
-    name?: string;
-    phone?: string;
-    avatar_url?: string;
-  }) => {
-    setLoading(true);
-    try {
-      console.log('Profile update requested:', { userId, updates });
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId)
-        .select()
         .single();
 
       if (error) {
-        console.error('Update profile error:', error);
-        toast.error("Не удалось обновить профиль");
-        return { data: null, error };
+        console.error('Login error:', error);
+        toast.error('Пользователь не найден');
+        return false;
       }
 
-      toast.success("Ваши данные успешно сохранены");
+      console.log('Profile found:', profile);
 
-      return { data, error: null };
-    } catch (error: any) {
-      console.error('Update profile error:', error);
-      toast.error("Не удалось обновить профиль");
-      return { data: null, error };
+      const userProfile = {
+        id: profile.id,
+        phone: profile.phone,
+        name: profile.name,
+        role: profile.role as UserRole,
+        isVerified: profile.is_verified || false,
+        totalRides: profile.total_rides || 0,
+        rating: profile.rating || 0.0,
+        avatarUrl: profile.avatar_url
+      };
+
+      setUser(userProfile);
+      toast.success('Вход выполнен успешно!');
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Ошибка при входе');
+      return false;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const logout = () => {
+    setUser(null);
+    toast.success('Выход выполнен успешно!');
+  };
+
   return {
-    signUp,
-    signIn,
-    signOut,
-    updateProfile,
-    loading,
+    register,
+    login,
+    logout,
+    isLoading,
   };
 };
