@@ -93,7 +93,6 @@ export const useBookings = () => {
       console.log('=== СОЗДАНИЕ БРОНИРОВАНИЯ В БАЗЕ ДАННЫХ ===');
       console.log('useBookings - Creating booking:', newBooking);
       
-      // Проверяем, что все обязательные поля заполнены
       if (!newBooking.ride_id || !newBooking.passenger_id) {
         throw new Error('Не заполнены обязательные поля: ride_id или passenger_id');
       }
@@ -123,17 +122,10 @@ export const useBookings = () => {
 
       if (error) {
         console.error('useBookings - Create booking error:', error);
-        console.error('useBookings - Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
         throw error;
       }
       
       console.log('useBookings - Booking created successfully:', data);
-      console.log('=== БРОНИРОВАНИЕ СОЗДАНО УСПЕШНО ===');
       return data;
     },
     onSuccess: () => {
