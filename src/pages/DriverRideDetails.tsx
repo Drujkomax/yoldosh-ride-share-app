@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,7 +28,7 @@ const DriverRideDetails = () => {
         .from('bookings')
         .select(`
           *,
-          profiles:passenger_id (
+          profiles!bookings_passenger_id_fkey (
             name,
             phone,
             rating,

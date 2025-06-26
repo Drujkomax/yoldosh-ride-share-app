@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -45,12 +44,12 @@ export const useBookings = () => {
         .from('bookings')
         .select(`
           *,
-          rides (
+          rides!bookings_ride_id_fkey (
             from_city,
             to_city,
             departure_date,
             departure_time,
-            profiles:driver_id (
+            profiles!rides_driver_id_fkey (
               name,
               rating
             )
