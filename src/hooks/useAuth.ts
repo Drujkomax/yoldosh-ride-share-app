@@ -20,12 +20,34 @@ export const useAuth = () => {
   const register = async (phone: string, name: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      console.log('Attempting to register user:', { phone, name, role });
+      console.log('=== НАЧАЛО РЕГИСТРАЦИИ ===');
+      console.log('useAuth - Данные для регистрации:', { phone, name, role });
       
       const userId = generateUUID();
-      console.log('Generated UUID:', userId);
+      console.log('useAuth - Сгенерированный UUID:', userId);
+      
+      // Проверяем, не существует ли уже пользователь с таким телефоном
+      console.log('useAuth - Проверяем существование пользователя...');
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, phone')
+        .eq('phone', phone)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('useAuth - Ошибка при проверке существующего пользователя:', checkError);
+      }
+
+      if (existingUser) {
+        console.log('useAuth - Пользователь уже существует:', existingUser);
+        toast.error('Пользователь с таким номером уже зарегистрирован');
+        return false;
+      }
+
+      console.log('useAuth - Пользователь не найден, создаем нового...');
       
       // Создаем профиль пользователя в базе данных
+      console.log('useAuth - Отправляем данные в Supabase profiles таблицу...');
       const { data: profile, error } = await supabase
         .from('profiles')
         .insert([
@@ -43,12 +65,26 @@ export const useAuth = () => {
         .single();
 
       if (error) {
-        console.error('Registration error:', error);
-        toast.error('Ошибка при регистрации');
+        console.error('useAuth - Ошибка при создании профиля:', error);
+        console.error('useAuth - Детали ошибки:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        
+        let errorMessage = 'Ошибка при регистрации';
+        if (error.code === '23505') {
+          errorMessage = 'Пользователь с таким номером уже существует';
+        } else if (error.code === '23514') {
+          errorMessage = 'Некорректные данные для регистрации';
+        }
+        
+        toast.error(errorMessage);
         return false;
       }
 
-      console.log('Profile created successfully:', profile);
+      console.log('useAuth - Профиль успешно создан в базе данных:', profile);
 
       // Сохраняем пользователя в контексте
       const userProfile = {
@@ -62,36 +98,47 @@ export const useAuth = () => {
         avatarUrl: profile.avatar_url
       };
 
+      console.log('useAuth - Данные пользователя для контекста:', userProfile);
       setUser(userProfile);
+      
+      console.log('useAuth - Регистрация завершена успешно!');
       toast.success('Регистрация прошла успешно!');
       return true;
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Ошибка при регистрации');
+      console.error('useAuth - Неожиданная ошибка при регистрации:', error);
+      toast.error('Произошла неожиданная ошибка при регистрации');
       return false;
     } finally {
       setIsLoading(false);
+      console.log('=== КОНЕЦ РЕГИСТРАЦИИ ===');
     }
   };
 
   const login = async (phone: string) => {
     setIsLoading(true);
     try {
-      console.log('Attempting to login user:', phone);
+      console.log('=== НАЧАЛО ВХОДА ===');
+      console.log('useAuth - Попытка входа для телефона:', phone);
       
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('phone', phone)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Login error:', error);
+        console.error('useAuth - Ошибка при поиске пользователя:', error);
+        toast.error('Ошибка при поиске пользователя');
+        return false;
+      }
+
+      if (!profile) {
+        console.log('useAuth - Пользователь не найден для телефона:', phone);
         toast.error('Пользователь не найден');
         return false;
       }
 
-      console.log('Profile found:', profile);
+      console.log('useAuth - Профиль найден:', profile);
 
       const userProfile = {
         id: profile.id,
@@ -105,18 +152,75 @@ export const useAuth = () => {
       };
 
       setUser(userProfile);
+      console.log('useAuth - Вход выполнен успешно!');
       toast.success('Вход выполнен успешно!');
       return true;
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Ошибка при входе');
+      console.error('useAuth - Неожиданная ошибка при входе:', error);
+      toast.error('Произошла неожиданная ошибка при входе');
       return false;
     } finally {
       setIsLoading(false);
+      console.log('=== КОНЕЦ ВХОДА ===');
+    }
+  };
+
+  // Добавляем функцию для автоматического создания профиля если нужно
+  const ensureUserProfile = async (user: any) => {
+    try {
+      console.log('useAuth - Проверяем/создаем профиль для пользователя:', user);
+      
+      // Проверяем существование профиля в базе данных
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('useAuth - Ошибка при проверке профиля:', checkError);
+        return false;
+      }
+
+      if (existingProfile) {
+        console.log('useAuth - Профиль уже существует в базе данных');
+        return true;
+      }
+
+      console.log('useAuth - Профиль не найден в базе, создаем автоматически...');
+      
+      // Создаем профиль автоматически
+      const { data: newProfile, error: createError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: user.id,
+            phone: user.phone,
+            name: user.name,
+            role: user.role,
+            is_verified: user.isVerified || false,
+            total_rides: user.totalRides || 0,
+            rating: user.rating || 0.0
+          }
+        ])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('useAuth - Ошибка при автоматическом создании профиля:', createError);
+        return false;
+      }
+
+      console.log('useAuth - Профиль автоматически создан:', newProfile);
+      return true;
+    } catch (error) {
+      console.error('useAuth - Ошибка в ensureUserProfile:', error);
+      return false;
     }
   };
 
   const logout = () => {
+    console.log('useAuth - Выход из системы');
     setUser(null);
     toast.success('Выход выполнен успешно!');
   };
@@ -125,6 +229,7 @@ export const useAuth = () => {
     register,
     login,
     logout,
+    ensureUserProfile,
     isLoading,
   };
 };

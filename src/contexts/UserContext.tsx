@@ -46,22 +46,40 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     // Загружаем пользователя из localStorage при инициализации
     const loadUserFromStorage = () => {
       try {
+        console.log('UserContext - Загрузка пользователя из localStorage...');
         const storedUser = localStorage.getItem('yoldosh_user');
+        
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
-          console.log('UserContext - Loaded user from localStorage:', parsedUser);
+          console.log('UserContext - Найден пользователь в localStorage:', parsedUser);
           
           // Проверяем валидность UUID
           if (!parsedUser.id || !isValidUUID(parsedUser.id)) {
-            console.log('UserContext - Invalid UUID detected, generating new one');
+            console.log('UserContext - Некорректный UUID, генерируем новый');
             parsedUser.id = generateUUID();
             localStorage.setItem('yoldosh_user', JSON.stringify(parsedUser));
+            console.log('UserContext - Новый UUID сгенерирован:', parsedUser.id);
           }
           
-          setUser(parsedUser);
+          // Убеждаемся, что все обязательные поля присутствуют
+          const completeUser = {
+            id: parsedUser.id,
+            phone: parsedUser.phone || '',
+            name: parsedUser.name || '',
+            role: parsedUser.role || 'passenger',
+            isVerified: parsedUser.isVerified || false,
+            totalRides: parsedUser.totalRides || 0,
+            rating: parsedUser.rating || 0.0,
+            avatarUrl: parsedUser.avatarUrl
+          };
+          
+          console.log('UserContext - Данные пользователя нормализованы:', completeUser);
+          setUser(completeUser);
+        } else {
+          console.log('UserContext - Пользователь не найден в localStorage');
         }
       } catch (error) {
-        console.error('UserContext - Error loading user from localStorage:', error);
+        console.error('UserContext - Ошибка при загрузке пользователя из localStorage:', error);
         localStorage.removeItem('yoldosh_user');
       } finally {
         setLoading(false);
@@ -72,7 +90,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateUser = (updatedUser: UserProfile | null) => {
-    console.log('UserContext - Updating user:', updatedUser);
+    console.log('UserContext - Обновление пользователя:', updatedUser);
     
     // Если это новый пользователь без правильного UUID, генерируем новый
     if (updatedUser && (!updatedUser.id || !isValidUUID(updatedUser.id))) {
@@ -80,17 +98,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         ...updatedUser,
         id: generateUUID()
       };
-      console.log('UserContext - Generated new UUID for user:', updatedUser.id);
+      console.log('UserContext - Сгенерирован новый UUID для пользователя:', updatedUser.id);
+    }
+    
+    // Нормализуем данные пользователя
+    if (updatedUser) {
+      updatedUser = {
+        id: updatedUser.id,
+        phone: updatedUser.phone || '',
+        name: updatedUser.name || '',
+        role: updatedUser.role || 'passenger',
+        isVerified: updatedUser.isVerified || false,
+        totalRides: updatedUser.totalRides || 0,
+        rating: updatedUser.rating || 0.0,
+        avatarUrl: updatedUser.avatarUrl
+      };
     }
     
     setUser(updatedUser);
     
     // Сохраняем в localStorage
     if (updatedUser) {
-      console.log('UserContext - Saving user to localStorage:', updatedUser);
+      console.log('UserContext - Сохранение пользователя в localStorage:', updatedUser);
       localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
     } else {
-      console.log('UserContext - Removing user from localStorage');
+      console.log('UserContext - Удаление пользователя из localStorage');
       localStorage.removeItem('yoldosh_user');
     }
   };
