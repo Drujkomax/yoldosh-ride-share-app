@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -130,9 +129,9 @@ const CreateRide = () => {
       
       createRide(rideData);
       
-      // Не переходим сразу, подождем результата mutation
+      // Переходим на главную страницу водителя после создания
       setTimeout(() => {
-        navigate('/driver');
+        navigate('/driver-home');
       }, 1000);
       
     } catch (error) {
@@ -149,7 +148,7 @@ const CreateRide = () => {
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => step > 1 ? setStep(step - 1) : navigate('/driver')}
+              onClick={() => step > 1 ? setStep(step - 1) : navigate('/driver-home')}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад

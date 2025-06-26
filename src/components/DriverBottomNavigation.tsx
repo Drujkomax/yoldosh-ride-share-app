@@ -35,11 +35,11 @@ const DriverBottomNavigation = () => {
       onClick: () => navigate('/search-requests')
     },
     {
-      path: '/chats',
+      path: '/driver-chats',
       icon: MessageCircle,
       label: 'Чаты',
       color: 'orange',
-      onClick: () => navigate('/chats')
+      onClick: () => navigate('/driver-chats')
     },
     {
       path: '/profile',

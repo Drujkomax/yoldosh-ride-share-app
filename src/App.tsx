@@ -9,6 +9,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import WelcomePage from "./pages/WelcomePage";
 import DriverDashboard from "./pages/DriverDashboard";
 import DriverHomePage from "./pages/DriverHomePage";
+import DriverChatsPage from "./pages/DriverChatsPage";
 import PassengerDashboard from "./pages/PassengerDashboard";
 import CreateRide from "./pages/CreateRide";
 import EditRide from "./pages/EditRide";
@@ -46,8 +47,9 @@ const App = () => (
               <Route path="/registration" element={<RegistrationPage />} />
               <Route path="/driver" element={<Navigate to="/driver-home" replace />} />
               <Route path="/driver-home" element={<DriverHomePage />} />
+              <Route path="/driver-chats" element={<DriverChatsPage />} />
               <Route path="/passenger" element={<PassengerDashboard />} />
-              <Route path="/create-ride" element={<DriverDashboard />} />
+              <Route path="/create-ride" element={<CreateRide />} />
               <Route path="/edit-ride/:id" element={<EditRide />} />
               <Route path="/create-request" element={<CreateRequest />} />
               <Route path="/search-rides" element={<SearchRides />} />
