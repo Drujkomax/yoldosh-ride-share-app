@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'driver' | 'passenger';
 
@@ -44,7 +45,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Загружаем пользователя из localStorage при инициализации
-    const loadUserFromStorage = () => {
+    const loadUserFromStorage = async () => {
       try {
         console.log('UserContext - Загрузка пользователя из localStorage...');
         const storedUser = localStorage.getItem('yoldosh_user');
@@ -74,6 +75,37 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           };
           
           console.log('UserContext - Данные пользователя нормализованы:', completeUser);
+          
+          // Проверяем, существует ли профиль в Supabase, если нет - создаем
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', completeUser.id)
+            .single();
+
+          if (!existingProfile) {
+            console.log('UserContext - Создаем профиль в Supabase');
+            const { error } = await supabase
+              .from('profiles')
+              .insert([{
+                id: completeUser.id,
+                name: completeUser.name,
+                phone: completeUser.phone,
+                role: completeUser.role,
+                is_verified: completeUser.isVerified,
+                total_rides: completeUser.totalRides,
+                rating: completeUser.rating || 0.0
+              }]);
+
+            if (error) {
+              console.error('UserContext - Ошибка создания профиля:', error);
+            } else {
+              console.log('UserContext - Профиль успешно создан в Supabase');
+            }
+          } else {
+            console.log('UserContext - Профиль уже существует в Supabase');
+          }
+          
           setUser(completeUser);
         } else {
           console.log('UserContext - Пользователь не найден в localStorage');
@@ -89,7 +121,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadUserFromStorage();
   }, []);
 
-  const updateUser = (updatedUser: UserProfile | null) => {
+  const updateUser = async (updatedUser: UserProfile | null) => {
     console.log('UserContext - Обновление пользователя:', updatedUser);
     
     // Если это новый пользователь без правильного UUID, генерируем новый
@@ -113,6 +145,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         rating: updatedUser.rating || 0.0,
         avatarUrl: updatedUser.avatarUrl
       };
+
+      // Обновляем или создаем профиль в Supabase
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .upsert([{
+            id: updatedUser.id,
+            name: updatedUser.name,
+            phone: updatedUser.phone,
+            role: updatedUser.role,
+            is_verified: updatedUser.isVerified,
+            total_rides: updatedUser.totalRides,
+            rating: updatedUser.rating || 0.0
+          }]);
+
+        if (error) {
+          console.error('UserContext - Ошибка обновления профиля:', error);
+        } else {
+          console.log('UserContext - Профиль успешно обновлен в Supabase');
+        }
+      } catch (error) {
+        console.error('UserContext - Ошибка при работе с Supabase:', error);
+      }
     }
     
     setUser(updatedUser);

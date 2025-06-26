@@ -109,12 +109,40 @@ const BookRide = () => {
         .select('id')
         .eq('ride_id', ride.id)
         .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${ride.driver_id}),and(participant1_id.eq.${ride.driver_id},participant2_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
 
       let chatId = existingChat?.id;
 
       // Если чат не существует, создаем новый
       if (!chatId) {
+        // Сначала убеждаемся, что профиль водителя существует
+        const { data: driverProfile } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .eq('id', ride.driver_id)
+          .single();
+
+        if (!driverProfile) {
+          // Создаем профиль водителя, если его нет
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+              id: ride.driver_id,
+              name: ride.driver?.name || 'Водитель',
+              phone: ride.driver?.phone || '',
+              role: 'driver',
+              is_verified: ride.driver?.is_verified || false,
+              total_rides: ride.driver?.total_rides || 0,
+              rating: ride.driver?.rating || 0
+            }]);
+
+          if (profileError) {
+            console.error('Ошибка создания профиля водителя:', profileError);
+            toast.error('Не удалось создать чат с водителем');
+            return;
+          }
+        }
+
         const { data: newChat, error } = await supabase
           .from('chats')
           .insert([{
@@ -125,7 +153,11 @@ const BookRide = () => {
           .select('id')
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Ошибка создания чата:', error);
+          toast.error('Не удалось создать чат');
+          return;
+        }
         chatId = newChat.id;
       }
 

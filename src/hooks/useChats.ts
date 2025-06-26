@@ -110,7 +110,7 @@ export const useChats = () => {
             .eq('chat_id', chat.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           // Количество непрочитанных сообщений
           const { count: unreadCount } = await supabase
@@ -236,6 +236,17 @@ export const useMessages = (chatId: string) => {
       
       if (!user) {
         throw new Error('Пользователь не авторизован');
+      }
+
+      // Сначала проверяем, существует ли чат
+      const { data: chatExists } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('id', chatId)
+        .single();
+
+      if (!chatExists) {
+        throw new Error('Чат не найден');
       }
 
       const { data, error } = await supabase
