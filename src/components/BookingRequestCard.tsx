@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, Calendar, MapPin, MessageSquare, Check, X, Loader2 } from 'lucide-react';
+import { User, Calendar, MapPin, MessageSquare, Check, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ interface BookingRequest {
     to_city: string;
     departure_date: string;
     departure_time: string;
+    available_seats: number;
   };
   seats_booked: number;
   total_price: number;
@@ -122,6 +123,9 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
     }
   };
 
+  // Проверяем, достаточно ли мест
+  const hasEnoughSeats = booking.ride.available_seats >= booking.seats_booked;
+
   return (
     <Card className="bg-gradient-to-r from-white to-slate-50 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-slate-100 animate-fade-in">
       <CardContent className="p-6">
@@ -162,7 +166,19 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
               {formatDate(booking.ride.departure_date)} в {formatTime(booking.ride.departure_time)}
             </div>
           </div>
+          <div className="text-xs text-blue-600 mt-1">
+            Свободных мест: {booking.ride.available_seats}
+          </div>
         </div>
+
+        {!hasEnoughSeats && (
+          <div className="bg-red-50 p-3 rounded-xl mb-4 flex items-center space-x-2">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <div className="text-sm text-red-700">
+              Недостаточно мест! Запрошено: {booking.seats_booked}, доступно: {booking.ride.available_seats}
+            </div>
+          </div>
+        )}
 
         {booking.pickup_location && (
           <div className="bg-green-50 p-3 rounded-xl mb-4">
@@ -190,8 +206,8 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
           </Button>
           <Button 
             onClick={() => onAccept(booking.id)}
-            disabled={isUpdating}
-            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
+            disabled={isUpdating || !hasEnoughSeats}
+            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Check className="h-4 w-4 mr-2" />
             Принять

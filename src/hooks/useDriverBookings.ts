@@ -19,6 +19,7 @@ export interface DriverBooking {
     to_city: string;
     departure_date: string;
     departure_time: string;
+    available_seats: number;
   };
   passenger: {
     name: string;
@@ -42,7 +43,7 @@ export const useDriverBookings = () => {
         return [];
       }
 
-      // Получаем заявки на поездки водителя - исправленный запрос
+      // Получаем заявки на поездки водителя
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -52,6 +53,7 @@ export const useDriverBookings = () => {
             to_city,
             departure_date,
             departure_time,
+            available_seats,
             driver_id
           ),
           profiles!bookings_passenger_id_fkey (
@@ -81,6 +83,7 @@ export const useDriverBookings = () => {
           to_city: booking.rides.to_city,
           departure_date: booking.rides.departure_date,
           departure_time: booking.rides.departure_time,
+          available_seats: booking.rides.available_seats,
         },
         passenger: {
           name: booking.profiles?.name || 'Неизвестен',
@@ -119,6 +122,7 @@ export const useDriverBookings = () => {
       queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['chats'] });
+      queryClient.invalidateQueries({ queryKey: ['rides'] });
       
       if (variables.status === 'confirmed') {
         toast.success("Заявка принята и чат создан");

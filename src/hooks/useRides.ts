@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +15,7 @@ export interface Ride {
   description?: string;
   car_model?: string;
   car_color?: string;
-  status: 'active' | 'cancelled' | 'completed';
+  status: 'active' | 'cancelled' | 'completed' | 'full';
   created_at: string;
   driver?: {
     name: string;
@@ -43,7 +42,7 @@ export const useRides = () => {
             total_rides
           )
         `)
-        .eq('status', 'active')
+        .in('status', ['active', 'full'])
         .order('departure_date', { ascending: true });
 
       if (error) {
@@ -272,7 +271,7 @@ export const useRides = () => {
           total_rides
         )
       `)
-      .eq('status', 'active')
+      .in('status', ['active', 'full'])
       .eq('from_city', filters.from_city)
       .eq('to_city', filters.to_city);
 
