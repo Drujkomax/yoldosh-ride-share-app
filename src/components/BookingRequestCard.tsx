@@ -1,12 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, Calendar, MapPin, MessageSquare, Check, X } from 'lucide-react';
+import { User, Calendar, MapPin, MessageSquare, Check, X, Loader2 } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface BookingRequest {
   id: string;
+  ride_id: string;
+  passenger_id: string;
   passenger: {
     name: string;
     phone: string;

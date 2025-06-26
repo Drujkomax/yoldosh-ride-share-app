@@ -62,6 +62,7 @@ const BookRide = () => {
         total_price: ride.price_per_seat * seats,
         pickup_location: pickupLocation,
         notes: notes,
+        status: 'pending',
       });
       
       toast.success('Заявка на бронирование отправлена!');
@@ -201,7 +202,7 @@ const BookRide = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium text-slate-800">{ride.driver?.name}</div>
-                    <div className="text-sm text-slate-600">{ride.driver?.phone}</div>
+                    <div className="text-sm text-slate-600">{ride.driver?.phone || 'Телефон не указан'}</div>
                     <div className="flex items-center space-x-2 mt-1">
                       <div className="flex text-yellow-500">
                         <Star className="h-4 w-4 fill-current" />
