@@ -5,53 +5,53 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, MessageCircle, Phone, Shield, Car } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, MessageCircle, Phone, Shield, Car, Loader2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useRideRequests } from '@/hooks/useRideRequests';
 
 const RequestDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useTheme();
+  const { requests, respondToRequest, isResponding } = useRideRequests();
   const [responseMessage, setResponseMessage] = useState('');
-  const [isResponding, setIsResponding] = useState(false);
 
-  // Mock request data - in real app this would come from API
-  const request = {
-    id: parseInt(id || '1'),
-    passenger: {
-      name: 'Азиз Каримов',
-      rating: 4.6,
-      reviews: 12,
-      isVerified: true,
-      phone: '+998 90 123 45 67',
-      joinDate: 'Октябрь 2023',
-      completedRides: 8
-    },
-    from: 'Ташкент',
-    to: 'Самарканд',
-    date: '25 декабря 2024',
-    preferredTime: 'Утром (08:00 - 11:00)',
-    passengers: 2,
-    maxPrice: 45000,
-    comment: 'Предпочитаю ехать утром, готов подождать. Есть 1 чемодан. Не курю.',
-    createdAt: '2 часа назад',
-    preferences: ['Некурящий', 'Тихая поездка', 'Остановки по договоренности'],
-    urgency: 'normal'
-  };
+  // Находим заявку по ID
+  const request = requests.find(r => r.id === id);
 
-  const handleSendResponse = () => {
-    if (!responseMessage.trim()) {
-      alert('Пожалуйста, напишите сообщение');
+  const handleSendResponse = async () => {
+    if (!responseMessage.trim() || !id) {
       return;
     }
     
-    alert(`Ваш отклик отправлен пассажиру ${request.passenger.name}!`);
-    navigate('/search-requests');
+    try {
+      await respondToRequest({ requestId: id, message: responseMessage });
+      navigate('/search-requests');
+    } catch (error) {
+      console.error('Ошибка отправки отклика:', error);
+    }
   };
 
   const handleCall = () => {
-    window.location.href = `tel:${request.passenger.phone}`;
+    if (request?.passenger?.phone) {
+      window.location.href = `tel:${request.passenger.phone}`;
+    }
   };
+
+  if (!request) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">Заявка не найдена</h2>
+            <Button onClick={() => navigate('/search-requests')} className="bg-gradient-primary">
+              Вернуться к заявкам
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
@@ -67,7 +67,7 @@ const RequestDetails = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('back')}
             </Button>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">Заявка #{request.id}</h1>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">Детали заявки</h1>
             <div></div>
           </div>
         </div>
@@ -89,8 +89,8 @@ const RequestDetails = () => {
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
-                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{request.passenger.name}</h3>
-                  {request.passenger.isVerified && (
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">{request.passenger?.name || 'Пассажир'}</h3>
+                  {request.passenger?.is_verified && (
                     <Badge className="bg-yoldosh-success/20 text-yoldosh-success border-0">
                       <Shield className="h-3 w-3 mr-1" />
                       {t('verified')}
@@ -100,25 +100,20 @@ const RequestDetails = () => {
                 <div className="flex items-center space-x-4 text-sm text-slate-600 dark:text-slate-400">
                   <div className="flex items-center space-x-1">
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span>{request.passenger.rating}</span>
-                    <span>({request.passenger.reviews} {t('reviews')})</span>
+                    <span>{request.passenger?.rating || 0}</span>
+                    <span>({request.passenger?.total_rides || 0} поездок)</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Car className="h-4 w-4" />
-                    <span>{request.passenger.completedRides} поездок</span>
-                  </div>
-                </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Зарегистрирован: {request.passenger.joinDate}
                 </div>
               </div>
-              <Button
-                onClick={handleCall}
-                className="bg-yoldosh-success hover:bg-green-700 rounded-xl"
-              >
-                <Phone className="h-4 w-4 mr-2" />
-                Позвонить
-              </Button>
+              {request.passenger?.phone && (
+                <Button
+                  onClick={handleCall}
+                  className="bg-yoldosh-success hover:bg-green-700 rounded-xl"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Позвонить
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -140,17 +135,18 @@ const RequestDetails = () => {
                     <span className="font-semibold text-slate-800 dark:text-slate-200">Маршрут</span>
                   </div>
                   <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
-                    {request.from} → {request.to}
+                    {request.from_city} → {request.to_city}
                   </div>
                 </div>
                 
                 <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-4 rounded-2xl">
                   <div className="flex items-center space-x-2 mb-2">
                     <Calendar className="h-5 w-5 text-yoldosh-success" />
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Дата и время</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Предпочитаемая дата</span>
                   </div>
-                  <div className="text-lg font-bold text-slate-800 dark:text-slate-200">{request.date}</div>
-                  <div className="text-sm text-slate-600 dark:text-slate-400">{request.preferredTime}</div>
+                  <div className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                    {new Date(request.preferred_date).toLocaleDateString('ru-RU')}
+                  </div>
                 </div>
               </div>
 
@@ -160,7 +156,7 @@ const RequestDetails = () => {
                     <Users className="h-5 w-5 text-yoldosh-accent" />
                     <span className="font-semibold text-slate-800 dark:text-slate-200">Пассажиры</span>
                   </div>
-                  <div className="text-lg font-bold text-slate-800 dark:text-slate-200">{request.passengers} человек(а)</div>
+                  <div className="text-lg font-bold text-slate-800 dark:text-slate-200">{request.passengers_count} человек(а)</div>
                 </div>
                 
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 rounded-2xl">
@@ -169,34 +165,22 @@ const RequestDetails = () => {
                     <span className="font-semibold text-slate-800 dark:text-slate-200">Готов заплатить до</span>
                   </div>
                   <div className="text-xl font-bold text-yoldosh-success">
-                    {request.maxPrice.toLocaleString()} {t('sum')}
+                    {request.max_price_per_seat.toLocaleString()} {t('sum')}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Comment */}
-            {request.comment && (
+            {/* Description */}
+            {request.description && (
               <div className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 p-4 rounded-2xl">
                 <div className="flex items-center space-x-2 mb-2">
                   <MessageCircle className="h-5 w-5 text-yoldosh-primary" />
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">Комментарий</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">Описание</span>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 italic">"{request.comment}"</p>
+                <p className="text-slate-700 dark:text-slate-300 italic">"{request.description}"</p>
               </div>
             )}
-
-            {/* Preferences */}
-            <div>
-              <h4 className="font-semibold mb-3 text-slate-800 dark:text-slate-200">Предпочтения пассажира</h4>
-              <div className="flex flex-wrap gap-2">
-                {request.preferences.map((pref, index) => (
-                  <Badge key={index} variant="outline" className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                    {pref}
-                  </Badge>
-                ))}
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -237,7 +221,14 @@ const RequestDetails = () => {
                 disabled={isResponding || !responseMessage.trim()}
                 className="flex-1 bg-gradient-accent hover:scale-105 transition-all duration-300 rounded-xl"
               >
-                {isResponding ? 'Отправляем...' : 'Отправить отклик'}
+                {isResponding ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Отправляем...
+                  </>
+                ) : (
+                  'Отправить отклик'
+                )}
               </Button>
             </div>
           </CardContent>
