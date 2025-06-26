@@ -173,7 +173,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          id: string
+          id?: string
           is_verified?: boolean | null
           name: string
           phone: string

@@ -1,7 +1,5 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'driver' | 'passenger';
 
@@ -20,7 +18,6 @@ interface UserContextType {
   user: UserProfile | null;
   setUser: (user: UserProfile | null) => void;
   isAuthenticated: boolean;
-  session: Session | null;
   loading: boolean;
 }
 
@@ -28,69 +25,39 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
+    // Загружаем пользователя из localStorage при инициализации
+    const loadUserFromStorage = () => {
+      try {
+        const storedUser = localStorage.getItem('yoldosh_user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('Loaded user from localStorage:', parsedUser);
+          setUser(parsedUser);
+        }
+      } catch (error) {
+        console.error('Error loading user from localStorage:', error);
+        localStorage.removeItem('yoldosh_user');
+      } finally {
         setLoading(false);
       }
-    });
+    };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        if (session?.user) {
-          fetchUserProfile(session.user.id);
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    loadUserFromStorage();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setUser(null);
-      } else if (profile) {
-        setUser({
-          id: profile.id,
-          phone: profile.phone,
-          role: profile.role as UserRole,
-          isVerified: profile.is_verified || false,
-          name: profile.name,
-          totalRides: profile.total_rides || 0,
-          rating: profile.rating || undefined,
-          avatarUrl: profile.avatar_url || undefined,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateUser = (updatedUser: UserProfile | null) => {
+    console.log('Updating user:', updatedUser);
     setUser(updatedUser);
+    
+    // Сохраняем в localStorage
+    if (updatedUser) {
+      localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
+    } else {
+      localStorage.removeItem('yoldosh_user');
+    }
   };
 
   return (
@@ -98,8 +65,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       value={{ 
         user, 
         setUser: updateUser, 
-        isAuthenticated: !!user && !!session,
-        session,
+        isAuthenticated: !!user,
         loading
       }}
     >

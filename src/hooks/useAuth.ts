@@ -94,6 +94,9 @@ export const useAuth = () => {
   const signOut = async () => {
     setLoading(true);
     try {
+      // Очищаем localStorage
+      localStorage.removeItem('yoldosh_user');
+      
       toast({
         title: "Выход выполнен",
         description: "Вы успешно вышли из аккаунта",
@@ -112,21 +115,38 @@ export const useAuth = () => {
     }
   };
 
-  const updateProfile = async (updates: {
+  const updateProfile = async (userId: string, updates: {
     name?: string;
     phone?: string;
     avatar_url?: string;
   }) => {
     setLoading(true);
     try {
-      console.log('Profile update requested:', updates);
+      console.log('Profile update requested:', { userId, updates });
       
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Update profile error:', error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось обновить профиль",
+          variant: "destructive",
+        });
+        return { data: null, error };
+      }
+
       toast({
         title: "Профиль обновлен",
         description: "Ваши данные успешно сохранены",
       });
 
-      return { error: null };
+      return { data, error: null };
     } catch (error: any) {
       console.error('Update profile error:', error);
       toast({
@@ -134,7 +154,7 @@ export const useAuth = () => {
         description: "Не удалось обновить профиль",
         variant: "destructive",
       });
-      return { error };
+      return { data: null, error };
     } finally {
       setLoading(false);
     }

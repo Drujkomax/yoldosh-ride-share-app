@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useUser } from '@/contexts/UserContext';
 
 export interface Booking {
   id: string;
@@ -26,19 +27,17 @@ export interface Booking {
 }
 
 export const useBookings = () => {
+  const { user } = useUser();
   const queryClient = useQueryClient();
 
   const { data: bookings = [], isLoading, error } = useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', user?.id],
     queryFn: async () => {
       console.log('useBookings - Starting to fetch bookings');
       
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('useBookings - Current user:', user);
-      
       if (!user) {
         console.log('useBookings - No user found');
-        throw new Error('No user found');
+        return [];
       }
 
       console.log('useBookings - Fetching bookings for user:', user.id);
@@ -85,7 +84,7 @@ export const useBookings = () => {
       console.log('useBookings - Mapped bookings:', mappedBookings);
       return mappedBookings;
     },
-    enabled: true,
+    enabled: !!user,
     retry: 1,
   });
 
