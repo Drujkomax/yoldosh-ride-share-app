@@ -9,14 +9,17 @@ export const useAuth = () => {
   const signUp = async (phone: string, name: string, role: 'driver' | 'passenger') => {
     setLoading(true);
     try {
-      // For now, we'll use email-based signup with phone as username
-      // In production, you'd implement proper SMS authentication
-      const email = `${phone.replace(/\D/g, '')}@yoldosh.app`;
-      const password = 'temp123'; // In production, generate a secure password or use OTP
+      // For demo purposes, we'll simulate phone verification without actual SMS
+      // In production, you would implement actual SMS verification
+      console.log('Simulating phone signup for:', phone, name, role);
+      
+      // Create a temporary email for Supabase auth (required by Supabase)
+      const tempEmail = `${phone.replace(/\D/g, '')}@temp.yoldosh.app`;
+      const tempPassword = 'TempPass123!'; // Temporary password
       
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: tempEmail,
+        password: tempPassword,
         options: {
           data: {
             phone,
@@ -26,8 +29,12 @@ export const useAuth = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signup error details:', error);
+        throw error;
+      }
 
+      console.log('Signup successful:', data);
       return { data, error: null };
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -40,16 +47,21 @@ export const useAuth = () => {
   const signIn = async (phone: string) => {
     setLoading(true);
     try {
-      const email = `${phone.replace(/\D/g, '')}@yoldosh.app`;
-      const password = 'temp123';
+      // For demo purposes, we'll check if user exists by attempting to sign in
+      const tempEmail = `${phone.replace(/\D/g, '')}@temp.yoldosh.app`;
+      const tempPassword = 'TempPass123!';
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: tempEmail,
+        password: tempPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signin error details:', error);
+        throw error;
+      }
 
+      console.log('Signin successful:', data);
       return { data, error: null };
     } catch (error: any) {
       console.error('Signin error:', error);

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,7 @@ const RegistrationPage = () => {
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isNewUser, setIsNewUser] = useState(true);
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -45,30 +46,26 @@ const RegistrationPage = () => {
       return;
     }
 
-    // First try to sign in (existing user)
+    // Check if user exists by trying to sign in
+    console.log('Checking if user exists for phone:', phone);
     const signInResult = await signIn(phone);
     
-    if (signInResult.error && signInResult.error.message.includes('Invalid login credentials')) {
-      // User doesn't exist, proceed with signup
-      setIsSignUp(true);
+    if (signInResult.data && !signInResult.error) {
+      // User exists and signed in successfully
+      setIsNewUser(false);
       toast({
-        title: "Регистрация",
-        description: "Создаем новый аккаунт...",
+        title: "Добро пожаловать!",
+        description: "Вы успешно вошли в систему",
       });
-      setStep('code');
-    } else if (signInResult.error) {
-      // Other error
-      toast({
-        title: "Ошибка",
-        description: "Проблема с входом в систему",
-        variant: "destructive"
-      });
+      // User will be redirected by the useEffect above
+      return;
     } else {
-      // Successful sign in
-      setIsSignUp(false);
+      // User doesn't exist, proceed with registration flow
+      setIsNewUser(true);
+      setStep('code');
       toast({
-        title: "Вход выполнен",
-        description: "Добро пожаловать обратно!",
+        title: "Код подтверждения",
+        description: "Введите код подтверждения для завершения регистрации",
       });
     }
   };
@@ -83,24 +80,26 @@ const RegistrationPage = () => {
       return;
     }
 
-    // Simulate SMS verification (in production, verify actual SMS code)
-    if (code !== '1234') {
+    // For demo purposes, accept any 4-digit code
+    if (!/^\d{4}$/.test(code)) {
       toast({
         title: "Ошибка",
-        description: "Неверный код подтверждения",
+        description: "Код должен содержать только цифры",
         variant: "destructive"
       });
       return;
     }
 
-    if (isSignUp && selectedRole) {
+    if (isNewUser && selectedRole) {
       // Create new user
+      console.log('Creating new user:', { phone, name, role: selectedRole });
       const result = await signUp(phone, name, selectedRole);
       
       if (result.error) {
+        console.error('Registration error:', result.error);
         toast({
           title: "Ошибка регистрации",
-          description: result.error.message,
+          description: "Не удалось создать аккаунт. Попробуйте еще раз.",
           variant: "destructive"
         });
       } else {
@@ -108,13 +107,8 @@ const RegistrationPage = () => {
           title: "Регистрация завершена",
           description: "Добро пожаловать в Yoldosh!",
         });
+        // User will be redirected by the useEffect above
       }
-    } else {
-      // User already signed in during phone step
-      toast({
-        title: "Авторизация завершена",
-        description: "Добро пожаловать обратно!",
-      });
     }
   };
 
@@ -198,10 +192,10 @@ const RegistrationPage = () => {
           <Card className="animate-slide-up bg-white/95 backdrop-blur-lg border-0 rounded-3xl shadow-2xl">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold text-slate-800">
-                Регистрация
+                Вход / Регистрация
               </CardTitle>
               <p className="text-slate-600 mt-2">
-                Введите ваши данные для регистрации
+                Введите ваши данные
               </p>
             </CardHeader>
             <CardContent className="space-y-6 p-8">
@@ -231,7 +225,7 @@ const RegistrationPage = () => {
                 disabled={loading}
                 className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl shadow-lg"
               >
-                {loading ? 'Проверяем...' : 'Получить код'}
+                {loading ? 'Проверяем...' : 'Продолжить'}
               </Button>
             </CardContent>
           </Card>
@@ -244,11 +238,11 @@ const RegistrationPage = () => {
                 Код подтверждения
               </CardTitle>
               <p className="text-slate-600 mt-2">
-                Введите код из SMS на номер<br />
+                Для завершения регистрации<br />
                 <span className="font-semibold text-yoldosh-primary">{phone}</span>
               </p>
               <p className="text-xs text-slate-400 mt-2">
-                Для демо используйте код: 1234
+                Для демо введите любой 4-значный код
               </p>
             </CardHeader>
             <CardContent className="space-y-8 p-8">
@@ -258,7 +252,7 @@ const RegistrationPage = () => {
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="XXXX"
+                placeholder="1234"
                 maxLength={4}
                 className="text-center text-2xl tracking-widest font-bold"
               />
