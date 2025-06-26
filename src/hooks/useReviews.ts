@@ -46,7 +46,8 @@ export const useReviews = (userId?: string) => {
         return [];
       }
 
-      const { data, error } = await supabase
+      // Using type assertion to work around missing 'reviews' table in types
+      const { data, error } = await (supabase as any)
         .from('reviews')
         .select(`
           *,
@@ -99,7 +100,8 @@ export const useReviews = (userId?: string) => {
         reviewer_id: user.id
       };
       
-      const { data, error } = await supabase
+      // Using type assertion for reviews table
+      const { data, error } = await (supabase as any)
         .from('reviews')
         .insert([reviewData])
         .select()
@@ -133,7 +135,7 @@ export const useReviews = (userId?: string) => {
   const updateUserRating = async (userId: string) => {
     try {
       // Получаем все отзывы пользователя для пересчета рейтинга
-      const { data: userReviews, error } = await supabase
+      const { data: userReviews, error } = await (supabase as any)
         .from('reviews')
         .select('rating')
         .eq('reviewed_user_id', userId);
@@ -144,7 +146,7 @@ export const useReviews = (userId?: string) => {
       }
 
       if (userReviews && userReviews.length > 0) {
-        const avgRating = userReviews.reduce((sum, review) => sum + review.rating, 0) / userReviews.length;
+        const avgRating = userReviews.reduce((sum: number, review: any) => sum + review.rating, 0) / userReviews.length;
         
         // Обновляем рейтинг в профиле
         await supabase
@@ -195,7 +197,7 @@ export const useReviews = (userId?: string) => {
       const bookingsNeedingReview = [];
       
       for (const booking of data || []) {
-        const { data: existingReview } = await supabase
+        const { data: existingReview } = await (supabase as any)
           .from('reviews')
           .select('id')
           .eq('booking_id', booking.id)
