@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -62,6 +61,14 @@ const CreateRide = () => {
         toast.error("Выберите дату и время");
         return;
       }
+      
+      // Проверяем, что дата не в прошлом
+      const selectedDate = new Date(`${formData.date}T${formData.time}`);
+      const now = new Date();
+      if (selectedDate <= now) {
+        toast.error("Дата и время поездки должны быть в будущем");
+        return;
+      }
     }
     
     if (step === 3) {
@@ -69,33 +76,66 @@ const CreateRide = () => {
         toast.error("Заполните все поля");
         return;
       }
+      
+      if (parseInt(formData.seats) <= 0) {
+        toast.error("Количество мест должно быть больше 0");
+        return;
+      }
+      
+      if (parseFloat(formData.price) <= 0) {
+        toast.error("Цена должна быть больше 0");
+        return;
+      }
     }
     
     setStep(step + 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    console.log('CreateRide - Starting ride creation');
+    console.log('CreateRide - Current user:', user);
+    console.log('CreateRide - Form data:', formData);
+    
     if (!user) {
+      console.error('CreateRide - No user found');
       toast.error("Необходимо войти в систему");
       return;
     }
 
-    const rideData = {
-      driver_id: user.id,
-      from_city: formData.from,
-      to_city: formData.to,
-      departure_date: formData.date,
-      departure_time: formData.time,
-      available_seats: parseInt(formData.seats),
-      price_per_seat: parseFloat(formData.price),
-      description: formData.description || undefined,
-      car_model: formData.car || undefined,
-      car_color: undefined,
-      status: 'active' as const
-    };
+    if (!user.id) {
+      console.error('CreateRide - User has no ID');
+      toast.error("Ошибка пользователя. Перезайдите в приложение");
+      return;
+    }
 
-    createRide(rideData);
-    navigate('/driver');
+    try {
+      const rideData = {
+        driver_id: user.id,
+        from_city: formData.from,
+        to_city: formData.to,
+        departure_date: formData.date,
+        departure_time: formData.time,
+        available_seats: parseInt(formData.seats),
+        price_per_seat: parseFloat(formData.price),
+        description: formData.description || undefined,
+        car_model: formData.car || undefined,
+        car_color: undefined,
+        status: 'active' as const
+      };
+
+      console.log('CreateRide - Prepared ride data:', rideData);
+      
+      createRide(rideData);
+      
+      // Не переходим сразу, подождем результата mutation
+      setTimeout(() => {
+        navigate('/driver');
+      }, 1000);
+      
+    } catch (error) {
+      console.error('CreateRide - Error in handleSubmit:', error);
+      toast.error("Произошла ошибка при создании поездки");
+    }
   };
 
   return (

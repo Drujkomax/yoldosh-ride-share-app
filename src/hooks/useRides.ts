@@ -31,6 +31,8 @@ export const useRides = () => {
   const { data: rides = [], isLoading, error } = useQuery({
     queryKey: ['rides'],
     queryFn: async () => {
+      console.log('useRides - Fetching rides from database');
+      
       const { data, error } = await supabase
         .from('rides')
         .select(`
@@ -44,7 +46,12 @@ export const useRides = () => {
         .eq('status', 'active')
         .order('departure_date', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('useRides - Error fetching rides:', error);
+        throw error;
+      }
+
+      console.log('useRides - Fetched rides:', data?.length || 0, 'rides');
 
       return data.map(ride => ({
         ...ride,
@@ -59,27 +66,93 @@ export const useRides = () => {
 
   const createRideMutation = useMutation({
     mutationFn: async (newRide: Omit<Ride, 'id' | 'created_at' | 'driver'>) => {
+      console.log('useRides - Creating new ride with data:', newRide);
+      
+      // Проверяем корректность данных перед отправкой
+      if (!newRide.driver_id) {
+        console.error('useRides - No driver_id provided');
+        throw new Error('Driver ID is required');
+      }
+      
+      if (!newRide.from_city || !newRide.to_city) {
+        console.error('useRides - Missing cities:', { from: newRide.from_city, to: newRide.to_city });
+        throw new Error('From and to cities are required');
+      }
+      
+      if (!newRide.departure_date || !newRide.departure_time) {
+        console.error('useRides - Missing date/time:', { date: newRide.departure_date, time: newRide.departure_time });
+        throw new Error('Departure date and time are required');
+      }
+      
+      if (newRide.available_seats <= 0 || newRide.price_per_seat <= 0) {
+        console.error('useRides - Invalid seats/price:', { seats: newRide.available_seats, price: newRide.price_per_seat });
+        throw new Error('Seats and price must be greater than 0');
+      }
+
+      // Проверяем, что водитель существует в profiles
+      console.log('useRides - Checking if driver exists in profiles');
+      const { data: driverProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('id', newRide.driver_id)
+        .single();
+      
+      if (profileError) {
+        console.error('useRides - Driver profile not found:', profileError);
+        throw new Error('Driver profile not found. Please complete registration first.');
+      }
+      
+      console.log('useRides - Driver profile found:', driverProfile);
+
       const { data, error } = await supabase
         .from('rides')
         .insert([newRide])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useRides - Error creating ride:', error);
+        console.error('useRides - Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+      
+      console.log('useRides - Ride created successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('useRides - Create ride success:', data);
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       toast.success("Ваша поездка успешно опубликована");
     },
-    onError: (error) => {
-      console.error('Create ride error:', error);
-      toast.error("Не удалось создать поездку");
+    onError: (error: any) => {
+      console.error('useRides - Create ride error:', error);
+      
+      // Показываем более понятные ошибки пользователю
+      let errorMessage = "Не удалось создать поездку";
+      
+      if (error.message?.includes('Driver profile not found')) {
+        errorMessage = "Необходимо завершить регистрацию профиля";
+      } else if (error.message?.includes('required')) {
+        errorMessage = "Заполните все обязательные поля";
+      } else if (error.code === '23503') {
+        errorMessage = "Ошибка связи с профилем водителя";
+      } else if (error.code === '42703') {
+        errorMessage = "Ошибка структуры данных";
+      }
+      
+      toast.error(errorMessage);
     },
   });
 
   const updateRideMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Ride> }) => {
+      console.log('useRides - Updating ride:', id, updates);
+      
       const { data, error } = await supabase
         .from('rides')
         .update(updates)
@@ -87,7 +160,12 @@ export const useRides = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('useRides - Error updating ride:', error);
+        throw error;
+      }
+      
+      console.log('useRides - Ride updated successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -95,7 +173,7 @@ export const useRides = () => {
       toast.success("Изменения сохранены");
     },
     onError: (error) => {
-      console.error('Update ride error:', error);
+      console.error('useRides - Update ride error:', error);
       toast.error("Не удалось обновить поездку");
     },
   });
@@ -105,6 +183,8 @@ export const useRides = () => {
     to_city: string;
     departure_date?: string;
   }) => {
+    console.log('useRides - Searching rides with filters:', filters);
+    
     let query = supabase
       .from('rides')
       .select(`
@@ -125,7 +205,12 @@ export const useRides = () => {
 
     const { data, error } = await query.order('departure_date', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('useRides - Error searching rides:', error);
+      throw error;
+    }
+
+    console.log('useRides - Found rides:', data?.length || 0);
 
     return data.map(ride => ({
       ...ride,
