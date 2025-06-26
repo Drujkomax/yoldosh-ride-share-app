@@ -23,7 +23,7 @@ export const useAuth = () => {
             phone,
             name,
             role,
-            is_verified: true, // Считаем пользователя верифицированным после подтверждения кода
+            is_verified: true,
             total_rides: 0,
             rating: 0.0
           }
@@ -33,13 +33,28 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Profile creation error:', error);
-        throw error;
+        toast({
+          title: "Ошибка регистрации",
+          description: "Не удалось создать аккаунт. Попробуйте еще раз.",
+          variant: "destructive",
+        });
+        return { data: null, error };
       }
 
       console.log('Profile created successfully:', data);
+      toast({
+        title: "Регистрация завершена",
+        description: "Аккаунт успешно создан!",
+      });
+      
       return { data, error: null };
     } catch (error: any) {
       console.error('Create profile error:', error);
+      toast({
+        title: "Ошибка регистрации",
+        description: "Произошла ошибка при создании аккаунта.",
+        variant: "destructive",
+      });
       return { data: null, error };
     } finally {
       setLoading(false);
@@ -56,7 +71,7 @@ export const useAuth = () => {
         .eq('phone', phone)
         .maybeSingle();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Check user error:', error);
         return { exists: false, user: null };
       }
@@ -79,7 +94,6 @@ export const useAuth = () => {
   const signOut = async () => {
     setLoading(true);
     try {
-      // Для демо версии просто очищаем локальное состояние
       toast({
         title: "Выход выполнен",
         description: "Вы успешно вышли из аккаунта",
@@ -105,14 +119,12 @@ export const useAuth = () => {
   }) => {
     setLoading(true);
     try {
-      // Для демо версии - обновляем профиль по ID
-      // В реальном приложении здесь бы был текущий пользователь
       console.log('Profile update requested:', updates);
       
       toast({
         title: "Профиль обновлен",
         description: "Ваши данные успешно сохранены",
-      });
+      );
 
       return { error: null };
     } catch (error: any) {

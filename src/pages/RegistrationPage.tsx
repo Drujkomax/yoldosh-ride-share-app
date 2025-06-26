@@ -98,12 +98,8 @@ const RegistrationPage = () => {
       
       if (result.error) {
         console.error('Registration error:', result.error);
-        toast({
-          title: "Ошибка регистрации",
-          description: "Не удалось создать аккаунт. Попробуйте еще раз.",
-          variant: "destructive"
-        });
-      } else {
+        return; // Toast уже показан в useAuth
+      } else if (result.data) {
         // Устанавливаем пользователя в контекст
         const newUser = {
           id: result.data.id,
@@ -117,11 +113,6 @@ const RegistrationPage = () => {
         };
         
         setUser(newUser);
-        
-        toast({
-          title: "Регистрация завершена",
-          description: "Добро пожаловать в Yoldosh!",
-        });
         
         // Перенаправляем в зависимости от роли
         if (selectedRole === 'driver') {
@@ -314,7 +305,8 @@ const RegistrationPage = () => {
               
               <button 
                 onClick={() => setStep('phone')}
-                className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2 hover:scale-105"
+                disabled={loading}
+                className="w-full text-yoldosh-primary hover:underline text-sm transition-all duration-200 py-2 hover:scale-105 disabled:opacity-50"
               >
                 Изменить данные
               </button>
