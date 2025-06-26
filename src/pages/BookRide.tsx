@@ -6,40 +6,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Minus, Plus, Loader2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUser } from '@/contexts/UserContext';
+import { useRides } from '@/hooks/useRides';
+import { useBookings } from '@/hooks/useBookings';
 
 const BookRide = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useTheme();
   const { user } = useUser();
+  const { rides, isLoading: ridesLoading } = useRides();
+  const { createBooking, isCreating } = useBookings();
+  
   const [bookingData, setBookingData] = useState({
     seats: 1,
     comment: ''
   });
 
-  // Mock ride data
-  const ride = {
-    id: 1,
-    driver: {
-      name: 'Бахтиёр',
-      rating: 4.8,
-      reviews: 45,
-      phone: '+998901234567',
-      isVerified: true
-    },
-    from: 'Ташкент',
-    to: 'Самарканд',
-    date: '25 декабря',
-    time: '09:00',
-    availableSeats: 3,
-    totalSeats: 4,
-    price: 50000,
-    car: 'Chevrolet Lacetti',
-    features: ['Кондиционер', 'Музыка', 'Некурящий']
-  };
+  // Находим поездку по ID
+  const ride = rides.find(r => r.id === id);
 
   const quickComments = [
     'Буду вовремя',
@@ -54,7 +41,9 @@ const BookRide = () => {
   };
 
   const handleSeatsChange = (increment: boolean) => {
-    if (increment && bookingData.seats < ride.availableSeats) {
+    if (!ride) return;
+    
+    if (increment && bookingData.seats < ride.available_seats) {
       setBookingData(prev => ({ ...prev, seats: prev.seats + 1 }));
     } else if (!increment && bookingData.seats > 1) {
       setBookingData(prev => ({ ...prev, seats: prev.seats - 1 }));
@@ -68,12 +57,47 @@ const BookRide = () => {
   };
 
   const handleBooking = () => {
-    console.log('Booking data:', bookingData);
-    alert('Запрос на бронирование отправлен! Водитель свяжется с вами в ближайшее время.');
-    navigate('/passenger');
+    if (!ride || !user) {
+      toast.error('Ошибка: данные поездки или пользователя не найдены');
+      return;
+    }
+
+    const totalPrice = ride.price_per_seat * bookingData.seats;
+    
+    createBooking({
+      ride_id: ride.id,
+      passenger_id: user.id,
+      seats_booked: bookingData.seats,
+      total_price: totalPrice,
+      status: 'pending',
+      notes: bookingData.comment || undefined,
+    });
   };
 
-  const totalPrice = ride.price * bookingData.seats;
+  if (ridesLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!ride) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">Поездка не найдена</h2>
+            <Button onClick={() => navigate('/passenger')} className="bg-gradient-primary">
+              Вернуться к поиску
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const totalPrice = ride.price_per_seat * bookingData.seats;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
@@ -106,23 +130,28 @@ const BookRide = () => {
                     <MapPin className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-bold text-xl text-slate-800 dark:text-slate-200">{ride.from} → {ride.to}</div>
+                    <div className="font-bold text-xl text-slate-800 dark:text-slate-200">
+                      {ride.from_city} → {ride.to_city}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4" />
-                    <span>{ride.date} в {ride.time}</span>
+                    <span>
+                      {new Date(ride.departure_date).toLocaleDateString('ru-RU')} в{' '}
+                      {ride.departure_time.slice(0, 5)}
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Users className="h-4 w-4" />
-                    <span>{ride.availableSeats} доступно мест</span>
+                    <span>{ride.available_seats} доступно мест</span>
                   </div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="font-bold text-2xl text-yoldosh-success">
-                  {ride.price.toLocaleString()} {t('sum')}
+                  {ride.price_per_seat.toLocaleString()} {t('sum')}
                 </div>
                 <div className="text-sm text-slate-500">за место</div>
               </div>
@@ -135,17 +164,21 @@ const BookRide = () => {
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium text-slate-800 dark:text-slate-200">{ride.driver.name}</span>
-                  {ride.driver.isVerified && (
-                    <Badge variant="secondary" className="text-xs bg-yoldosh-success/20 text-yoldosh-success">
-                      ✓ {t('verified')}
-                    </Badge>
-                  )}
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {ride.driver?.name || 'Водитель'}
+                  </span>
+                  <Badge variant="secondary" className="text-xs bg-yoldosh-success/20 text-yoldosh-success">
+                    ✓ {t('verified')}
+                  </Badge>
                 </div>
                 <div className="flex items-center space-x-1 text-sm">
                   <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                  <span className="text-slate-600 dark:text-slate-400">{ride.driver.rating}</span>
-                  <span className="text-gray-500">({ride.driver.reviews} {t('reviews')})</span>
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {ride.driver?.rating || 0}
+                  </span>
+                  <span className="text-gray-500">
+                    ({ride.driver?.total_rides || 0} {t('reviews')})
+                  </span>
                 </div>
               </div>
             </div>
@@ -184,10 +217,10 @@ const BookRide = () => {
                 <Input
                   type="number"
                   min="1"
-                  max={ride.availableSeats}
+                  max={ride.available_seats}
                   value={bookingData.seats}
                   onChange={(e) => {
-                    const value = Math.max(1, Math.min(ride.availableSeats, parseInt(e.target.value) || 1));
+                    const value = Math.max(1, Math.min(ride.available_seats, parseInt(e.target.value) || 1));
                     handleInputChange('seats', value);
                   }}
                   className="w-20 text-center h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80 font-bold text-lg"
@@ -197,12 +230,12 @@ const BookRide = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleSeatsChange(true)}
-                  disabled={bookingData.seats >= ride.availableSeats}
+                  disabled={bookingData.seats >= ride.available_seats}
                   className="h-10 w-10 rounded-full hover:scale-110 transition-all duration-300"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
-                <span className="text-sm text-slate-500">из {ride.availableSeats} доступных</span>
+                <span className="text-sm text-slate-500">из {ride.available_seats} доступных</span>
               </div>
             </div>
 
@@ -248,7 +281,7 @@ const BookRide = () => {
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
               <span className="text-slate-600 dark:text-slate-400">
-                {bookingData.seats} место × {ride.price.toLocaleString()} {t('sum')}
+                {bookingData.seats} место × {ride.price_per_seat.toLocaleString()} {t('sum')}
               </span>
               <span className="font-bold text-2xl text-yoldosh-success">
                 {totalPrice.toLocaleString()} {t('sum')}
@@ -260,9 +293,17 @@ const BookRide = () => {
         {/* Action Button */}
         <Button 
           onClick={handleBooking}
+          disabled={isCreating}
           className="w-full h-14 text-lg bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
         >
-          Отправить запрос на бронирование
+          {isCreating ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Отправка заявки...
+            </>
+          ) : (
+            'Отправить запрос на бронирование'
+          )}
         </Button>
       </div>
     </div>

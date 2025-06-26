@@ -4,37 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye, X, MessageCircle } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye, X, MessageCircle, Power } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
+import { useDriverBookings } from '@/hooks/useDriverBookings';
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { rides } = useRides();
+  const { rides, updateRide } = useRides();
+  const { bookings, updateBooking, isUpdating } = useDriverBookings();
 
   // Фильтруем поездки текущего водителя
   const myRides = rides.filter(ride => ride.driver_id === user?.id);
-
-  // Mock data для заявок пассажиров (позже будет заменено на реальные данные)
-  const passengerRequestsForMyRides = [
-    {
-      id: 1,
-      passenger: {
-        name: 'Азиз',
-        rating: 4.6,
-        reviews: 12
-      },
-      rideId: myRides[0]?.id || '1',
-      from: 'Ташкент',
-      to: 'Самарканд',
-      date: '25 декабря',
-      passengers: 2,
-      offerPrice: 45000,
-      comment: 'Хочу поехать в вашей поездке. Готов ехать в назначенное время.',
-      createdAt: '30 минут назад'
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,19 +31,18 @@ const DriverDashboard = () => {
     navigate('/create-ride');
   };
 
-  const handleAcceptRequest = (requestId: number, passengerName: string) => {
-    alert(`Заявка от ${passengerName} принята! Пассажир получит уведомление.`);
+  const handleAcceptRequest = (requestId: string) => {
+    updateBooking({ id: requestId, status: 'confirmed' });
   };
 
-  const handleRejectRequest = (requestId: number, passengerName: string) => {
-    if (confirm(`Вы уверены, что хотите отказать пассажиру ${passengerName}?`)) {
-      console.log(`Отказ пассажиру ${passengerName} по заявке ${requestId}`);
-      alert(`Отказ отправлен пассажиру ${passengerName}. Уведомление отправлено в чат.`);
+  const handleRejectRequest = (requestId: string) => {
+    updateBooking({ id: requestId, status: 'cancelled' });
+  };
+
+  const handleDeactivateRide = (rideId: string) => {
+    if (confirm('Вы уверены, что хотите деактивировать эту поездку?')) {
+      updateRide({ id: rideId, updates: { status: 'cancelled' } });
     }
-  };
-
-  const handleViewRequestDetails = (requestId: number) => {
-    navigate(`/request-details/${requestId}`);
   };
 
   const handleViewRideDetails = (rideId: string) => {
@@ -70,10 +51,6 @@ const DriverDashboard = () => {
 
   const handleEditRide = (rideId: string) => {
     navigate(`/edit-ride/${rideId}`);
-  };
-
-  const getRideById = (rideId: string) => {
-    return myRides.find(ride => ride.id === rideId);
   };
 
   const formatDate = (dateStr: string) => {
@@ -160,94 +137,75 @@ const DriverDashboard = () => {
                 Заявки на мои поездки
               </CardTitle>
               <Badge className="bg-yoldosh-accent/10 text-yoldosh-accent border-0 animate-bounce">
-                {passengerRequestsForMyRides.length} новых
+                {bookings.length} новых
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {passengerRequestsForMyRides.length === 0 ? (
+            {bookings.length === 0 ? (
               <div className="text-center py-8 text-slate-500">
                 Пока нет заявок на ваши поездки
               </div>
             ) : (
-              passengerRequestsForMyRides.map((request) => {
-                const relatedRide = getRideById(request.rideId);
-                return (
-                  <div key={request.id} className="bg-gradient-to-r from-white to-slate-50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-slate-100 animate-fade-in">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-accent rounded-2xl flex items-center justify-center animate-pulse">
-                          <User className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <div className="font-bold text-slate-800 text-lg">{request.passenger.name}</div>
-                          <div className="flex items-center space-x-2 mt-1 text-sm">
-                            <span className="text-amber-500">★ {request.passenger.rating}</span>
-                            <span className="text-slate-500">({request.passenger.reviews} отзывов)</span>
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">{request.createdAt}</div>
-                        </div>
+              bookings.map((booking) => (
+                <div key={booking.id} className="bg-gradient-to-r from-white to-slate-50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-slate-100 animate-fade-in">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-accent rounded-2xl flex items-center justify-center animate-pulse">
+                        <User className="h-6 w-6 text-white" />
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-xl text-yoldosh-success">
-                          {request.offerPrice.toLocaleString()} сум
+                      <div>
+                        <div className="font-bold text-slate-800 text-lg">{booking.passenger.name}</div>
+                        <div className="flex items-center space-x-2 mt-1 text-sm">
+                          <span className="text-amber-500">★ {booking.passenger.rating || 0}</span>
+                          <span className="text-slate-500">({booking.passenger.total_rides} поездок)</span>
                         </div>
-                        <div className="text-sm text-slate-600">{request.passengers} пассажир(ов)</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {new Date(booking.created_at).toLocaleString('ru-RU')}
+                        </div>
                       </div>
                     </div>
-                    
-                    {relatedRide && (
-                      <div className="bg-blue-50 p-3 rounded-xl mb-4">
-                        <div className="text-sm font-semibold text-blue-800">Поездка</div>
-                        <div className="text-sm text-blue-600">
-                          {relatedRide.from_city} → {relatedRide.to_city} • {formatDate(relatedRide.departure_date)} в {formatTime(relatedRide.departure_time)}
-                        </div>
+                    <div className="text-right">
+                      <div className="font-bold text-xl text-yoldosh-success">
+                        {booking.total_price.toLocaleString()} сум
                       </div>
-                    )}
-                    
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center space-x-3">
-                        <MapPin className="h-5 w-5 text-slate-400" />
-                        <span className="font-semibold text-slate-800">{request.from} → {request.to}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-slate-600">
-                        <Calendar className="h-4 w-4" />
-                        <span>{request.date}</span>
-                      </div>
-                      {request.comment && (
-                        <div className="bg-slate-100 p-3 rounded-xl">
-                          <p className="text-sm text-slate-700 italic">"{request.comment}"</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex space-x-3">
-                      <Button 
-                        onClick={() => handleViewRequestDetails(request.id)}
-                        variant="outline" 
-                        className="flex-1 rounded-xl border-yoldosh-accent text-yoldosh-accent hover:bg-yoldosh-accent/10 hover:scale-105 transition-all duration-300"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Подробнее
-                      </Button>
-                      <Button 
-                        onClick={() => handleRejectRequest(request.id, request.passenger.name)}
-                        variant="outline"
-                        className="flex-1 rounded-xl border-red-500 text-red-500 hover:bg-red-50 hover:border-red-600 hover:text-red-600 hover:scale-105 transition-all duration-300"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Отказать
-                      </Button>
-                      <Button 
-                        onClick={() => handleAcceptRequest(request.id, request.passenger.name)}
-                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
-                      >
-                        Принять
-                      </Button>
+                      <div className="text-sm text-slate-600">{booking.seats_booked} место(а)</div>
                     </div>
                   </div>
-                );
-              })
+                  
+                  <div className="bg-blue-50 p-3 rounded-xl mb-4">
+                    <div className="text-sm font-semibold text-blue-800">Поездка</div>
+                    <div className="text-sm text-blue-600">
+                      {booking.ride.from_city} → {booking.ride.to_city} • {formatDate(booking.ride.departure_date)} в {formatTime(booking.ride.departure_time)}
+                    </div>
+                  </div>
+                  
+                  {booking.notes && (
+                    <div className="bg-slate-100 p-3 rounded-xl mb-4">
+                      <p className="text-sm text-slate-700 italic">"{booking.notes}"</p>
+                    </div>
+                  )}
+
+                  <div className="flex space-x-3">
+                    <Button 
+                      onClick={() => handleRejectRequest(booking.id)}
+                      variant="outline"
+                      disabled={isUpdating}
+                      className="flex-1 rounded-xl border-red-500 text-red-500 hover:bg-red-50 hover:border-red-600 hover:text-red-600 hover:scale-105 transition-all duration-300"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Отказать
+                    </Button>
+                    <Button 
+                      onClick={() => handleAcceptRequest(booking.id)}
+                      disabled={isUpdating}
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
+                    >
+                      Принять
+                    </Button>
+                  </div>
+                </div>
+              ))
             )}
           </CardContent>
         </Card>
@@ -289,7 +247,7 @@ const DriverDashboard = () => {
                         {ride.price_per_seat.toLocaleString()} сум
                       </div>
                       <Badge className={getStatusColor(ride.status)}>
-                        Активна
+                        {ride.status === 'active' ? 'Активна' : ride.status === 'cancelled' ? 'Отменена' : 'Завершена'}
                       </Badge>
                     </div>
                   </div>
@@ -303,14 +261,25 @@ const DriverDashboard = () => {
                       <Eye className="h-4 w-4 mr-2" />
                       Подробнее
                     </Button>
-                    <Button 
-                      onClick={() => handleEditRide(ride.id)}
-                      variant="outline"
-                      className="flex-1 rounded-xl border-slate-300 text-slate-600 hover:bg-slate-50 hover:scale-105 transition-all duration-300"
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Редактировать
-                    </Button>
+                    {ride.status === 'active' && (
+                      <>
+                        <Button 
+                          onClick={() => handleEditRide(ride.id)}
+                          variant="outline"
+                          className="flex-1 rounded-xl border-slate-300 text-slate-600 hover:bg-slate-50 hover:scale-105 transition-all duration-300"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Редактировать
+                        </Button>
+                        <Button 
+                          onClick={() => handleDeactivateRide(ride.id)}
+                          variant="outline"
+                          className="rounded-xl border-red-500 text-red-500 hover:bg-red-50 hover:scale-105 transition-all duration-300 px-4"
+                        >
+                          <Power className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))
