@@ -58,17 +58,17 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   const { data: chats = [], isLoading } = useQuery({
-    queryKey: ['chats'],
+    queryKey: ['chats', user?.id],
     queryFn: async () => {
-      console.log('useChats - Загрузка чатов пользователя');
+      console.log('useChats - Загрузка чатов пользователя:', user?.id);
       
-      if (!user) {
+      if (!user?.id) {
         console.log('useChats - Пользователь не найден');
         return [];
       }
 
-      // Упрощенный запрос без сложных join'ов
-      const { data, error } = await supabase
+      // Загружаем чаты где пользователь является участником
+      const { data: chatsData, error } = await supabase
         .from('chats')
         .select('*')
         .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
@@ -79,21 +79,22 @@ export const useChats = () => {
         return [];
       }
 
-      // Загружаем участников и поездки отдельно
+      // Загружаем дополнительные данные для каждого чата
       const chatsWithData = await Promise.all(
-        (data || []).map(async (chat) => {
+        (chatsData || []).map(async (chat) => {
           // Загружаем участников
-          const { data: participant1 } = await supabase
-            .from('profiles')
-            .select('name, phone, rating, total_rides, is_verified')
-            .eq('id', chat.participant1_id)
-            .single();
-
-          const { data: participant2 } = await supabase
-            .from('profiles')
-            .select('name, phone, rating, total_rides, is_verified')
-            .eq('id', chat.participant2_id)
-            .single();
+          const [participant1Response, participant2Response] = await Promise.all([
+            supabase
+              .from('profiles')
+              .select('name, phone, rating, total_rides, is_verified')
+              .eq('id', chat.participant1_id)
+              .single(),
+            supabase
+              .from('profiles')
+              .select('name, phone, rating, total_rides, is_verified')
+              .eq('id', chat.participant2_id)
+              .single()
+          ]);
 
           // Загружаем поездку если есть
           let ride = null;
@@ -125,8 +126,8 @@ export const useChats = () => {
 
           return {
             ...chat,
-            participant1,
-            participant2,
+            participant1: participant1Response.data,
+            participant2: participant2Response.data,
             ride,
             lastMessage,
             unreadCount: unreadCount || 0
@@ -137,12 +138,12 @@ export const useChats = () => {
       console.log('useChats - Загружено чатов:', chatsWithData.length);
       return chatsWithData as Chat[];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   // Realtime подписка на обновления чатов
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
 
     console.log('useChats - Подписка на realtime обновления чатов');
 
@@ -153,24 +154,10 @@ export const useChats = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'chats',
-          filter: `participant1_id=eq.${user.id}`
+          table: 'chats'
         },
         () => {
-          console.log('useChats - Обновление чата (participant1)');
-          queryClient.invalidateQueries({ queryKey: ['chats'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chats',
-          filter: `participant2_id=eq.${user.id}`
-        },
-        () => {
-          console.log('useChats - Обновление чата (participant2)');
+          console.log('useChats - Обновление чата');
           queryClient.invalidateQueries({ queryKey: ['chats'] });
         }
       )
@@ -197,7 +184,7 @@ export const useChats = () => {
       supabase.removeChannel(chatsChannel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [user, queryClient]);
+  }, [user?.id, queryClient]);
 
   return {
     chats,
@@ -218,10 +205,14 @@ export const useMessages = (chatId: string) => {
         return [];
       }
 
-      // Упрощенный запрос
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select(`
+          *,
+          sender:profiles!messages_sender_id_fkey (
+            name
+          )
+        `)
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true });
 
@@ -230,24 +221,8 @@ export const useMessages = (chatId: string) => {
         return [];
       }
 
-      // Загружаем информацию об отправителях отдельно
-      const messagesWithSenders = await Promise.all(
-        (data || []).map(async (message) => {
-          const { data: sender } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', message.sender_id)
-            .single();
-
-          return {
-            ...message,
-            sender
-          };
-        })
-      );
-
-      console.log('useMessages - Загружено сообщений:', messagesWithSenders.length);
-      return messagesWithSenders as Message[];
+      console.log('useMessages - Загружено сообщений:', data?.length || 0);
+      return data as Message[];
     },
     enabled: !!chatId,
   });
@@ -256,27 +231,13 @@ export const useMessages = (chatId: string) => {
     mutationFn: async ({ content, messageType = 'text' }: { content: string; messageType?: 'text' | 'location' }) => {
       console.log('useMessages - Отправка сообщения:', { content, messageType, chatId, userId: user?.id });
       
-      if (!user) {
+      if (!user?.id) {
         throw new Error('Пользователь не авторизован');
       }
 
       if (!chatId) {
         throw new Error('Chat ID не указан');
       }
-
-      // Проверяем, существует ли чат
-      const { data: chatExists, error: chatError } = await supabase
-        .from('chats')
-        .select('id')
-        .eq('id', chatId)
-        .single();
-
-      if (chatError || !chatExists) {
-        console.error('useMessages - Чат не найден:', chatError);
-        throw new Error('Чат не найден');
-      }
-
-      console.log('useMessages - Чат найден, отправляем сообщение');
 
       // Отправляем сообщение
       const { data, error } = await supabase
@@ -374,4 +335,41 @@ export const useMessages = (chatId: string) => {
     markAsRead: markAsReadMutation.mutateAsync,
     isSending: sendMessageMutation.isPending,
   };
+};
+
+// Функция для создания чата между пользователями
+export const createChat = async (ride_id: string, participant1_id: string, participant2_id: string) => {
+  console.log('createChat - Создание чата:', { ride_id, participant1_id, participant2_id });
+  
+  // Проверяем, существует ли уже чат
+  const { data: existingChat } = await supabase
+    .from('chats')
+    .select('id')
+    .eq('ride_id', ride_id)
+    .or(`and(participant1_id.eq.${participant1_id},participant2_id.eq.${participant2_id}),and(participant1_id.eq.${participant2_id},participant2_id.eq.${participant1_id})`)
+    .single();
+
+  if (existingChat) {
+    console.log('createChat - Чат уже существует:', existingChat.id);
+    return existingChat.id;
+  }
+
+  // Создаем новый чат
+  const { data: newChat, error } = await supabase
+    .from('chats')
+    .insert([{
+      ride_id,
+      participant1_id,
+      participant2_id,
+    }])
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('createChat - Ошибка создания чата:', error);
+    throw error;
+  }
+
+  console.log('createChat - Чат создан:', newChat.id);
+  return newChat.id;
 };

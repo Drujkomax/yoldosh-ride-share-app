@@ -69,7 +69,7 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
   };
 
   const handleContactPassenger = async () => {
-    if (!user) {
+    if (!user?.id) {
       toast.error('Необходимо войти в систему');
       return;
     }
@@ -82,7 +82,7 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
         .select('id')
         .eq('ride_id', booking.ride_id)
         .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${booking.passenger_id}),and(participant1_id.eq.${booking.passenger_id},participant2_id.eq.${user.id})`)
-        .single();
+        .maybeSingle();
 
       let chatId = existingChat?.id;
 
@@ -113,7 +113,7 @@ const BookingRequestCard: React.FC<BookingRequestCardProps> = ({
         time: booking.ride.departure_time
       });
       
-      navigate(`/chat/${booking.passenger.name}?${params.toString()}`);
+      navigate(`/chat/${encodeURIComponent(booking.passenger.name)}?${params.toString()}`);
     } catch (error) {
       console.error('Chat creation error:', error);
       toast.error('Не удалось создать чат');

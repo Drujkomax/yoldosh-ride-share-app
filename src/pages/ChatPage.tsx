@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,16 +28,6 @@ const ChatPage = () => {
   const { messages, isLoading, sendMessage, markAsRead, isSending } = useMessages(chatId);
   const [inputText, setInputText] = useState('');
 
-  // Добавляем отладочную информацию
-  useEffect(() => {
-    console.log('ChatPage - Данные чата:', {
-      chatId,
-      user: user?.id,
-      chatType,
-      messagesCount: messages.length
-    });
-  }, [chatId, user, chatType, messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -47,7 +38,7 @@ const ChatPage = () => {
 
   // Отмечаем сообщения как прочитанные при загрузке
   useEffect(() => {
-    if (messages.length > 0 && user) {
+    if (messages.length > 0 && user?.id) {
       const unreadMessages = messages
         .filter(msg => !msg.read_at && msg.sender_id !== user.id)
         .map(msg => msg.id);
@@ -56,14 +47,12 @@ const ChatPage = () => {
         markAsRead(unreadMessages).catch(console.error);
       }
     }
-  }, [messages, user, markAsRead]);
+  }, [messages, user?.id, markAsRead]);
 
   const handleSendMessage = async () => {
     if (!inputText.trim() || isSending) return;
 
-    console.log('ChatPage - Отправка сообщения:', { inputText, chatId, userId: user?.id });
-
-    if (!user) {
+    if (!user?.id) {
       toast.error("Необходимо войти в систему");
       return;
     }
@@ -76,14 +65,13 @@ const ChatPage = () => {
     try {
       await sendMessage({ content: inputText });
       setInputText('');
-      console.log('ChatPage - Сообщение успешно отправлено');
     } catch (error) {
       console.error('ChatPage - Ошибка отправки сообщения:', error);
     }
   };
 
   const handleSendLocation = async () => {
-    if (!user) {
+    if (!user?.id) {
       toast.error("Необходимо войти в систему");
       return;
     }
@@ -105,11 +93,11 @@ const ChatPage = () => {
         },
         (error) => {
           console.error('Ошибка получения геолокации:', error);
-          alert('Не удалось получить геолокацию. Проверьте разрешения браузера.');
+          toast.error('Не удалось получить геолокацию. Проверьте разрешения браузера.');
         }
       );
     } else {
-      alert('Геолокация не поддерживается вашим браузером');
+      toast.error('Геолокация не поддерживается вашим браузером');
     }
   };
 
@@ -135,7 +123,7 @@ const ChatPage = () => {
     );
   }
 
-  if (!user) {
+  if (!user?.id) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

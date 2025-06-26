@@ -29,20 +29,19 @@ const ChatPanel = () => {
   };
 
   const getOtherParticipant = (chat: any) => {
-    if (!user) return null;
+    if (!user?.id) return null;
     return chat.participant1_id === user.id ? chat.participant2 : chat.participant1;
   };
 
   const getChatType = (chat: any) => {
-    if (!user) return 'passenger';
-    const otherParticipant = getOtherParticipant(chat);
+    if (!user?.id) return 'passenger';
     // Определяем тип на основе роли текущего пользователя
     return user.role === 'driver' ? 'passenger' : 'driver';
   };
 
   const handleChatClick = (chat: any) => {
     const otherParticipant = getOtherParticipant(chat);
-    if (!otherParticipant) return;
+    if (!otherParticipant?.name) return;
 
     const params = new URLSearchParams({
       chatId: chat.id,
@@ -54,7 +53,7 @@ const ChatPanel = () => {
       time: chat.ride?.departure_time || ''
     });
     
-    navigate(`/chat/${otherParticipant.name}?${params.toString()}`);
+    navigate(`/chat/${encodeURIComponent(otherParticipant.name)}?${params.toString()}`);
     setIsExpanded(false); // Скрываем панель при переходе к чату
   };
 
@@ -119,7 +118,7 @@ const ChatPanel = () => {
                 const otherParticipant = getOtherParticipant(chat);
                 const chatType = getChatType(chat);
                 
-                if (!otherParticipant) return null;
+                if (!otherParticipant?.name) return null;
 
                 return (
                   <div

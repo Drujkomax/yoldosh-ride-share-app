@@ -37,7 +37,7 @@ export const useDriverBookings = () => {
     queryFn: async () => {
       console.log('useDriverBookings - Загрузка заявок для водителя:', user?.id);
       
-      if (!user) {
+      if (!user?.id) {
         console.log('useDriverBookings - Пользователь не найден');
         return [];
       }
@@ -71,7 +71,6 @@ export const useDriverBookings = () => {
       }
 
       console.log('useDriverBookings - Загружено заявок:', data?.length || 0);
-      console.log('useDriverBookings - Данные заявок:', data);
 
       return data.map(booking => ({
         ...booking,
@@ -79,7 +78,7 @@ export const useDriverBookings = () => {
         passenger: Array.isArray(booking.passenger) ? booking.passenger[0] : booking.passenger
       })) as DriverBooking[];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const updateBookingMutation = useMutation({
@@ -104,8 +103,10 @@ export const useDriverBookings = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] }); // Обновляем чаты после создания
+      
       if (variables.status === 'confirmed') {
-        toast.success("Заявка принята");
+        toast.success("Заявка принята и чат создан");
       } else {
         toast.success("Заявка отклонена");
       }
