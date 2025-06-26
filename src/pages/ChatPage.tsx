@@ -115,6 +115,20 @@ const ChatPage = () => {
     }
   };
 
+  // КРИТИЧЕСКИ ВАЖНО: обработка навигации назад с сохранением роли пользователя
+  const handleBackNavigation = () => {
+    console.log('ChatPage - Возврат назад, текущая роль пользователя:', user?.role);
+    
+    // Сохраняем роль пользователя перед навигацией
+    if (user?.role === 'driver') {
+      console.log('ChatPage - Возврат на панель водителя');
+      navigate('/driver');
+    } else {
+      console.log('ChatPage - Возврат на панель пассажира');
+      navigate('/passenger');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -141,7 +155,7 @@ const ChatPage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg">ID чата не найден</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">
+          <Button onClick={handleBackNavigation} className="mt-4">
             Назад
           </Button>
         </div>
@@ -157,7 +171,7 @@ const ChatPage = () => {
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={handleBackNavigation}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
@@ -167,7 +181,7 @@ const ChatPage = () => {
                 <User className="h-4 w-4 text-gray-400" />
               </div>
               <div className="text-center">
-                <h1 className="text-lg font-semibold">{decodeURIComponent(name || 'Чат')}</h1>
+                <h1 className="text-lg font-semibold text-high-contrast">{decodeURIComponent(name || 'Чат')}</h1>
                 <div className="flex items-center space-x-2">
                   <Badge variant={chatType === 'driver' ? 'default' : 'secondary'} className="text-xs">
                     {chatType === 'driver' ? (
@@ -197,7 +211,7 @@ const ChatPage = () => {
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">{decodeURIComponent(from)} → {decodeURIComponent(to)}</span>
+                <span className="font-medium text-high-contrast">{decodeURIComponent(from)} → {decodeURIComponent(to)}</span>
               </div>
               {date && time && (
                 <div className="flex items-center space-x-2 text-blue-700">
@@ -275,7 +289,7 @@ const ChatPage = () => {
             onClick={handleSendMessage}
             disabled={!inputText.trim() || isSending}
             size="icon"
-            className="shrink-0"
+            className="shrink-0 bg-yoldosh-blue hover:bg-blue-700"
           >
             {isSending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

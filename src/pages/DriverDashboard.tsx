@@ -74,17 +74,21 @@ const DriverDashboard = () => {
     }
   };
 
+  console.log('DriverDashboard - Текущий пользователь:', user);
+  console.log('DriverDashboard - Роль пользователя:', user?.role);
+  console.log('DriverDashboard - Заявки пассажиров:', bookings);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 pb-24">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+      <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-secondary bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-high-contrast">
                 Панель водителя
               </h1>
-              <p className="text-slate-600 mt-1">Управляйте своими поездками</p>
+              <p className="text-slate-700 mt-1">Управляйте своими поездками</p>
             </div>
             <div className="flex space-x-3">
               <Button
@@ -93,7 +97,7 @@ const DriverDashboard = () => {
                 onClick={() => navigate('/profile')}
                 className="rounded-xl hover:bg-yoldosh-secondary/10 p-3 hover:scale-110 transition-all duration-300"
               >
-                <User className="h-5 w-5 text-yoldosh-secondary" />
+                <User className="h-5 w-5 yoldosh-secondary" />
               </Button>
               <Button
                 variant="ghost"
@@ -101,7 +105,7 @@ const DriverDashboard = () => {
                 onClick={() => navigate('/settings')}
                 className="rounded-xl hover:bg-yoldosh-secondary/10 p-3 hover:scale-110 transition-all duration-300"
               >
-                <Settings className="h-5 w-5 text-yoldosh-secondary" />
+                <Settings className="h-5 w-5 yoldosh-secondary" />
               </Button>
             </div>
           </div>
@@ -110,18 +114,18 @@ const DriverDashboard = () => {
 
       <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Create Ride Quick Action */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-0 rounded-3xl shadow-xl animate-fade-in">
+        <Card className="card-high-contrast rounded-3xl shadow-xl animate-fade-in">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-slate-800 text-lg">Создать новую поездку</h3>
+                <h3 className="font-bold text-high-contrast text-lg">Создать новую поездку</h3>
                 <p className="text-slate-600 text-sm mt-1">
                   Опубликуйте свою поездку и найдите пассажиров
                 </p>
               </div>
               <Button 
                 onClick={handleCreateRide}
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
+                className="bg-yoldosh-primary hover:bg-blue-700 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Создать поездку
@@ -131,11 +135,11 @@ const DriverDashboard = () => {
         </Card>
 
         {/* Passenger Requests for My Rides */}
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl animate-fade-in">
+        <Card className="card-high-contrast rounded-3xl shadow-xl animate-fade-in">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
-                <Bell className="h-6 w-6 mr-3 text-yoldosh-accent animate-pulse" />
+              <CardTitle className="text-xl font-bold text-high-contrast flex items-center">
+                <Bell className="h-6 w-6 mr-3 yoldosh-accent animate-pulse" />
                 Заявки на мои поездки
               </CardTitle>
               <Badge className="bg-yoldosh-accent/10 text-yoldosh-accent border-0 animate-bounce">
@@ -163,9 +167,9 @@ const DriverDashboard = () => {
         </Card>
 
         {/* My Rides */}
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl animate-fade-in">
+        <Card className="card-high-contrast rounded-3xl shadow-xl animate-fade-in">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-slate-800">Мои поездки</CardTitle>
+            <CardTitle className="text-xl font-bold text-high-contrast">Мои поездки</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {myRides.length === 0 ? (
@@ -174,14 +178,14 @@ const DriverDashboard = () => {
               </div>
             ) : (
               myRides.map((ride) => (
-                <div key={ride.id} className="bg-gradient-to-r from-white to-slate-50 rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border border-slate-100 animate-fade-in">
+                <div key={ride.id} className="card-high-contrast rounded-2xl p-6 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border border-slate-100 animate-fade-in">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
-                        <div className="w-10 h-10 bg-gradient-secondary rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-yoldosh-secondary rounded-xl flex items-center justify-center">
                           <MapPin className="h-5 w-5 text-white" />
                         </div>
-                        <span className="font-bold text-slate-800 text-lg">{ride.from_city} → {ride.to_city}</span>
+                        <span className="font-bold text-high-contrast text-lg">{ride.from_city} → {ride.to_city}</span>
                       </div>
                       <div className="flex items-center space-x-6 text-sm text-slate-600">
                         <div className="flex items-center space-x-2">
@@ -195,7 +199,7 @@ const DriverDashboard = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-2xl text-yoldosh-success">
+                      <div className="font-bold text-2xl yoldosh-success">
                         {ride.price_per_seat.toLocaleString()} сум
                       </div>
                       <Badge className={getStatusColor(ride.status)}>
@@ -208,7 +212,7 @@ const DriverDashboard = () => {
                     <Button 
                       onClick={() => handleViewRideDetails(ride.id)}
                       variant="outline" 
-                      className="flex-1 rounded-xl border-yoldosh-secondary text-yoldosh-secondary hover:bg-yoldosh-secondary/10 hover:scale-105 transition-all duration-300"
+                      className="flex-1 rounded-xl border-yoldosh-secondary yoldosh-secondary hover:bg-yoldosh-secondary/10 hover:scale-105 transition-all duration-300"
                     >
                       <Eye className="h-4 w-4 mr-2" />
                       Подробнее
@@ -241,21 +245,21 @@ const DriverDashboard = () => {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
+          <Card className="card-high-contrast rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yoldosh-primary mb-2">{myRides.length}</div>
+              <div className="text-3xl font-bold yoldosh-primary mb-2">{myRides.length}</div>
               <div className="text-sm text-slate-600 font-medium">Поездок</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
+          <Card className="card-high-contrast rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yoldosh-success mb-2">{user?.rating || '0.0'}</div>
+              <div className="text-3xl font-bold yoldosh-success mb-2">{user?.rating || '0.0'}</div>
               <div className="text-sm text-slate-600 font-medium">Рейтинг</div>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-0 rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
+          <Card className="card-high-contrast rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 animate-fade-in">
             <CardContent className="p-6 text-center">
-              <div className="text-3xl font-bold text-yoldosh-warning mb-2">{user?.totalRides || 0}</div>
+              <div className="text-3xl font-bold text-amber-600 mb-2">{user?.totalRides || 0}</div>
               <div className="text-sm text-slate-600 font-medium">Пассажиров</div>
             </CardContent>
           </Card>

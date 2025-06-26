@@ -45,6 +45,15 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom colors for better contrast */
+    --yoldosh-primary: #4F46E5;
+    --yoldosh-secondary: #7C3AED;
+    --yoldosh-accent: #EC4899;
+    --yoldosh-success: #059669;
+    --yoldosh-warning: #D97706;
+    --yoldosh-error: #DC2626;
+    --yoldosh-blue: #3B82F6;
   }
 
   .dark {
@@ -128,5 +137,81 @@
   
   .text-gradient {
     @apply bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent;
+  }
+
+  /* Improved color utilities for better contrast */
+  .yoldosh-primary {
+    color: var(--yoldosh-primary);
+  }
+  
+  .bg-yoldosh-primary {
+    background-color: var(--yoldosh-primary);
+  }
+  
+  .yoldosh-secondary {
+    color: var(--yoldosh-secondary);
+  }
+  
+  .bg-yoldosh-secondary {
+    background-color: var(--yoldosh-secondary);
+  }
+  
+  .yoldosh-success {
+    color: var(--yoldosh-success);
+  }
+  
+  .bg-yoldosh-success {
+    background-color: var(--yoldosh-success);
+  }
+  
+  .yoldosh-error {
+    color: var(--yoldosh-error);
+  }
+  
+  .bg-yoldosh-error {
+    background-color: var(--yoldosh-error);
+  }
+  
+  .yoldosh-blue {
+    color: var(--yoldosh-blue);
+  }
+  
+  .bg-yoldosh-blue {
+    background-color: var(--yoldosh-blue);
+  }
+  
+  /* Gradient utilities with better contrast */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, var(--yoldosh-primary) 0%, var(--yoldosh-secondary) 100%);
+  }
+  
+  .bg-gradient-secondary {
+    background: linear-gradient(135deg, var(--yoldosh-secondary) 0%, var(--yoldosh-accent) 100%);
+  }
+  
+  .bg-gradient-accent {
+    background: linear-gradient(135deg, var(--yoldosh-accent) 0%, var(--yoldosh-primary) 100%);
+  }
+  
+  /* High contrast text classes */
+  .text-high-contrast {
+    color: #1a1a1a;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+  
+  .text-white-contrast {
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Card with better contrast */
+  .card-high-contrast {
+    @apply bg-white border border-gray-200 shadow-lg;
+    color: #1a1a1a;
+  }
+  
+  .card-dark-contrast {
+    @apply bg-gray-800 border border-gray-700 shadow-lg;
+    color: white;
   }
 }

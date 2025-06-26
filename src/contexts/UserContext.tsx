@@ -63,18 +63,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
           
           // Убеждаемся, что все обязательные поля присутствуют
+          // КРИТИЧЕСКИ ВАЖНО: роль пользователя НИКОГДА не должна изменяться без явного действия пользователя
           const completeUser = {
             id: parsedUser.id,
             phone: parsedUser.phone || '',
             name: parsedUser.name || '',
-            role: parsedUser.role || 'passenger',
+            role: parsedUser.role || 'passenger', // Роль сохраняется из localStorage
             isVerified: parsedUser.isVerified || false,
             totalRides: parsedUser.totalRides || 0,
             rating: parsedUser.rating || 0.0,
             avatarUrl: parsedUser.avatarUrl
           };
           
-          console.log('UserContext - Данные пользователя нормализованы:', completeUser);
+          console.log('UserContext - Данные пользователя нормализованы с сохранением роли:', completeUser);
           
           // Проверяем, существует ли профиль в Supabase, если нет - создаем
           const { data: existingProfile } = await supabase
@@ -91,7 +92,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 id: completeUser.id,
                 name: completeUser.name,
                 phone: completeUser.phone,
-                role: completeUser.role,
+                role: completeUser.role, // Сохраняем исходную роль
                 is_verified: completeUser.isVerified,
                 total_rides: completeUser.totalRides,
                 rating: completeUser.rating || 0.0
@@ -100,10 +101,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             if (error) {
               console.error('UserContext - Ошибка создания профиля:', error);
             } else {
-              console.log('UserContext - Профиль успешно создан в Supabase');
+              console.log('UserContext - Профиль успешно создан в Supabase с ролью:', completeUser.role);
             }
           } else {
-            console.log('UserContext - Профиль уже существует в Supabase');
+            console.log('UserContext - Профиль уже существует в Supabase с ролью:', existingProfile.role);
+            // Проверяем, что роль в базе совпадает с локальной
+            if (existingProfile.role !== completeUser.role) {
+              console.warn('UserContext - Роль в базе данных отличается от локальной, синхронизируем');
+              // Приоритет отдаем локальной роли (она была установлена пользователем)
+              await supabase
+                .from('profiles')
+                .update({ role: completeUser.role })
+                .eq('id', completeUser.id);
+            }
           }
           
           setUser(completeUser);
@@ -133,18 +143,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.log('UserContext - Сгенерирован новый UUID для пользователя:', updatedUser.id);
     }
     
-    // Нормализуем данные пользователя
+    // Нормализуем данные пользователя, СОХРАНЯЯ РОЛЬ
     if (updatedUser) {
+      // КРИТИЧЕСКИ ВАЖНО: при обновлении пользователя НЕ меняем роль без явного указания
+      const currentUser = user;
+      
       updatedUser = {
         id: updatedUser.id,
         phone: updatedUser.phone || '',
         name: updatedUser.name || '',
-        role: updatedUser.role || 'passenger',
+        role: updatedUser.role || currentUser?.role || 'passenger', // Сохраняем текущую роль
         isVerified: updatedUser.isVerified || false,
         totalRides: updatedUser.totalRides || 0,
         rating: updatedUser.rating || 0.0,
         avatarUrl: updatedUser.avatarUrl
       };
+
+      console.log('UserContext - Пользователь обновлен с сохранением роли:', updatedUser.role);
 
       // Обновляем или создаем профиль в Supabase
       try {
@@ -154,7 +169,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             id: updatedUser.id,
             name: updatedUser.name,
             phone: updatedUser.phone,
-            role: updatedUser.role,
+            role: updatedUser.role, // Сохраняем роль
             is_verified: updatedUser.isVerified,
             total_rides: updatedUser.totalRides,
             rating: updatedUser.rating || 0.0
@@ -163,7 +178,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
           console.error('UserContext - Ошибка обновления профиля:', error);
         } else {
-          console.log('UserContext - Профиль успешно обновлен в Supabase');
+          console.log('UserContext - Профиль успешно обновлен в Supabase с ролью:', updatedUser.role);
         }
       } catch (error) {
         console.error('UserContext - Ошибка при работе с Supabase:', error);
@@ -174,7 +189,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     // Сохраняем в localStorage
     if (updatedUser) {
-      console.log('UserContext - Сохранение пользователя в localStorage:', updatedUser);
+      console.log('UserContext - Сохранение пользователя в localStorage с ролью:', updatedUser.role);
       localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
     } else {
       console.log('UserContext - Удаление пользователя из localStorage');

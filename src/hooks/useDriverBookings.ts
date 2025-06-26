@@ -42,19 +42,19 @@ export const useDriverBookings = () => {
         return [];
       }
 
-      // Получаем заявки на поездки водителя
+      // Получаем заявки на поездки водителя - исправленный запрос
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
-          ride:rides!inner (
+          rides!bookings_ride_id_fkey!inner (
             from_city,
             to_city,
             departure_date,
             departure_time,
             driver_id
           ),
-          passenger:profiles!bookings_passenger_id_fkey (
+          profiles!bookings_passenger_id_fkey (
             name,
             phone,
             rating,
@@ -62,7 +62,7 @@ export const useDriverBookings = () => {
           )
         `)
         .eq('rides.driver_id', user.id)
-        .in('status', ['pending'])
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -70,13 +70,28 @@ export const useDriverBookings = () => {
         throw error;
       }
 
+      console.log('useDriverBookings - Данные из запроса:', data);
       console.log('useDriverBookings - Загружено заявок:', data?.length || 0);
 
-      return data.map(booking => ({
+      // Правильно маппим данные
+      const mappedBookings = (data || []).map(booking => ({
         ...booking,
-        ride: Array.isArray(booking.ride) ? booking.ride[0] : booking.ride,
-        passenger: Array.isArray(booking.passenger) ? booking.passenger[0] : booking.passenger
+        ride: {
+          from_city: booking.rides.from_city,
+          to_city: booking.rides.to_city,
+          departure_date: booking.rides.departure_date,
+          departure_time: booking.rides.departure_time,
+        },
+        passenger: {
+          name: booking.profiles?.name || 'Неизвестен',
+          phone: booking.profiles?.phone || '',
+          rating: booking.profiles?.rating || 0,
+          total_rides: booking.profiles?.total_rides || 0,
+        }
       })) as DriverBooking[];
+
+      console.log('useDriverBookings - Обработанные заявки:', mappedBookings);
+      return mappedBookings;
     },
     enabled: !!user?.id,
   });
@@ -103,7 +118,7 @@ export const useDriverBookings = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['driver-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['chats'] }); // Обновляем чаты после создания
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
       
       if (variables.status === 'confirmed') {
         toast.success("Заявка принята и чат создан");
