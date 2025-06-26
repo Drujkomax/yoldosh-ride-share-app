@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export interface Ride {
   id: string;
@@ -70,18 +70,11 @@ export const useRides = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rides'] });
-      toast({
-        title: "Поездка создана",
-        description: "Ваша поездка успешно опубликована",
-      });
+      toast.success("Ваша поездка успешно опубликована");
     },
     onError: (error) => {
       console.error('Create ride error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось создать поездку",
-        variant: "destructive",
-      });
+      toast.error("Не удалось создать поездку");
     },
   });
 
@@ -99,18 +92,11 @@ export const useRides = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rides'] });
-      toast({
-        title: "Поездка обновлена",
-        description: "Изменения сохранены",
-      });
+      toast.success("Изменения сохранены");
     },
     onError: (error) => {
       console.error('Update ride error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить поездку",
-        variant: "destructive",
-      });
+      toast.error("Не удалось обновить поездку");
     },
   });
 

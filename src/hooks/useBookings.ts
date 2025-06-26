@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { useUser } from '@/contexts/UserContext';
 
 export interface Booking {
@@ -109,18 +109,11 @@ export const useBookings = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['rides'] });
-      toast({
-        title: "Бронирование создано",
-        description: "Ваша заявка отправлена водителю",
-      });
+      toast.success("Ваша заявка отправлена водителю");
     },
     onError: (error) => {
       console.error('Create booking error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось забронировать поездку",
-        variant: "destructive",
-      });
+      toast.error("Не удалось забронировать поездку");
     },
   });
 
@@ -145,18 +138,11 @@ export const useBookings = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      toast({
-        title: "Бронирование обновлено",
-        description: "Изменения сохранены",
-      });
+      toast.success("Изменения сохранены");
     },
     onError: (error) => {
       console.error('Update booking error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить бронирование",
-        variant: "destructive",
-      });
+      toast.error("Не удалось обновить бронирование");
     },
   });
 

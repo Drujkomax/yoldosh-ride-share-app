@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -33,28 +33,17 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Profile creation error:', error);
-        toast({
-          title: "Ошибка регистрации",
-          description: "Не удалось создать аккаунт. Попробуйте еще раз.",
-          variant: "destructive",
-        });
+        toast.error("Не удалось создать аккаунт. Попробуйте еще раз.");
         return { data: null, error };
       }
 
       console.log('Profile created successfully:', data);
-      toast({
-        title: "Регистрация завершена",
-        description: "Аккаунт успешно создан!",
-      });
+      toast.success("Аккаунт успешно создан!");
       
       return { data, error: null };
     } catch (error: any) {
       console.error('Create profile error:', error);
-      toast({
-        title: "Ошибка регистрации",
-        description: "Произошла ошибка при создании аккаунта.",
-        variant: "destructive",
-      });
+      toast.error("Произошла ошибка при создании аккаунта.");
       return { data: null, error };
     } finally {
       setLoading(false);
@@ -97,18 +86,11 @@ export const useAuth = () => {
       // Очищаем localStorage
       localStorage.removeItem('yoldosh_user');
       
-      toast({
-        title: "Выход выполнен",
-        description: "Вы успешно вышли из аккаунта",
-      });
+      toast.success("Вы успешно вышли из аккаунта");
       return { error: null };
     } catch (error: any) {
       console.error('Signout error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось выйти из аккаунта",
-        variant: "destructive",
-      });
+      toast.error("Не удалось выйти из аккаунта");
       return { error };
     } finally {
       setLoading(false);
@@ -133,27 +115,16 @@ export const useAuth = () => {
 
       if (error) {
         console.error('Update profile error:', error);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось обновить профиль",
-          variant: "destructive",
-        });
+        toast.error("Не удалось обновить профиль");
         return { data: null, error };
       }
 
-      toast({
-        title: "Профиль обновлен",
-        description: "Ваши данные успешно сохранены",
-      });
+      toast.success("Ваши данные успешно сохранены");
 
       return { data, error: null };
     } catch (error: any) {
       console.error('Update profile error:', error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить профиль",
-        variant: "destructive",
-      });
+      toast.error("Не удалось обновить профиль");
       return { data: null, error };
     } finally {
       setLoading(false);
