@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { ArrowLeft, User, Send, MapPin, Clock, Car, Calendar, Loader2 } from 'lu
 import { Input } from '@/components/ui/input';
 import { useMessages } from '@/hooks/useChats';
 import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 const ChatPage = () => {
   const navigate = useNavigate();
