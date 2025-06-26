@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MapPin, Calendar, Users, Settings, User, Car, Shield, Search, Bell, Edit, Eye, X, MessageCircle } from 'lucide-react';
+import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye, X, MessageCircle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 
@@ -48,18 +49,8 @@ const DriverDashboard = () => {
     navigate('/create-ride');
   };
 
-  const handleCreateRideWithoutVerification = () => {
-    navigate('/create-ride');
-  };
-
   const handleAcceptRequest = (requestId: number, passengerName: string) => {
-    if (user?.isVerified) {
-      alert(`Заявка от ${passengerName} принята! Пассажир получит уведомление.`);
-    } else {
-      if (confirm('Для принятия заявок необходима верификация. Пройти верификацию сейчас?')) {
-        navigate('/verification');
-      }
-    }
+    alert(`Заявка от ${passengerName} принята! Пассажир получит уведомление.`);
   };
 
   const handleRejectRequest = (requestId: number, passengerName: string) => {
@@ -139,39 +130,26 @@ const DriverDashboard = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Verification Status */}
-        {!user?.isVerified && (
-          <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-0 rounded-3xl shadow-xl animate-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center animate-pulse">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800">Пройдите верификацию</h3>
-                  <p className="text-slate-600 text-sm mt-1">
-                    Для принятия заявок пассажиров рекомендуется верификация
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={handleCreateRideWithoutVerification}
-                    variant="outline"
-                    className="bg-blue-500 text-white hover:bg-blue-600 rounded-xl"
-                  >
-                    Создать без верификации
-                  </Button>
-                  <Button 
-                    onClick={() => navigate('/verification')}
-                    className="bg-gradient-to-r from-amber-400 to-orange-400 hover:scale-105 transition-all duration-300 rounded-xl"
-                  >
-                    Пройти
-                  </Button>
-                </div>
+        {/* Create Ride Quick Action */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-0 rounded-3xl shadow-xl animate-fade-in">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-slate-800 text-lg">Создать новую поездку</h3>
+                <p className="text-slate-600 text-sm mt-1">
+                  Опубликуйте свою поездку и найдите пассажиров
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <Button 
+                onClick={handleCreateRide}
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Создать поездку
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Passenger Requests for My Rides */}
         <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl animate-fade-in">
