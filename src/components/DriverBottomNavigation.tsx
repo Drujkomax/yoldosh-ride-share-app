@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, MessageCircle, User } from 'lucide-react';
+import { Plus, Search, MessageCircle, User, Home } from 'lucide-react';
 
 const DriverBottomNavigation = () => {
   const navigate = useNavigate();
@@ -13,6 +13,13 @@ const DriverBottomNavigation = () => {
   };
 
   const navItems = [
+    {
+      path: '/driver-home',
+      icon: Home,
+      label: 'Главная',
+      color: 'purple',
+      onClick: () => navigate('/driver-home')
+    },
     {
       path: '/create-ride',
       icon: Plus,

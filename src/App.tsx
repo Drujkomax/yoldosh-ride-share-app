@@ -3,11 +3,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from "./contexts/UserContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import WelcomePage from "./pages/WelcomePage";
 import DriverDashboard from "./pages/DriverDashboard";
+import DriverHomePage from "./pages/DriverHomePage";
 import PassengerDashboard from "./pages/PassengerDashboard";
 import CreateRide from "./pages/CreateRide";
 import EditRide from "./pages/EditRide";
@@ -43,9 +44,10 @@ const App = () => (
             <Routes>
               <Route path="/" element={<WelcomePage />} />
               <Route path="/registration" element={<RegistrationPage />} />
-              <Route path="/driver" element={<DriverDashboard />} />
+              <Route path="/driver" element={<Navigate to="/driver-home" replace />} />
+              <Route path="/driver-home" element={<DriverHomePage />} />
               <Route path="/passenger" element={<PassengerDashboard />} />
-              <Route path="/create-ride" element={<CreateRide />} />
+              <Route path="/create-ride" element={<DriverDashboard />} />
               <Route path="/edit-ride/:id" element={<EditRide />} />
               <Route path="/create-request" element={<CreateRequest />} />
               <Route path="/search-rides" element={<SearchRides />} />
