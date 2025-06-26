@@ -8,6 +8,7 @@ import { Plus, MapPin, Calendar, Users, Settings, User, Search, Bell, Edit, Eye,
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useDriverBookings } from '@/hooks/useDriverBookings';
+import ChatPanel from '@/components/ChatPanel';
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
@@ -341,6 +342,9 @@ const DriverDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {/* Chat Panel */}
+      <ChatPanel />
     </div>
   );
 };

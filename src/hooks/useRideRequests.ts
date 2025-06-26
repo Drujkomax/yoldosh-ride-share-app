@@ -56,9 +56,16 @@ export const useRideRequests = () => {
 
       console.log('useRideRequests - Загружено заявок:', data?.length || 0);
 
-      return data.map(request => ({
+      // Правильно маппим данные профилей
+      return (data || []).map(request => ({
         ...request,
-        passenger: request.profiles
+        passenger: request.profiles ? {
+          name: request.profiles.name,
+          phone: request.profiles.phone,
+          rating: request.profiles.rating,
+          total_rides: request.profiles.total_rides,
+          is_verified: request.profiles.is_verified
+        } : undefined
       })) as RideRequest[];
     },
   });
@@ -99,30 +106,56 @@ export const useRideRequests = () => {
         throw new Error('Пользователь не авторизован');
       }
 
-      // Создаем чат между водителем и пассажиром
-      const { data: chatData, error: chatError } = await supabase
-        .from('chats')
-        .insert([{
-          participant1_id: user.id, // водитель
-          participant2_id: (await supabase
-            .from('ride_requests')
-            .select('passenger_id')
-            .eq('id', requestId)
-            .single()).data?.passenger_id,
-        }])
-        .select()
+      // Получаем информацию о заявке для получения ID пассажира
+      const { data: requestData, error: requestError } = await supabase
+        .from('ride_requests')
+        .select('passenger_id')
+        .eq('id', requestId)
         .single();
 
-      if (chatError) {
-        console.error('useRideRequests - Ошибка создания чата:', chatError);
-        throw chatError;
+      if (requestError || !requestData) {
+        console.error('useRideRequests - Ошибка получения заявки:', requestError);
+        throw requestError || new Error('Заявка не найдена');
+      }
+
+      // Проверяем, существует ли уже чат между этими пользователями
+      const { data: existingChat, error: chatSearchError } = await supabase
+        .from('chats')
+        .select('id')
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${requestData.passenger_id}),and(participant1_id.eq.${requestData.passenger_id},participant2_id.eq.${user.id})`)
+        .single();
+
+      let chatId: string;
+
+      if (existingChat && !chatSearchError) {
+        // Используем существующий чат
+        chatId = existingChat.id;
+        console.log('useRideRequests - Используем существующий чат:', chatId);
+      } else {
+        // Создаем новый чат между водителем и пассажиром
+        const { data: chatData, error: chatError } = await supabase
+          .from('chats')
+          .insert([{
+            participant1_id: user.id, // водитель
+            participant2_id: requestData.passenger_id, // пассажир
+          }])
+          .select()
+          .single();
+
+        if (chatError) {
+          console.error('useRideRequests - Ошибка создания чата:', chatError);
+          throw chatError;
+        }
+
+        chatId = chatData.id;
+        console.log('useRideRequests - Создан новый чат:', chatId);
       }
 
       // Отправляем первое сообщение
       const { data: messageData, error: messageError } = await supabase
         .from('messages')
         .insert([{
-          chat_id: chatData.id,
+          chat_id: chatId,
           sender_id: user.id,
           content: message,
           message_type: 'text'
@@ -135,7 +168,13 @@ export const useRideRequests = () => {
         throw messageError;
       }
 
-      return { chat: chatData, message: messageData };
+      // Обновляем время последнего сообщения в чате
+      await supabase
+        .from('chats')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', chatId);
+
+      return { chatId, message: messageData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });

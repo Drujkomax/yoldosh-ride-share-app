@@ -2,52 +2,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Send, MapPin, Clock, Car, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Send, MapPin, Clock, Car, Calendar, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-
-interface Message {
-  id: number;
-  text?: string;
-  location?: {
-    lat: number;
-    lng: number;
-    address: string;
-  };
-  timestamp: Date;
-  sender: 'me' | 'other';
-}
+import { useMessages } from '@/hooks/useChats';
+import { useUser } from '@/contexts/UserContext';
 
 const ChatPage = () => {
   const navigate = useNavigate();
   const { name } = useParams();
   const [searchParams] = useSearchParams();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: 'Привет! Я уже в пути к месту встречи.',
-      timestamp: new Date(Date.now() - 10 * 60000),
-      sender: 'other'
-    },
-    {
-      id: 2,
-      text: 'Отлично! Увидимся через 10 минут.',
-      timestamp: new Date(Date.now() - 8 * 60000),
-      sender: 'me'
-    }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const { user } = useUser();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Получаем детали поездки из URL параметров
+  // Получаем ID чата и детали из URL параметров
+  const chatId = searchParams.get('chatId') || '';
   const chatType = searchParams.get('type'); // 'driver' или 'passenger'
   const rideId = searchParams.get('rideId');
   const from = searchParams.get('from');
   const to = searchParams.get('to');
   const date = searchParams.get('date');
   const time = searchParams.get('time');
+
+  const { messages, isLoading, sendMessage, markAsRead, isSending } = useMessages(chatId);
+  const [inputText, setInputText] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,68 +35,77 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  // Отмечаем сообщения как прочитанные при загрузке
+  useEffect(() => {
+    if (messages.length > 0 && user) {
+      const unreadMessages = messages
+        .filter(msg => !msg.read_at && msg.sender_id !== user.id)
+        .map(msg => msg.id);
+      
+      if (unreadMessages.length > 0) {
+        markAsRead(unreadMessages).catch(console.error);
+      }
+    }
+  }, [messages, user, markAsRead]);
 
-    const newMessage: Message = {
-      id: Date.now(),
-      text: inputText,
-      timestamp: new Date(),
-      sender: 'me'
-    };
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isSending) return;
 
-    setMessages(prev => [...prev, newMessage]);
-    setInputText('');
+    try {
+      await sendMessage({ content: inputText });
+      setInputText('');
+    } catch (error) {
+      console.error('Ошибка отправки сообщения:', error);
+    }
   };
 
-  const handleSendLocation = () => {
-    setIsLocationLoading(true);
-    
+  const handleSendLocation = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
+          const locationText = `Мое местоположение: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
           
-          const mockAddress = `ул. Примерная, ${Math.floor(Math.random() * 100)}, Ташкент`;
-          
-          const locationMessage: Message = {
-            id: Date.now(),
-            location: {
-              lat: latitude,
-              lng: longitude,
-              address: mockAddress
-            },
-            timestamp: new Date(),
-            sender: 'me'
-          };
-
-          setMessages(prev => [...prev, locationMessage]);
-          setIsLocationLoading(false);
+          try {
+            await sendMessage({ 
+              content: locationText, 
+              messageType: 'location' 
+            });
+          } catch (error) {
+            console.error('Ошибка отправки геолокации:', error);
+          }
         },
         (error) => {
           console.error('Ошибка получения геолокации:', error);
           alert('Не удалось получить геолокацию. Проверьте разрешения браузера.');
-          setIsLocationLoading(false);
         }
       );
     } else {
       alert('Геолокация не поддерживается вашим браузером');
-      setIsLocationLoading(false);
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', { 
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString('ru-RU', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -183,44 +170,40 @@ const ChatPage = () => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-          >
+        {messages.length === 0 ? (
+          <div className="text-center text-gray-500 mt-8">
+            <p>Начните общение</p>
+          </div>
+        ) : (
+          messages.map((message) => (
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.sender === 'me'
-                  ? 'bg-yoldosh-blue text-white'
-                  : 'bg-white border shadow-sm'
-              }`}
+              key={message.id}
+              className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
             >
-              {message.text && (
-                <p className="text-sm">{message.text}</p>
-              )}
-              
-              {message.location && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4" />
-                    <span className="text-sm font-medium">Местоположение</span>
+              <div
+                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  message.sender_id === user?.id
+                    ? 'bg-yoldosh-blue text-white'
+                    : 'bg-white border shadow-sm'
+                }`}
+              >
+                <p className="text-sm">{message.content}</p>
+                
+                <div className={`flex items-center justify-between space-x-2 mt-1 text-xs ${
+                  message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
+                }`}>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-3 w-3" />
+                    <span>{formatTime(message.created_at)}</span>
                   </div>
-                  <p className="text-xs opacity-75">{message.location.address}</p>
-                  <div className="text-xs opacity-60">
-                    {message.location.lat.toFixed(6)}, {message.location.lng.toFixed(6)}
-                  </div>
+                  {message.sender_id === user?.id && (
+                    <span>{message.read_at ? '✓✓' : '✓'}</span>
+                  )}
                 </div>
-              )}
-              
-              <div className={`flex items-center space-x-1 mt-1 text-xs ${
-                message.sender === 'me' ? 'text-blue-100' : 'text-gray-500'
-              }`}>
-                <Clock className="h-3 w-3" />
-                <span>{formatTime(message.timestamp)}</span>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -234,24 +217,29 @@ const ChatPage = () => {
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               className="w-full"
+              disabled={isSending}
             />
           </div>
           <Button
             onClick={handleSendLocation}
             variant="outline"
             size="icon"
-            disabled={isLocationLoading}
+            disabled={isSending}
             className="shrink-0"
           >
-            <MapPin className={`h-4 w-4 ${isLocationLoading ? 'animate-pulse' : ''}`} />
+            <MapPin className="h-4 w-4" />
           </Button>
           <Button
             onClick={handleSendMessage}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || isSending}
             size="icon"
             className="shrink-0"
           >
-            <Send className="h-4 w-4" />
+            {isSending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

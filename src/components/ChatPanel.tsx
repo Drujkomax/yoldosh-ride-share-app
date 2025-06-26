@@ -4,103 +4,63 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, User, Car, MapPin, Clock, X, ChevronUp, ChevronDown } from 'lucide-react';
-
-interface Chat {
-  id: string;
-  name: string;
-  type: 'driver' | 'passenger';
-  lastMessage: string;
-  timestamp: Date;
-  unreadCount: number;
-  rideDetails: {
-    from: string;
-    to: string;
-    date: string;
-    time: string;
-    rideId: string;
-  };
-}
+import { MessageCircle, User, Car, MapPin, Clock, ChevronDown } from 'lucide-react';
+import { useChats } from '@/hooks/useChats';
+import { useUser } from '@/contexts/UserContext';
 
 const ChatPanel = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { chats, isLoading } = useChats();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Mock chats data
-  const chats: Chat[] = [
-    {
-      id: '1',
-      name: 'Алишер',
-      type: 'driver',
-      lastMessage: 'Я уже в пути к месту встречи',
-      timestamp: new Date(Date.now() - 5 * 60000),
-      unreadCount: 2,
-      rideDetails: {
-        from: 'Ташкент',
-        to: 'Самарканд',
-        date: '25 декабря',
-        time: '09:00',
-        rideId: '1'
-      }
-    },
-    {
-      id: '2',
-      name: 'Жамшид',
-      type: 'passenger',
-      lastMessage: 'Спасибо за поездку!',
-      timestamp: new Date(Date.now() - 30 * 60000),
-      unreadCount: 0,
-      rideDetails: {
-        from: 'Ташкент',
-        to: 'Бухара',
-        date: '24 декабря',
-        time: '14:00',
-        rideId: '2'
-      }
-    },
-    {
-      id: '3',
-      name: 'Фарход',
-      type: 'driver',
-      lastMessage: 'Встретимся у метро',
-      timestamp: new Date(Date.now() - 2 * 60 * 60000),
-      unreadCount: 1,
-      rideDetails: {
-        from: 'Ташкент',
-        to: 'Фергана',
-        date: '23 декабря',
-        time: '08:30',
-        rideId: '3'
-      }
-    }
-  ];
-
-  const formatTime = (date: Date) => {
+  const formatTime = (date: string) => {
     const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    const messageDate = new Date(date);
+    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
     
     if (diffInMinutes < 60) {
       return `${diffInMinutes}м назад`;
     } else if (diffInMinutes < 24 * 60) {
       return `${Math.floor(diffInMinutes / 60)}ч назад`;
     } else {
-      return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      return messageDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     }
   };
 
-  const handleChatClick = (chat: Chat) => {
+  const getOtherParticipant = (chat: any) => {
+    if (!user) return null;
+    return chat.participant1_id === user.id ? chat.participant2 : chat.participant1;
+  };
+
+  const getChatType = (chat: any) => {
+    if (!user) return 'passenger';
+    const otherParticipant = getOtherParticipant(chat);
+    // Определяем тип на основе контекста - если есть ride_id, то это водитель-пассажир диалог
+    return user.role === 'driver' ? 'passenger' : 'driver';
+  };
+
+  const handleChatClick = (chat: any) => {
+    const otherParticipant = getOtherParticipant(chat);
+    if (!otherParticipant) return;
+
     const params = new URLSearchParams({
-      type: chat.type,
-      rideId: chat.rideDetails.rideId,
-      from: chat.rideDetails.from,
-      to: chat.rideDetails.to,
-      date: chat.rideDetails.date,
-      time: chat.rideDetails.time
+      chatId: chat.id,
+      type: getChatType(chat),
+      rideId: chat.ride_id || '',
+      from: chat.ride?.from_city || '',
+      to: chat.ride?.to_city || '',
+      date: chat.ride?.departure_date ? new Date(chat.ride.departure_date).toLocaleDateString('ru-RU') : '',
+      time: chat.ride?.departure_time || ''
     });
-    navigate(`/chat/${chat.name}?${params.toString()}`);
+    navigate(`/chat/${otherParticipant.name}?${params.toString()}`);
   };
 
   const totalUnread = chats.reduce((sum, chat) => sum + chat.unreadCount, 0);
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!isExpanded) {
     return (
@@ -152,57 +112,66 @@ const ChatPanel = () => {
                 <p>Нет активных чатов</p>
               </div>
             ) : (
-              chats.map((chat) => (
-                <div
-                  key={chat.id}
-                  onClick={() => handleChatClick(chat)}
-                  className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      {chat.type === 'driver' ? (
-                        <Car className="h-5 w-5 text-gray-400" />
-                      ) : (
-                        <User className="h-5 w-5 text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-sm">{chat.name}</span>
-                          <Badge 
-                            variant={chat.type === 'driver' ? 'default' : 'secondary'} 
-                            className="text-xs"
-                          >
-                            {chat.type === 'driver' ? 'Водитель' : 'Пассажир'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs text-gray-500">
-                            {formatTime(chat.timestamp)}
-                          </span>
-                          {chat.unreadCount > 0 && (
-                            <Badge className="h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                              {chat.unreadCount}
+              chats.map((chat) => {
+                const otherParticipant = getOtherParticipant(chat);
+                const chatType = getChatType(chat);
+                
+                if (!otherParticipant) return null;
+
+                return (
+                  <div
+                    key={chat.id}
+                    onClick={() => handleChatClick(chat)}
+                    className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        {chatType === 'driver' ? (
+                          <Car className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <User className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium text-sm">{otherParticipant.name}</span>
+                            <Badge 
+                              variant={chatType === 'driver' ? 'default' : 'secondary'} 
+                              className="text-xs"
+                            >
+                              {chatType === 'driver' ? 'Водитель' : 'Пассажир'}
                             </Badge>
-                          )}
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-gray-500">
+                              {formatTime(chat.last_message_at)}
+                            </span>
+                            {chat.unreadCount > 0 && (
+                              <Badge className="h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
+                                {chat.unreadCount}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+                        
+                        {chat.ride && (
+                          <div className="flex items-center space-x-2 text-xs text-gray-600 mb-1">
+                            <MapPin className="h-3 w-3" />
+                            <span>{chat.ride.from_city} → {chat.ride.to_city}</span>
+                            <Clock className="h-3 w-3 ml-2" />
+                            <span>{new Date(chat.ride.departure_date).toLocaleDateString('ru-RU')}</span>
+                          </div>
+                        )}
+                        
+                        <p className="text-sm text-gray-600 truncate">
+                          {chat.lastMessage?.content || 'Нет сообщений'}
+                        </p>
                       </div>
-                      
-                      <div className="flex items-center space-x-2 text-xs text-gray-600 mb-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{chat.rideDetails.from} → {chat.rideDetails.to}</span>
-                        <Clock className="h-3 w-3 ml-2" />
-                        <span>{chat.rideDetails.date}</span>
-                      </div>
-                      
-                      <p className="text-sm text-gray-600 truncate">
-                        {chat.lastMessage}
-                      </p>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>

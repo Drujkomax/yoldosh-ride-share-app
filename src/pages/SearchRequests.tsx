@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,18 +45,64 @@ const SearchRequests = () => {
     }
   };
 
-  // Фильтрация заявок
-  const filteredRequests = requests.filter(request => {
-    if (filters.from && request.from_city !== filters.from) return false;
-    if (filters.to && request.to_city !== filters.to) return false;
-    if (filters.date) {
-      const requestDate = new Date(request.preferred_date);
-      const filterDate = new Date(filters.date);
-      if (requestDate.toDateString() !== filterDate.toDateString()) return false;
-    }
-    if (filters.maxPrice && request.max_price_per_seat < Number(filters.maxPrice)) return false;
-    return true;
-  });
+  // Исправленная фильтрация заявок с использованием useMemo
+  const filteredRequests = useMemo(() => {
+    console.log('SearchRequests - Применение фильтров:', filters);
+    console.log('SearchRequests - Общее количество заявок:', requests.length);
+    
+    return requests.filter(request => {
+      // Фильтр по городу отправления
+      if (filters.from && request.from_city !== filters.from) {
+        return false;
+      }
+      
+      // Фильтр по городу назначения
+      if (filters.to && request.to_city !== filters.to) {
+        return false;
+      }
+      
+      // Фильтр по дате
+      if (filters.date) {
+        const requestDate = new Date(request.preferred_date);
+        const filterDate = new Date(filters.date);
+        // Сравниваем только даты, игнорируя время
+        if (requestDate.toDateString() !== filterDate.toDateString()) {
+          return false;
+        }
+      }
+      
+      // Фильтр по минимальной цене
+      if (filters.maxPrice) {
+        const minPrice = Number(filters.maxPrice);
+        if (isNaN(minPrice) || request.max_price_per_seat < minPrice) {
+          return false;
+        }
+      }
+      
+      return true;
+    }).sort((a, b) => {
+      // Сортировка результатов
+      switch (filters.sortBy) {
+        case 'price':
+          return b.max_price_per_seat - a.max_price_per_seat;
+        case 'rating':
+          return (b.passenger?.rating || 0) - (a.passenger?.rating || 0);
+        case 'time':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+  }, [requests, filters]);
+
+  const clearFilters = () => {
+    setFilters({
+      from: '',
+      to: '',
+      date: undefined,
+      maxPrice: '',
+      sortBy: 'time'
+    });
+  };
 
   if (isLoading) {
     return (
@@ -90,20 +136,31 @@ const SearchRequests = () => {
         {/* Search Filters */}
         <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
           <CardHeader>
-            <CardTitle className="flex items-center text-slate-800 dark:text-slate-200">
-              <Filter className="h-5 w-5 mr-2" />
-              {t('filters')}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center text-slate-800 dark:text-slate-200">
+                <Filter className="h-5 w-5 mr-2" />
+                {t('filters')}
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="text-xs"
+              >
+                Очистить
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('from')}</label>
-                <Select value={filters.from} onValueChange={(value) => handleFilterChange('from', value)}>
+                <Select value={filters.from} onValueChange={(value) => handleFilterChange('from', value === 'all' ? '' : value)}>
                   <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80">
                     <SelectValue placeholder={t('select_city')} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
+                    <SelectItem value="all">Все города</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -112,11 +169,12 @@ const SearchRequests = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">{t('to')}</label>
-                <Select value={filters.to} onValueChange={(value) => handleFilterChange('to', value)}>
+                <Select value={filters.to} onValueChange={(value) => handleFilterChange('to', value === 'all' ? '' : value)}>
                   <SelectTrigger className="h-12 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80">
                     <SelectValue placeholder={t('select_city')} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg">
+                    <SelectItem value="all">Все города</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -164,13 +222,34 @@ const SearchRequests = () => {
         {/* Search Results */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Найдено заявок: {filteredRequests.length}</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+              Найдено заявок: {filteredRequests.length}
+              {filteredRequests.length !== requests.length && (
+                <span className="text-sm text-slate-500 ml-2">
+                  (из {requests.length} всего)
+                </span>
+              )}
+            </h2>
           </div>
           
           {filteredRequests.length === 0 ? (
             <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
               <CardContent className="p-8 text-center">
-                <p className="text-slate-600 dark:text-slate-400">Заявки не найдены. Попробуйте изменить фильтры поиска.</p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  {requests.length === 0 
+                    ? "Заявки не найдены."
+                    : "Заявки не найдены. Попробуйте изменить фильтры поиска."
+                  }
+                </p>
+                {filteredRequests.length === 0 && requests.length > 0 && (
+                  <Button
+                    onClick={clearFilters}
+                    variant="outline"
+                    className="mt-4"
+                  >
+                    Сбросить фильтры
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
