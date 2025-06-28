@@ -2,11 +2,17 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Search, MessageCircle, User, Home } from 'lucide-react';
+import { useChats } from '@/hooks/useChats';
 
 const DriverBottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { chats } = useChats();
+
+  // Подсчитываем общее количество непрочитанных сообщений
+  const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -39,7 +45,8 @@ const DriverBottomNavigation = () => {
       icon: MessageCircle,
       label: 'Чаты',
       color: 'orange',
-      onClick: () => navigate('/driver-chats')
+      onClick: () => navigate('/driver-chats'),
+      badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
     },
     {
       path: '/profile',
@@ -76,13 +83,20 @@ const DriverBottomNavigation = () => {
               key={item.path}
               onClick={item.onClick}
               variant="ghost"
-              className={`flex-1 flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-300 hover:scale-105 ${
+              className={`flex-1 flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-300 hover:scale-105 relative ${
                 getActiveStyles(item.color, isActiveItem)
               }`}
             >
-              <Icon className={`h-5 w-5 mb-1 transition-all duration-300 ${
-                isActiveItem ? 'animate-pulse' : ''
-              }`} />
+              <div className="relative">
+                <Icon className={`h-5 w-5 mb-1 transition-all duration-300 ${
+                  isActiveItem ? 'animate-pulse' : ''
+                }`} />
+                {item.badge && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center p-0 min-w-5">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </Badge>
+                )}
+              </div>
               <span className="text-xs font-medium">{item.label}</span>
             </Button>
           );

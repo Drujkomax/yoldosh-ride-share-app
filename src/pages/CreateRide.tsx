@@ -2,359 +2,222 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Calendar, Users, Car } from 'lucide-react';
-import { useRides } from '@/hooks/useRides';
+import { ArrowLeft, Plus, Car, Clock, MapPin, Users, DollarSign } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useRides } from '@/hooks/useRides';
 import { toast } from 'sonner';
+import DriverBottomNavigation from '@/components/DriverBottomNavigation';
 
 const CreateRide = () => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { createRide, isCreating } = useRides();
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    from: '',
-    to: '',
-    date: '',
-    time: '',
-    seats: '',
-    price: '',
-    duration: '2',
-    car: '',
-    description: ''
-  });
+  const { createRide } = useRides();
 
-  const cities = [
-    'Ташкент',
-    'Самарканд',
-    'Бухара',
-    'Андижан',
-    'Наманган',
-    'Фергана',
-    'Карши',
-    'Термез',
-    'Ургенч',
-    'Нукус'
-  ];
+  const [fromCity, setFromCity] = useState('');
+  const [toCity, setToCity] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
+  const [departureTime, setDepartureTime] = useState('');
+  const [availableSeats, setAvailableSeats] = useState('');
+  const [pricePerSeat, setPricePerSeat] = useState('');
+  const [carModel, setCarModel] = useState('');
+  const [carColor, setCarColor] = useState('');
+  const [description, setDescription] = useState('');
+  const [duration, setDuration] = useState('');
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleNext = () => {
-    if (step === 1) {
-      if (!formData.from || !formData.to) {
-        toast.error("Выберите города отправления и назначения");
-        return;
-      }
-      if (formData.from === formData.to) {
-        toast.error("Города отправления и назначения должны отличаться");
-        return;
-      }
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    if (step === 2) {
-      if (!formData.date || !formData.time) {
-        toast.error("Выберите дату и время");
-        return;
-      }
-      
-      // Проверяем, что дата не в прошлом
-      const selectedDate = new Date(`${formData.date}T${formData.time}`);
-      const now = new Date();
-      if (selectedDate <= now) {
-        toast.error("Дата и время поездки должны быть в будущем");
-        return;
-      }
-    }
-    
-    if (step === 3) {
-      if (!formData.seats || !formData.price || !formData.car) {
-        toast.error("Заполните все поля");
-        return;
-      }
-      
-      if (parseInt(formData.seats) <= 0) {
-        toast.error("Количество мест должно быть больше 0");
-        return;
-      }
-      
-      if (parseFloat(formData.price) <= 0) {
-        toast.error("Цена должна быть больше 0");
-        return;
-      }
-    }
-    
-    setStep(step + 1);
-  };
-
-  const handleSubmit = async () => {
-    console.log('CreateRide - Starting ride creation');
-    console.log('CreateRide - Current user:', user);
-    console.log('CreateRide - Form data:', formData);
-    
-    if (!user) {
-      console.error('CreateRide - No user found');
-      toast.error("Необходимо войти в систему");
-      return;
-    }
-
-    if (!user.id) {
-      console.error('CreateRide - User has no ID');
-      toast.error("Ошибка пользователя. Перезайдите в приложение");
+    if (!user?.id) {
+      toast.error('Необходимо войти в систему');
       return;
     }
 
     try {
-      const rideData = {
+      await createRide({
         driver_id: user.id,
-        from_city: formData.from,
-        to_city: formData.to,
-        departure_date: formData.date,
-        departure_time: formData.time,
-        available_seats: parseInt(formData.seats),
-        price_per_seat: parseFloat(formData.price),
-        duration_hours: parseInt(formData.duration),
-        description: formData.description || undefined,
-        car_model: formData.car || undefined,
-        car_color: undefined,
-        status: 'active' as const
-      };
-
-      console.log('CreateRide - Prepared ride data:', rideData);
+        from_city: fromCity,
+        to_city: toCity,
+        departure_date: departureDate,
+        departure_time: departureTime,
+        available_seats: parseInt(availableSeats),
+        price_per_seat: parseFloat(pricePerSeat),
+        car_model: carModel,
+        car_color: carColor,
+        description,
+        duration_hours: parseInt(duration)
+      });
       
-      createRide(rideData);
-      
-      // Переходим на главную страницу водителя после создания
-      setTimeout(() => {
-        navigate('/driver-home');
-      }, 1000);
-      
+      toast.success('Поездка успешно создана!');
+      navigate('/driver-home');
     } catch (error) {
-      console.error('CreateRide - Error in handleSubmit:', error);
-      toast.error("Произошла ошибка при создании поездки");
+      console.error('Error creating ride:', error);
+      toast.error('Ошибка при создании поездки');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => step > 1 ? setStep(step - 1) : navigate('/driver-home')}
+              onClick={() => navigate('/driver-home')}
+              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-5 w-5 mr-2" />
               Назад
             </Button>
-            <h1 className="text-xl font-bold">Создать поездку</h1>
-            <div className="text-sm text-gray-500">{step}/4</div>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Создать поездку
+              </h1>
+              <p className="text-slate-600 mt-1">Опубликуйте поездку и найдите пассажиров</p>
+            </div>
+            <div className="w-16"></div>
           </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between py-4">
-            {[1, 2, 3, 4].map((num) => (
-              <div key={num} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  num <= step ? 'bg-yoldosh-blue text-white' : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {num}
+      {/* Form Content */}
+      <div className="container mx-auto px-6 py-8">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-slate-800 flex items-center">
+              <Car className="h-6 w-6 mr-3 text-yoldosh-primary" />
+              Детали поездки
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="fromCity" className="block text-sm font-medium text-slate-700">Откуда</label>
+                  <input
+                    type="text"
+                    id="fromCity"
+                    value={fromCity}
+                    onChange={(e) => setFromCity(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
+                  />
                 </div>
-                {num < 4 && (
-                  <div className={`w-16 h-1 mx-2 ${
-                    num < step ? 'bg-yoldosh-blue' : 'bg-gray-200'
-                  }`} />
-                )}
+                <div>
+                  <label htmlFor="toCity" className="block text-sm font-medium text-slate-700">Куда</label>
+                  <input
+                    type="text"
+                    id="toCity"
+                    value={toCity}
+                    onChange={(e) => setToCity(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
+                  />
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <Card className="max-w-md mx-auto">
-          {step === 1 && (
-            <>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-yoldosh-blue" />
-                  Маршрут
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Откуда</Label>
-                  <Select value={formData.from} onValueChange={(value) => handleInputChange('from', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите город" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Куда</Label>
-                  <Select value={formData.to} onValueChange={(value) => handleInputChange('to', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите город" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city}>{city}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleNext} className="w-full bg-yoldosh-blue hover:bg-blue-700">
-                  Далее
-                </Button>
-              </CardContent>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-yoldosh-blue" />
-                  Дата и время
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Дата</Label>
-                  <Input
+                  <label htmlFor="departureDate" className="block text-sm font-medium text-slate-700">Дата отправления</label>
+                  <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
+                    id="departureDate"
+                    value={departureDate}
+                    onChange={(e) => setDepartureDate(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Время</Label>
-                  <Input
+                  <label htmlFor="departureTime" className="block text-sm font-medium text-slate-700">Время отправления</label>
+                  <input
                     type="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange('time', e.target.value)}
+                    id="departureTime"
+                    value={departureTime}
+                    onChange={(e) => setDepartureTime(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
                   />
                 </div>
-                <Button onClick={handleNext} className="w-full bg-yoldosh-blue hover:bg-blue-700">
-                  Далее
-                </Button>
-              </CardContent>
-            </>
-          )}
+              </div>
 
-          {step === 3 && (
-            <>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Car className="h-5 w-5 mr-2 text-yoldosh-blue" />
-                  Детали поездки
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Количество мест</Label>
-                  <Select value={formData.seats} onValueChange={(value) => handleInputChange('seats', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите количество" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                        <SelectItem key={num} value={num.toString()}>{num} мест</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Длительность поездки (часы)</Label>
-                  <Select value={formData.duration} onValueChange={(value) => handleInputChange('duration', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите длительность" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 8, 10, 12].map((num) => (
-                        <SelectItem key={num} value={num.toString()}>{num} ч.</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Цена за место (сум)</Label>
-                  <Input
+                  <label htmlFor="availableSeats" className="block text-sm font-medium text-slate-700">Количество мест</label>
+                  <input
                     type="number"
-                    placeholder="50000"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
+                    id="availableSeats"
+                    value={availableSeats}
+                    onChange={(e) => setAvailableSeats(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
                   />
                 </div>
                 <div>
-                  <Label>Автомобиль</Label>
-                  <Input
-                    placeholder="Марка и модель"
-                    value={formData.car}
-                    onChange={(e) => handleInputChange('car', e.target.value)}
+                  <label htmlFor="pricePerSeat" className="block text-sm font-medium text-slate-700">Цена за место</label>
+                  <input
+                    type="number"
+                    id="pricePerSeat"
+                    value={pricePerSeat}
+                    onChange={(e) => setPricePerSeat(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
                   />
                 </div>
-                <Button onClick={handleNext} className="w-full bg-yoldosh-blue hover:bg-blue-700">
-                  Далее
-                </Button>
-              </CardContent>
-            </>
-          )}
+              </div>
 
-          {step === 4 && (
-            <>
-              <CardHeader>
-                <CardTitle>Описание</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label>Дополнительная информация</Label>
-                  <Textarea
-                    placeholder="Расскажите о поездке: остановки, правила, предпочтения..."
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
+                  <label htmlFor="carModel" className="block text-sm font-medium text-slate-700">Модель автомобиля</label>
+                  <input
+                    type="text"
+                    id="carModel"
+                    value={carModel}
+                    onChange={(e) => setCarModel(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
                   />
                 </div>
-                
-                {/* Summary */}
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <h3 className="font-medium">Сводка поездки:</h3>
-                  <p className="text-sm"><span className="font-medium">Маршрут:</span> {formData.from} → {formData.to}</p>
-                  <p className="text-sm"><span className="font-medium">Дата:</span> {formData.date} в {formData.time}</p>
-                  <p className="text-sm"><span className="font-medium">Длительность:</span> {formData.duration} часов</p>
-                  <p className="text-sm"><span className="font-medium">Мест:</span> {formData.seats}</p>
-                  <p className="text-sm"><span className="font-medium">Цена:</span> {formData.price} сум за место</p>
-                  <p className="text-sm"><span className="font-medium">Автомобиль:</span> {formData.car}</p>
+                <div>
+                  <label htmlFor="carColor" className="block text-sm font-medium text-slate-700">Цвет автомобиля</label>
+                  <input
+                    type="text"
+                    id="carColor"
+                    value={carColor}
+                    onChange={(e) => setCarColor(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
+                  />
                 </div>
-                
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={isCreating}
-                  className="w-full bg-yoldosh-green hover:bg-green-700"
-                >
-                  {isCreating ? 'Создание...' : 'Создать поездку'}
-                </Button>
-              </CardContent>
-            </>
-          )}
+              </div>
+
+              <div>
+                <label htmlFor="duration" className="block text-sm font-medium text-slate-700">Длительность поездки (в часах)</label>
+                <input
+                  type="number"
+                  id="duration"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-slate-700">Описание</label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl text-lg font-semibold"
+              >
+                <Plus className="h-6 w-6 mr-3" />
+                Создать поездку
+              </Button>
+            </form>
+          </CardContent>
         </Card>
       </div>
+
+      <DriverBottomNavigation />
     </div>
   );
 };

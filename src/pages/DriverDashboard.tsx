@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import ChatPanel from '@/components/ChatPanel';
 import DriverBottomNavigation from '@/components/DriverBottomNavigation';
 
 const DriverDashboard = () => {
@@ -82,9 +81,6 @@ const DriverDashboard = () => {
 
       {/* Driver Bottom Navigation */}
       <DriverBottomNavigation />
-
-      {/* Chat Panel */}
-      <ChatPanel />
     </div>
   );
 };
