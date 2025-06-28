@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, ArrowRight, Search, Navigation, ChevronLeft, Clock } from 'lucide-react';
-import MapLocationPicker from './MapLocationPicker';
+import MapLocationPicker2Gis from './MapLocationPicker2Gis';
 import YandexAddressSearch from './YandexAddressSearch';
 
 interface LocationStepProps {
@@ -27,7 +27,7 @@ const LocationStep = ({
 }: LocationStepProps) => {
   const [activeTab, setActiveTab] = useState<'search' | 'map'>('search');
   const [recentSearches] = useState<string[]>(() => {
-    const saved = localStorage.getItem('yandex_recent_searches');
+    const saved = localStorage.getItem('recent_searches');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -42,20 +42,19 @@ const LocationStep = ({
   };
 
   const handleRecentAddressSelect = (address: string) => {
-    // Для недавних поисков мы можем попробовать найти координаты
+    // Для недавних поисков пытаемся найти координаты через 2GIS API
     const geocodeAddress = async () => {
       try {
         const response = await fetch(
-          `https://geocode-maps.yandex.ru/1.x/?apikey=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&geocode=${encodeURIComponent(address)}&format=json&results=1&lang=ru_RU`
+          `https://catalog.api.2gis.com/3.0/items/geocode?q=${encodeURIComponent(address)}&key=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&location=69.240073,41.311081&radius=50000&fields=items.point&locale=ru_RU`
         );
         
         if (response.ok) {
           const data = await response.json();
-          const result = data.response?.GeoObjectCollection?.featureMember?.[0];
-          if (result) {
-            const geoObject = result.GeoObject;
-            const coords = geoObject.Point.pos.split(' ').map(Number).reverse();
-            onLocationSelect(coords as [number, number], address);
+          const item = data.result?.items?.[0];
+          if (item) {
+            const coords: [number, number] = [item.point.lat, item.point.lon];
+            onLocationSelect(coords, address);
           }
         }
       } catch (error) {
@@ -73,13 +72,13 @@ const LocationStep = ({
           
           try {
             const response = await fetch(
-              `https://geocode-maps.yandex.ru/1.x/?apikey=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&geocode=${coords[1]},${coords[0]}&format=json&lang=ru_RU`
+              `https://catalog.api.2gis.com/3.0/items/geocode?lat=${coords[0]}&lon=${coords[1]}&key=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&fields=items.point&locale=ru_RU`
             );
             
             if (response.ok) {
               const data = await response.json();
-              const geoObject = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
-              const address = geoObject ? geoObject.name || geoObject.description || 'Текущее местоположение' : 'Текущее местоположение';
+              const item = data.result?.items?.[0];
+              const address = item?.full_name || item?.address_name || 'Текущее местоположение';
               onLocationSelect(coords, address);
             } else {
               onLocationSelect(coords, 'Текущее местоположение');
@@ -222,7 +221,7 @@ const LocationStep = ({
               <h2 className="text-lg font-semibold">Выберите на карте</h2>
             </div>
             <div className="flex-1">
-              <MapLocationPicker
+              <MapLocationPicker2Gis
                 onLocationSelect={handleLocationSelect}
                 selectedLocation={selectedLocation}
                 placeholder="Выберите точку на карте"

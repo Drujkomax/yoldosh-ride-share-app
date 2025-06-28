@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useRideRequests } from '@/hooks/useRideRequests';
 import { toast } from 'sonner';
 import BottomNavigation from '@/components/BottomNavigation';
-import { YandexMapProvider } from '@/components/YandexMapProvider';
+import { MapProvider2Gis } from '@/components/2GisMapProvider';
 import LocationStep from '@/components/LocationStep';
 
 interface RequestData {
@@ -187,7 +186,7 @@ const CreateRequest = () => {
                     </div>
                   </div>
 
-                  {/* Предпочитаемая дата */}
+                  {/* Остальные поля формы */}
                   <div className="space-y-3">
                     <label htmlFor="preferredDate" className="flex items-center text-lg font-semibold text-gray-800">
                       <Calendar className="h-5 w-5 mr-2 text-purple-600" />
@@ -203,7 +202,6 @@ const CreateRequest = () => {
                     />
                   </div>
 
-                  {/* Количество пассажиров */}
                   <div className="space-y-3">
                     <label htmlFor="passengersCount" className="flex items-center text-lg font-semibold text-gray-800">
                       <Users className="h-5 w-5 mr-2 text-purple-600" />
@@ -221,7 +219,6 @@ const CreateRequest = () => {
                     />
                   </div>
 
-                  {/* Максимальная цена */}
                   <div className="space-y-3">
                     <label htmlFor="maxPrice" className="flex items-center text-lg font-semibold text-gray-800">
                       <DollarSign className="h-5 w-5 mr-2 text-purple-600" />
@@ -239,7 +236,6 @@ const CreateRequest = () => {
                     />
                   </div>
 
-                  {/* Описание */}
                   <div className="space-y-3">
                     <label htmlFor="description" className="text-lg font-semibold text-gray-800 block">
                       Описание (необязательно)
@@ -284,7 +280,7 @@ const CreateRequest = () => {
   };
 
   return (
-    <YandexMapProvider>
+    <MapProvider2Gis>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
         {/* Header */}
         <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
@@ -331,7 +327,7 @@ const CreateRequest = () => {
 
         <BottomNavigation />
       </div>
-    </YandexMapProvider>
+    </MapProvider2Gis>
   );
 };
 

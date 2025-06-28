@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,11 +30,10 @@ const YandexAddressSearch = ({
   const [isFocused, setIsFocused] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  // Используем корректный API ключ
   const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
 
   useEffect(() => {
-    const saved = localStorage.getItem('yandex_recent_searches');
+    const saved = localStorage.getItem('recent_searches');
     if (saved) {
       setRecentSearches(JSON.parse(saved));
     }
@@ -44,7 +42,7 @@ const YandexAddressSearch = ({
   const saveRecentSearch = (address: string) => {
     const updated = [address, ...recentSearches.filter(item => item !== address)].slice(0, 5);
     setRecentSearches(updated);
-    localStorage.setItem('yandex_recent_searches', JSON.stringify(updated));
+    localStorage.setItem('recent_searches', JSON.stringify(updated));
   };
 
   const searchAddresses = async (searchQuery: string) => {
@@ -55,18 +53,16 @@ const YandexAddressSearch = ({
 
     setIsLoading(true);
     try {
-      console.log('Searching for:', searchQuery);
+      console.log('Searching with 2GIS for:', searchQuery);
       
-      // Используем правильный URL для Yandex Geocoder API
       const response = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY}&geocode=${encodeURIComponent(searchQuery + ', Узбекистан')}&format=json&results=10&lang=ru_RU&kind=house`
+        `https://catalog.api.2gis.com/3.0/items/geocode?q=${encodeURIComponent(searchQuery)}&key=${API_KEY}&location=69.240073,41.311081&radius=50000&fields=items.point&locale=ru_RU`
       );
       
-      console.log('Response status:', response.status);
+      console.log('2GIS Response status:', response.status);
       
       if (!response.ok) {
-        console.error('API Error:', response.status, response.statusText);
-        // Fallback к мок данным при ошибке API
+        console.error('2GIS API Error:', response.status, response.statusText);
         const mockResults = generateMockResults(searchQuery);
         setSuggestions(mockResults);
         setShowSuggestions(true);
@@ -74,27 +70,27 @@ const YandexAddressSearch = ({
       }
 
       const data = await response.json();
-      console.log('API Response:', data);
+      console.log('2GIS API Response:', data);
       
-      const results = data.response?.GeoObjectCollection?.featureMember || [];
+      const results = data.result?.items || [];
       
-      const addresses: AddressResult[] = results.map((item: any, index: number) => {
-        const geoObject = item.GeoObject;
-        const coords = geoObject.Point.pos.split(' ').map(Number).reverse();
-        
-        return {
-          name: geoObject.name || `Адрес ${index + 1}`,
-          description: geoObject.description || geoObject.metaDataProperty?.GeocoderMetaData?.text || 'Нет описания',
-          coordinates: coords as [number, number]
-        };
-      });
+      const addresses: AddressResult[] = results.map((item: any) => ({
+        name: item.name || 'Неизвестное место',
+        description: item.full_name || item.address_name || 'Нет описания',
+        coordinates: [item.point.lat, item.point.lon] as [number, number]
+      }));
 
-      console.log('Processed addresses:', addresses);
-      setSuggestions(addresses);
+      // Если нет результатов от API, показываем мок данные
+      if (addresses.length === 0) {
+        const mockResults = generateMockResults(searchQuery);
+        setSuggestions(mockResults);
+      } else {
+        setSuggestions(addresses);
+      }
+      
       setShowSuggestions(true);
     } catch (error) {
       console.error('Error searching addresses:', error);
-      // Fallback к мок данным при ошибке
       const mockResults = generateMockResults(searchQuery);
       setSuggestions(mockResults);
       setShowSuggestions(true);
@@ -116,7 +112,7 @@ const YandexAddressSearch = ({
 
     return uzbekCities
       .filter(city => city.name.toLowerCase().includes(query.toLowerCase()))
-      .map((city, index) => ({
+      .map((city) => ({
         name: city.name,
         description: `${city.name}, Узбекистан`,
         coordinates: city.coords

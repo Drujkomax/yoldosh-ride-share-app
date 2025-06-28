@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { toast } from 'sonner';
 import DriverBottomNavigation from '@/components/DriverBottomNavigation';
-import { YandexMapProvider } from '@/components/YandexMapProvider';
+import { MapProvider2Gis } from '@/components/2GisMapProvider';
 import LocationStep from '@/components/LocationStep';
 import RouteVisualizer from '@/components/RouteVisualizer';
 
@@ -384,7 +383,7 @@ const CreateRide = () => {
   };
 
   return (
-    <YandexMapProvider>
+    <MapProvider2Gis>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         {/* Header */}
         <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
@@ -431,7 +430,7 @@ const CreateRide = () => {
 
         <DriverBottomNavigation />
       </div>
-    </YandexMapProvider>
+    </MapProvider2Gis>
   );
 };
 
