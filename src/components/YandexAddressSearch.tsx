@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MapPin, Loader2 } from 'lucide-react';
+import { Search, MapPin, Loader2, Clock } from 'lucide-react';
 
 interface AddressResult {
   name: string;
@@ -21,9 +21,24 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   const API_KEY = 'fc46d1dc-d099-42f9-baf7-e6d468df0eef';
+
+  useEffect(() => {
+    // Загружаем недавние поиски из localStorage
+    const saved = localStorage.getItem('yandex_recent_searches');
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+  }, []);
+
+  const saveRecentSearch = (address: string) => {
+    const updated = [address, ...recentSearches.filter(item => item !== address)].slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem('yandex_recent_searches', JSON.stringify(updated));
+  };
 
   const searchAddresses = async (searchQuery: string) => {
     if (searchQuery.length < 3) {
@@ -46,7 +61,7 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
       
       const addresses: AddressResult[] = results.map((item: any) => {
         const geoObject = item.GeoObject;
-        const coords = geoObject.Point.pos.split(' ').map(Number).reverse(); // Яндекс возвращает lon,lat, нам нужно lat,lon
+        const coords = geoObject.Point.pos.split(' ').map(Number).reverse();
         
         return {
           name: geoObject.name || '',
@@ -69,12 +84,10 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
     const newQuery = e.target.value;
     setQuery(newQuery);
 
-    // Очищаем предыдущий таймаут
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
 
-    // Устанавливаем новый таймаут для поиска
     timeoutRef.current = setTimeout(() => {
       searchAddresses(newQuery);
     }, 300);
@@ -83,7 +96,13 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
   const handleAddressSelect = (address: AddressResult) => {
     setQuery(address.name);
     setShowSuggestions(false);
+    saveRecentSearch(address.name);
     onAddressSelect(address.name, address.coordinates);
+  };
+
+  const handleRecentSelect = (address: string) => {
+    setQuery(address);
+    searchAddresses(address);
   };
 
   useEffect(() => {
@@ -101,37 +120,57 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
+        <Search className="absolute left-4 top-4 h-6 w-6 text-gray-400" />
         <Input
           placeholder={placeholder}
           value={query}
           onChange={handleInputChange}
           onFocus={() => {
-            if (suggestions.length > 0) {
+            if (suggestions.length > 0 || recentSearches.length > 0) {
               setShowSuggestions(true);
             }
           }}
-          className="pl-12 h-14 bg-gray-800 border-gray-700 text-white placeholder-gray-400 rounded-2xl text-lg focus:border-blue-500 focus:ring-blue-500"
+          className="pl-14 h-16 bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-800 placeholder-gray-500 rounded-2xl text-lg font-medium shadow-sm focus:shadow-lg transition-all duration-300"
         />
         {isLoading && (
-          <Loader2 className="absolute right-4 top-4 h-5 w-5 text-gray-400 animate-spin" />
+          <Loader2 className="absolute right-4 top-4 h-6 w-6 text-blue-500 animate-spin" />
         )}
       </div>
 
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-gray-800 border border-gray-700 rounded-2xl shadow-xl max-h-80 overflow-y-auto">
+      {showSuggestions && (suggestions.length > 0 || (query.length < 3 && recentSearches.length > 0)) && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border-2 border-gray-100 rounded-2xl shadow-2xl max-h-96 overflow-y-auto">
+          {query.length < 3 && recentSearches.length > 0 && (
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center space-x-2 mb-3">
+                <Clock className="h-4 w-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-600">Недавние поиски</span>
+              </div>
+              {recentSearches.map((address, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  onClick={() => handleRecentSelect(address)}
+                  className="w-full justify-start text-left hover:bg-gray-50 rounded-xl px-4 py-3 h-auto mb-1"
+                >
+                  <MapPin className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                  <span className="text-gray-700 font-medium truncate">{address}</span>
+                </Button>
+              ))}
+            </div>
+          )}
+          
           {suggestions.map((address, index) => (
             <Button
               key={index}
               variant="ghost"
               onClick={() => handleAddressSelect(address)}
-              className="w-full justify-start text-left hover:bg-gray-700 rounded-2xl px-6 py-4 h-auto flex-col items-start"
+              className="w-full justify-start text-left hover:bg-blue-50 rounded-2xl px-6 py-4 h-auto flex-col items-start border-b border-gray-50 last:border-b-0"
             >
               <div className="flex items-center w-full">
-                <MapPin className="h-5 w-5 mr-3 text-gray-400 flex-shrink-0" />
+                <MapPin className="h-5 w-5 mr-4 text-blue-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-white font-medium truncate">{address.name}</div>
-                  <div className="text-gray-400 text-sm truncate">{address.description}</div>
+                  <div className="text-gray-800 font-semibold truncate">{address.name}</div>
+                  <div className="text-gray-500 text-sm truncate mt-1">{address.description}</div>
                 </div>
               </div>
             </Button>
@@ -139,7 +178,6 @@ const YandexAddressSearch = ({ onAddressSelect, placeholder = "Введите а
         </div>
       )}
 
-      {/* Overlay to close suggestions when clicking outside */}
       {showSuggestions && (
         <div 
           className="fixed inset-0 z-40" 

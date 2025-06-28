@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useYandexMap } from './YandexMapProvider';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation } from 'lucide-react';
+import { MapPin, Navigation, Crosshair } from 'lucide-react';
 
 interface MapLocationPickerProps {
   onLocationSelect: (coordinates: [number, number], address: string) => void;
@@ -13,7 +13,7 @@ interface MapLocationPickerProps {
 
 const MapLocationPicker = ({ 
   onLocationSelect, 
-  defaultCenter = [41.2995, 69.2401], // Ташкент
+  defaultCenter = [41.2995, 69.2401],
   placeholder = "Выберите точку на карте",
   selectedLocation
 }: MapLocationPickerProps) => {
@@ -22,36 +22,35 @@ const MapLocationPicker = ({
   const [map, setMap] = useState<any>(null);
   const [placemark, setPlacemark] = useState<any>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
 
   useEffect(() => {
     if (!isLoaded || !ymaps || !mapRef.current) return;
 
     const mapInstance = new ymaps.Map(mapRef.current, {
       center: selectedLocation || defaultCenter,
-      zoom: 12,
-      controls: ['zoomControl', 'fullscreenControl']
+      zoom: selectedLocation ? 15 : 12,
+      controls: ['zoomControl', 'fullscreenControl', 'typeSelector']
     });
 
-    // Добавляем плейсмарк если есть выбранная локация
     if (selectedLocation) {
       const newPlacemark = new ymaps.Placemark(selectedLocation, {
         hintContent: 'Выбранная точка'
       }, {
-        preset: 'islands#redDotIcon',
-        draggable: true
+        preset: 'islands#redCircleDotIconWithCaption',
+        draggable: true,
+        iconColor: '#3b82f6'
       });
 
       mapInstance.geoObjects.add(newPlacemark);
       setPlacemark(newPlacemark);
 
-      // Обработчик перетаскивания
       newPlacemark.events.add('dragend', () => {
         const coords = newPlacemark.geometry.getCoordinates();
         handleLocationSelect(coords);
       });
     }
 
-    // Обработчик клика по карте
     mapInstance.events.add('click', (e: any) => {
       const coords = e.get('coords');
       handleLocationSelect(coords);
@@ -68,27 +67,28 @@ const MapLocationPicker = ({
     if (!ymaps) return;
 
     try {
-      // Получаем адрес по координатам
       const geocoder = ymaps.geocode(coords);
       geocoder.then((res: any) => {
         const firstGeoObject = res.geoObjects.get(0);
         const address = firstGeoObject ? firstGeoObject.getAddressLine() : 'Неизвестный адрес';
         
-        // Обновляем или создаем плейсмарк
+        setSelectedAddress(address);
+
         if (placemark) {
           placemark.geometry.setCoordinates(coords);
+          placemark.properties.set('hintContent', address);
         } else if (map) {
           const newPlacemark = new ymaps.Placemark(coords, {
             hintContent: address
           }, {
-            preset: 'islands#redDotIcon',
-            draggable: true
+            preset: 'islands#redCircleDotIconWithCaption',
+            draggable: true,
+            iconColor: '#3b82f6'
           });
 
           map.geoObjects.add(newPlacemark);
           setPlacemark(newPlacemark);
 
-          // Добавляем обработчик перетаскивания
           newPlacemark.events.add('dragend', () => {
             const newCoords = newPlacemark.geometry.getCoordinates();
             handleLocationSelect(newCoords);
@@ -111,7 +111,7 @@ const MapLocationPicker = ({
         (position) => {
           const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
           if (map) {
-            map.setCenter(coords, 14);
+            map.setCenter(coords, 15);
           }
           handleLocationSelect(coords);
           setIsDetectingLocation(false);
@@ -119,6 +119,11 @@ const MapLocationPicker = ({
         (error) => {
           console.error('Error getting location:', error);
           setIsDetectingLocation(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
         }
       );
     } else {
@@ -128,39 +133,55 @@ const MapLocationPicker = ({
 
   if (!isLoaded) {
     return (
-      <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-        <div className="text-gray-500">Загрузка карты...</div>
+      <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-inner">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <div className="text-gray-600 font-medium">Загрuzka карты...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <MapPin className="h-5 w-5 text-gray-400" />
-          <span className="text-sm text-gray-600">{placeholder}</span>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-200">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-blue-500 rounded-full">
+            <Crosshair className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="font-semibold text-gray-800">{placeholder}</div>
+            {selectedAddress && (
+              <div className="text-sm text-gray-600 mt-1">{selectedAddress}</div>
+            )}
+          </div>
         </div>
+        
         <Button
           variant="outline"
           size="sm"
           onClick={handleDetectLocation}
           disabled={isDetectingLocation}
-          className="text-sm"
+          className="bg-white hover:bg-blue-50 border-blue-300 text-blue-600 font-medium rounded-xl px-4 py-2"
         >
           <Navigation className="h-4 w-4 mr-2" />
-          {isDetectingLocation ? 'Определяем...' : 'Моя геолокация'}
+          {isDetectingLocation ? 'Определяем...' : 'Моё местоположение'}
         </Button>
       </div>
       
-      <div 
-        ref={mapRef} 
-        className="w-full h-64 rounded-lg border border-gray-200"
-        style={{ minHeight: '256px' }}
-      />
-      
-      <div className="text-xs text-gray-500 text-center">
-        Нажмите на карту или перетащите маркер для выбора точки
+      <div className="relative">
+        <div 
+          ref={mapRef} 
+          className="w-full h-80 rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden"
+          style={{ minHeight: '320px' }}
+        />
+        
+        <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-xl p-3 shadow-lg border border-white/20">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <MapPin className="h-4 w-4 text-blue-500" />
+            <span>Нажмите на карту или перетащите маркер для выбора точки</span>
+          </div>
+        </div>
       </div>
     </div>
   );

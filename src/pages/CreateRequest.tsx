@@ -96,20 +96,20 @@ const CreateRequest = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-2 mb-8">
+    <div className="flex items-center justify-center space-x-3 mb-8">
       {steps.map((step, index) => (
         <React.Fragment key={step.number}>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full text-sm font-bold transition-all duration-300 ${
             currentStep === step.number 
-              ? 'bg-purple-600 text-white' 
+              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-110' 
               : step.completed 
-                ? 'bg-green-500 text-white' 
+                ? 'bg-green-500 text-white shadow-md' 
                 : 'bg-gray-200 text-gray-600'
           }`}>
-            {step.completed ? <Check className="h-4 w-4" /> : step.number}
+            {step.completed ? <Check className="h-5 w-5" /> : step.number}
           </div>
           {index < steps.length - 1 && (
-            <div className={`w-8 h-0.5 ${
+            <div className={`w-12 h-1 rounded-full transition-all duration-300 ${
               step.completed ? 'bg-green-500' : 'bg-gray-200'
             }`} />
           )}
@@ -129,7 +129,7 @@ const CreateRequest = () => {
             onNext={() => setCurrentStep(2)}
             selectedLocation={requestData.fromCoordinates}
             selectedAddress={requestData.fromAddress}
-            icon={<MapPin className="h-6 w-6 mr-3 text-green-600" />}
+            icon={<MapPin className="h-8 w-8 mr-3 text-green-500" />}
           />
         );
 
@@ -142,61 +142,73 @@ const CreateRequest = () => {
             onNext={() => setCurrentStep(3)}
             selectedLocation={requestData.toCoordinates}
             selectedAddress={requestData.toAddress}
-            icon={<MapPin className="h-6 w-6 mr-3 text-red-600" />}
+            icon={<MapPin className="h-8 w-8 mr-3 text-red-500" />}
           />
         );
 
       case 3:
         return (
-          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center justify-center">
-                <FileText className="h-6 w-6 mr-3 text-yoldosh-primary" />
-                Детали заявки
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Отображение выбранного маршрута */}
-                <div className="bg-gray-50 p-4 rounded-xl space-y-3">
-                  <h3 className="font-semibold text-gray-800">Выбранный маршрут</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-green-500 rounded-full" />
-                      <span className="text-sm text-gray-700">{requestData.fromAddress}</span>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-red-500 rounded-full" />
-                      <span className="text-sm text-gray-700">{requestData.toAddress}</span>
+          <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
+            <Card className="max-w-3xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="text-center pb-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                <CardTitle className="text-3xl font-bold flex items-center justify-center mb-2">
+                  <FileText className="h-8 w-8 mr-3" />
+                  Детали заявки
+                </CardTitle>
+                <p className="text-purple-100 text-lg">Заполните информацию о вашей поездке</p>
+              </CardHeader>
+              
+              <CardContent className="p-8">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Отображение выбранного маршрута */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-100 shadow-sm">
+                    <h3 className="font-bold text-xl text-gray-800 mb-4 flex items-center">
+                      <MapPin className="h-6 w-6 mr-2 text-purple-600" />
+                      Выбранный маршрут
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-4 p-4 bg-white/80 rounded-xl shadow-sm">
+                        <div className="w-4 h-4 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-800 mb-1">Откуда</div>
+                          <div className="text-gray-600">{requestData.fromAddress}</div>
+                        </div>
+                      </div>
+                      <div className="flex justify-center">
+                        <div className="w-px h-8 bg-gradient-to-b from-green-500 to-red-500"></div>
+                      </div>
+                      <div className="flex items-start space-x-4 p-4 bg-white/80 rounded-xl shadow-sm">
+                        <div className="w-4 h-4 bg-red-500 rounded-full mt-1 flex-shrink-0"></div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-800 mb-1">Куда</div>
+                          <div className="text-gray-600">{requestData.toAddress}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Предпочитаемая дата */}
-                <div>
-                  <label htmlFor="preferredDate" className="block text-sm font-medium text-slate-700 mb-2">
-                    Предпочитаемая дата
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  {/* Предпочитаемая дата */}
+                  <div className="space-y-3">
+                    <label htmlFor="preferredDate" className="flex items-center text-lg font-semibold text-gray-800">
+                      <Calendar className="h-5 w-5 mr-2 text-purple-600" />
+                      Предпочитаемая дата
+                    </label>
                     <input
                       type="date"
                       id="preferredDate"
                       value={requestData.preferredDate}
                       onChange={(e) => setRequestData(prev => ({ ...prev, preferredDate: e.target.value }))}
-                      className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
+                      className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-300"
                       required
                     />
                   </div>
-                </div>
 
-                {/* Количество пассажиров */}
-                <div>
-                  <label htmlFor="passengersCount" className="block text-sm font-medium text-slate-700 mb-2">
-                    Количество пассажиров
-                  </label>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  {/* Количество пассажиров */}
+                  <div className="space-y-3">
+                    <label htmlFor="passengersCount" className="flex items-center text-lg font-semibold text-gray-800">
+                      <Users className="h-5 w-5 mr-2 text-purple-600" />
+                      Количество пассажиров
+                    </label>
                     <input
                       type="number"
                       id="passengersCount"
@@ -204,67 +216,66 @@ const CreateRequest = () => {
                       max="8"
                       value={requestData.passengersCount}
                       onChange={(e) => setRequestData(prev => ({ ...prev, passengersCount: e.target.value }))}
-                      className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
+                      className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-300"
                       required
                     />
                   </div>
-                </div>
 
-                {/* Максимальная цена */}
-                <div>
-                  <label htmlFor="maxPrice" className="block text-sm font-medium text-slate-700 mb-2">
-                    Максимальная цена за место (необязательно)
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  {/* Максимальная цена */}
+                  <div className="space-y-3">
+                    <label htmlFor="maxPrice" className="flex items-center text-lg font-semibold text-gray-800">
+                      <DollarSign className="h-5 w-5 mr-2 text-purple-600" />
+                      Максимальная цена за место (необязательно)
+                    </label>
                     <input
                       type="number"
                       id="maxPrice"
                       min="0"
-                      step="0.01"
+                      step="1000"
                       value={requestData.maxPrice}
                       onChange={(e) => setRequestData(prev => ({ ...prev, maxPrice: e.target.value }))}
-                      className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
-                      placeholder="Укажите максимальную цену"
+                      className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-300"
+                      placeholder="Укажите максимальную цену (сум)"
                     />
                   </div>
-                </div>
 
-                {/* Описание */}
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
-                    Описание (необязательно)
-                  </label>
-                  <textarea
-                    id="description"
-                    value={requestData.description}
-                    onChange={(e) => setRequestData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={4}
-                    className="w-full pl-4 pr-4 py-3 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
-                    placeholder="Дополнительная информация о поездке..."
-                  />
-                </div>
-                
-                <div className="flex space-x-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCurrentStep(2)}
-                    className="flex-1 h-12 rounded-xl"
-                  >
-                    Назад
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1 h-12 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Создать заявку
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                  {/* Описание */}
+                  <div className="space-y-3">
+                    <label htmlFor="description" className="text-lg font-semibold text-gray-800 block">
+                      Описание (необязательно)
+                    </label>
+                    <textarea
+                      id="description"
+                      value={requestData.description}
+                      onChange={(e) => setRequestData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-300 resize-none"
+                      placeholder="Дополнительная информация о поездке..."
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-4 pt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep(2)}
+                      className="flex-1 h-16 rounded-2xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold text-lg"
+                    >
+                      <ArrowLeft className="h-5 w-5 mr-2" />
+                      Назад
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1 h-16 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                    >
+                      <Plus className="h-6 w-6 mr-2" />
+                      Создать заявку
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       default:
@@ -274,9 +285,9 @@ const CreateRequest = () => {
 
   return (
     <YandexMapProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 pb-20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
           <div className="container mx-auto px-6 py-6">
             <div className="flex items-center justify-between">
               <Button
@@ -288,26 +299,34 @@ const CreateRequest = () => {
                     navigate('/passenger');
                   }
                 }}
-                className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+                className="rounded-2xl hover:bg-purple-50 p-4 text-gray-700 font-semibold"
               >
-                <ArrowLeft className="h-5 w-5 mr-2" />
+                <ArrowLeft className="h-6 w-6 mr-2" />
                 Назад
               </Button>
               <div className="text-center">
-                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                   Создать заявку
                 </h1>
-                <p className="text-slate-600 mt-1">Шаг {currentStep} из {steps.length}</p>
+                <p className="text-gray-600 mt-2 text-lg">Шаг {currentStep} из {steps.length}</p>
               </div>
-              <div className="w-16"></div>
+              <div className="w-24"></div>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-6 py-8">
-          {renderStepIndicator()}
-          {renderCurrentStep()}
+        <div className="py-8">
+          {currentStep < 3 ? (
+            renderCurrentStep()
+          ) : (
+            <>
+              <div className="container mx-auto px-6 pb-8">
+                {renderStepIndicator()}
+              </div>
+              {renderCurrentStep()}
+            </>
+          )}
         </div>
 
         <BottomNavigation />

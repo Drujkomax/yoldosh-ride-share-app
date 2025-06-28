@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Plus, Car, Clock, MapPin, Users, DollarSign, Route, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Car, Clock, MapPin, Users, DollarSign, Route, Check, Calendar } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { toast } from 'sonner';
@@ -36,20 +36,19 @@ const CreateRide = () => {
   const [rideData, setRideData] = useState<RideData>({
     departureDate: '',
     departureTime: '',
-    availableSeats: '',
+    availableSeats: '4',
     pricePerSeat: '',
     carModel: '',
     carColor: '',
     description: '',
-    duration: ''
+    duration: '2'
   });
 
   const steps = [
     { number: 1, title: 'Откуда', completed: !!rideData.fromAddress },
     { number: 2, title: 'Куда', completed: !!rideData.toAddress },
     { number: 3, title: 'Маршрут', completed: !!rideData.routeData },
-    { number: 4, title: 'Детали', completed: false },
-    { number: 5, title: 'Публикация', completed: false }
+    { number: 4, title: 'Детали', completed: false }
   ];
 
   const handleFromLocationSelect = (coordinates: [number, number], address: string) => {
@@ -120,20 +119,20 @@ const CreateRide = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-2 mb-8">
+    <div className="flex items-center justify-center space-x-3 mb-8">
       {steps.map((step, index) => (
         <React.Fragment key={step.number}>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+          <div className={`flex items-center justify-center w-12 h-12 rounded-full text-sm font-bold transition-all duration-300 ${
             currentStep === step.number 
-              ? 'bg-blue-600 text-white' 
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-110' 
               : step.completed 
-                ? 'bg-green-500 text-white' 
+                ? 'bg-green-500 text-white shadow-md' 
                 : 'bg-gray-200 text-gray-600'
           }`}>
-            {step.completed ? <Check className="h-4 w-4" /> : step.number}
+            {step.completed ? <Check className="h-5 w-5" /> : step.number}
           </div>
           {index < steps.length - 1 && (
-            <div className={`w-8 h-0.5 ${
+            <div className={`w-12 h-1 rounded-full transition-all duration-300 ${
               step.completed ? 'bg-green-500' : 'bg-gray-200'
             }`} />
           )}
@@ -153,7 +152,7 @@ const CreateRide = () => {
             onNext={() => setCurrentStep(2)}
             selectedLocation={rideData.fromCoordinates}
             selectedAddress={rideData.fromAddress}
-            icon={<MapPin className="h-6 w-6 mr-3 text-green-600" />}
+            icon={<MapPin className="h-8 w-8 mr-3 text-green-500" />}
           />
         );
 
@@ -166,180 +165,217 @@ const CreateRide = () => {
             onNext={() => setCurrentStep(3)}
             selectedLocation={rideData.toCoordinates}
             selectedAddress={rideData.toAddress}
-            icon={<MapPin className="h-6 w-6 mr-3 text-red-600" />}
+            icon={<MapPin className="h-8 w-8 mr-3 text-red-500" />}
           />
         );
 
       case 3:
         return (
-          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center justify-center">
-                <Route className="h-6 w-6 mr-3 text-blue-600" />
-                Проверьте маршрут
-              </CardTitle>
-              <p className="text-slate-600 mt-1">Убедитесь, что маршрут построен правильно</p>
-            </CardHeader>
-            
-            <CardContent className="p-6">
-              {rideData.fromCoordinates && rideData.toCoordinates && (
-                <RouteVisualizer
-                  startPoint={rideData.fromCoordinates}
-                  endPoint={rideData.toCoordinates}
-                  startAddress={rideData.fromAddress || ''}
-                  endAddress={rideData.toAddress || ''}
-                  onRouteCalculated={handleRouteCalculated}
-                />
-              )}
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+            <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="text-center pb-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <CardTitle className="text-3xl font-bold flex items-center justify-center mb-2">
+                  <Route className="h-8 w-8 mr-3" />
+                  Проверьте маршрут
+                </CardTitle>
+                <p className="text-blue-100 text-lg">Убедитесь, что маршрут построен правильно</p>
+              </CardHeader>
               
-              <div className="flex space-x-4 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep(2)}
-                  className="flex-1 h-12 rounded-xl"
-                >
-                  Назад
-                </Button>
-                <Button
-                  onClick={() => setCurrentStep(4)}
-                  disabled={!rideData.routeData}
-                  className="flex-1 h-12 bg-gradient-primary rounded-xl"
-                >
-                  Продолжить
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              <CardContent className="p-8">
+                {rideData.fromCoordinates && rideData.toCoordinates && (
+                  <RouteVisualizer
+                    startPoint={rideData.fromCoordinates}
+                    endPoint={rideData.toCoordinates}
+                    startAddress={rideData.fromAddress || ''}
+                    endAddress={rideData.toAddress || ''}
+                    onRouteCalculated={handleRouteCalculated}
+                  />
+                )}
+                
+                <div className="flex space-x-4 mt-8">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(2)}
+                    className="flex-1 h-14 rounded-2xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold text-lg"
+                  >
+                    <ArrowLeft className="h-5 w-5 mr-2" />
+                    Назад
+                  </Button>
+                  <Button
+                    onClick={() => setCurrentStep(4)}
+                    disabled={!rideData.routeData}
+                    className="flex-1 h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    Продолжить
+                    <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       case 4:
         return (
-          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center justify-center">
-                <Car className="h-6 w-6 mr-3 text-yoldosh-primary" />
-                Детали поездки
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
-              <form onSubmit={handleDetailsSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Дата отправления</label>
-                    <input
-                      type="date"
-                      value={rideData.departureDate}
-                      onChange={(e) => setRideData(prev => ({ ...prev, departureDate: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      required
-                    />
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+            <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <CardHeader className="text-center pb-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <CardTitle className="text-3xl font-bold flex items-center justify-center mb-2">
+                  <Car className="h-8 w-8 mr-3" />
+                  Детали поездки
+                </CardTitle>
+                <p className="text-blue-100 text-lg">Заполните информацию о поездке</p>
+              </CardHeader>
+              
+              <CardContent className="p-8">
+                <form onSubmit={handleDetailsSubmit} className="space-y-8">
+                  {/* Дата и время */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="flex items-center text-lg font-semibold text-gray-800">
+                        <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                        Дата отправления
+                      </label>
+                      <input
+                        type="date"
+                        value={rideData.departureDate}
+                        onChange={(e) => setRideData(prev => ({ ...prev, departureDate: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="flex items-center text-lg font-semibold text-gray-800">
+                        <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                        Время отправления
+                      </label>
+                      <input
+                        type="time"
+                        value={rideData.departureTime}
+                        onChange={(e) => setRideData(prev => ({ ...prev, departureTime: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        required
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Время отправления</label>
-                    <input
-                      type="time"
-                      value={rideData.departureTime}
-                      onChange={(e) => setRideData(prev => ({ ...prev, departureTime: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Количество мест</label>
+                  {/* Места и цена */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="flex items-center text-lg font-semibold text-gray-800">
+                        <Users className="h-5 w-5 mr-2 text-blue-600" />
+                        Количество мест
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={rideData.availableSeats}
+                        onChange={(e) => setRideData(prev => ({ ...prev, availableSeats: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="flex items-center text-lg font-semibold text-gray-800">
+                        <DollarSign className="h-5 w-5 mr-2 text-blue-600" />
+                        Цена за место (сум)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={rideData.pricePerSeat}
+                        onChange={(e) => setRideData(prev => ({ ...prev, pricePerSeat: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        placeholder="50000"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Автомобиль */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <label className="flex items-center text-lg font-semibold text-gray-800">
+                        <Car className="h-5 w-5 mr-2 text-blue-600" />
+                        Модель автомобиля
+                      </label>
+                      <input
+                        type="text"
+                        value={rideData.carModel}
+                        onChange={(e) => setRideData(prev => ({ ...prev, carModel: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        placeholder="Toyota Camry"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-lg font-semibold text-gray-800 block">
+                        Цвет автомобиля
+                      </label>
+                      <input
+                        type="text"
+                        value={rideData.carColor}
+                        onChange={(e) => setRideData(prev => ({ ...prev, carColor: e.target.value }))}
+                        className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
+                        placeholder="Белый"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Продолжительность */}
+                  <div className="space-y-3">
+                    <label className="flex items-center text-lg font-semibold text-gray-800">
+                      <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                      Длительность поездки (в часах)
+                    </label>
                     <input
                       type="number"
                       min="1"
-                      max="8"
-                      value={rideData.availableSeats}
-                      onChange={(e) => setRideData(prev => ({ ...prev, availableSeats: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      max="24"
+                      value={rideData.duration}
+                      onChange={(e) => setRideData(prev => ({ ...prev, duration: e.target.value }))}
+                      className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300"
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Цена за место</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={rideData.pricePerSeat}
-                      onChange={(e) => setRideData(prev => ({ ...prev, pricePerSeat: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      required
+
+                  {/* Описание */}
+                  <div className="space-y-3">
+                    <label className="text-lg font-semibold text-gray-800 block">
+                      Описание (необязательно)
+                    </label>
+                    <textarea
+                      value={rideData.description}
+                      onChange={(e) => setRideData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      className="w-full px-4 py-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-300 resize-none"
+                      placeholder="Дополнительная информация о поездке..."
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Модель автомобиля</label>
-                    <input
-                      type="text"
-                      value={rideData.carModel}
-                      onChange={(e) => setRideData(prev => ({ ...prev, carModel: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      placeholder="Например: Toyota Camry"
-                    />
+                  
+                  <div className="flex space-x-4 pt-6">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep(3)}
+                      className="flex-1 h-16 rounded-2xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold text-lg"
+                    >
+                      <ArrowLeft className="h-5 w-5 mr-2" />
+                      Назад
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="flex-1 h-16 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                    >
+                      <Plus className="h-6 w-6 mr-2" />
+                      Создать поездку
+                    </Button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Цвет автомобиля</label>
-                    <input
-                      type="text"
-                      value={rideData.carColor}
-                      onChange={(e) => setRideData(prev => ({ ...prev, carColor: e.target.value }))}
-                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                      placeholder="Например: Белый"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Длительность поездки (в часах)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="24"
-                    value={rideData.duration}
-                    onChange={(e) => setRideData(prev => ({ ...prev, duration: e.target.value }))}
-                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Описание (необязательно)</label>
-                  <textarea
-                    value={rideData.description}
-                    onChange={(e) => setRideData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    placeholder="Дополнительная информация о поездке..."
-                  />
-                </div>
-                
-                <div className="flex space-x-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCurrentStep(3)}
-                    className="flex-1 h-12 rounded-xl"
-                  >
-                    Назад
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1 h-12 bg-gradient-primary rounded-xl"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Создать поездку
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
         );
 
       default:
@@ -349,9 +385,9 @@ const CreateRide = () => {
 
   return (
     <YandexMapProvider>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
           <div className="container mx-auto px-6 py-6">
             <div className="flex items-center justify-between">
               <Button
@@ -363,26 +399,34 @@ const CreateRide = () => {
                     navigate('/driver-home');
                   }
                 }}
-                className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+                className="rounded-2xl hover:bg-blue-50 p-4 text-gray-700 font-semibold"
               >
-                <ArrowLeft className="h-5 w-5 mr-2" />
+                <ArrowLeft className="h-6 w-6 mr-2" />
                 Назад
               </Button>
               <div className="text-center">
-                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Создать поездку
                 </h1>
-                <p className="text-slate-600 mt-1">Шаг {currentStep} из {steps.length}</p>
+                <p className="text-gray-600 mt-2 text-lg">Шаг {currentStep} из {steps.length}</p>
               </div>
-              <div className="w-16"></div>
+              <div className="w-24"></div>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="container mx-auto px-6 py-8">
-          {renderStepIndicator()}
-          {renderCurrentStep()}
+        <div className="py-8">
+          {currentStep < 3 ? (
+            renderCurrentStep()
+          ) : (
+            <>
+              <div className="container mx-auto px-6 pb-8">
+                {renderStepIndicator()}
+              </div>
+              {renderCurrentStep()}
+            </>
+          )}
         </div>
 
         <DriverBottomNavigation />
