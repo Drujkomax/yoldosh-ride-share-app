@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,17 +6,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, Users, Clock, ArrowRight } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
+import { useSearchHistory } from '@/hooks/useSearchHistory';
 import BottomNavigation from '@/components/BottomNavigation';
-import LocationSelector from '@/components/LocationSelector';
+import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
 import DateSelector from '@/components/DateSelector';
 import PassengerSelector from '@/components/PassengerSelector';
-import { format } from 'date-fns';
+import { format, startOfToday, addYears } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { searchRides } = useRides();
+  const { searchHistory, addToHistory } = useSearchHistory();
+  
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
   const [date, setDate] = useState<Date>();
@@ -28,54 +32,6 @@ const PassengerDashboard = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showPassengerSelector, setShowPassengerSelector] = useState(false);
 
-  // Search history from localStorage
-  const getSearchHistory = () => {
-    try {
-      const history = localStorage.getItem('searchHistory');
-      return history ? JSON.parse(history) : [
-        {
-          id: 1,
-          from: 'Москва',
-          to: 'Санкт-Петербург',
-          date: '23 декабря',
-          passengers: 2,
-          searchTime: '2 часа назад'
-        },
-        {
-          id: 2,
-          from: 'Дениса Давыдова, Московская обл.',
-          to: 'Санкт-Петербург',
-          date: '20 декабря',
-          passengers: 1,
-          searchTime: '1 день назад'
-        }
-      ];
-    } catch {
-      return [];
-    }
-  };
-
-  const searchHistory = getSearchHistory();
-
-  const saveToSearchHistory = (searchData: any) => {
-    try {
-      const newEntry = {
-        id: Date.now(),
-        from: searchData.from_city,
-        to: searchData.to_city,
-        date: searchData.departure_date ? format(new Date(searchData.departure_date), 'dd MMMM', { locale: ru }) : 'Любая дата',
-        passengers: passengers,
-        searchTime: 'Только что'
-      };
-      
-      const history = getSearchHistory();
-      const updatedHistory = [newEntry, ...history.slice(0, 4)];
-      localStorage.setItem('searchHistory', JSON.stringify(updatedHistory));
-    } catch (error) {
-      console.error('Error saving search history:', error);
-    }
-  };
-
   const handleSearch = async () => {
     if (fromCity && toCity && date) {
       setIsSearching(true);
@@ -83,13 +39,19 @@ const PassengerDashboard = () => {
         const searchData = {
           from_city: fromCity,
           to_city: toCity,
-          departure_date: format(date, 'yyyy-MM-dd')
+          departure_date: format(date, 'yyyy-MM-dd'),
+          passengers_count: passengers
         };
         
-        const results = await searchRides(searchData);
-        console.log('Search results:', results);
+        // Добавляем в историю поиска
+        await addToHistory(searchData);
         
-        saveToSearchHistory(searchData);
+        const results = await searchRides({
+          from_city: fromCity,
+          to_city: toCity,
+          departure_date: format(date, 'yyyy-MM-dd')
+        });
+        console.log('Search results:', results);
         
         const params = new URLSearchParams({
           from: fromCity,
@@ -107,21 +69,33 @@ const PassengerDashboard = () => {
   };
 
   const handleSearchHistoryClick = (historyItem: any) => {
-    setFromCity(historyItem.from);
-    setToCity(historyItem.to);
-    setPassengers(historyItem.passengers);
-    try {
-      if (historyItem.date !== 'Любая дата') {
-        const currentYear = new Date().getFullYear();
-        const parsedDate = new Date(`${historyItem.date} ${currentYear}`);
+    setFromCity(historyItem.from_city);
+    setToCity(historyItem.to_city);
+    setPassengers(historyItem.passengers_count || 1);
+    
+    if (historyItem.departure_date) {
+      try {
+        const parsedDate = new Date(historyItem.departure_date);
         if (!isNaN(parsedDate.getTime())) {
           setDate(parsedDate);
         }
+      } catch (error) {
+        console.log('Could not parse date from history:', error);
       }
-    } catch (error) {
-      console.log('Could not parse date from history:', error);
     }
   };
+
+  const formatHistoryDate = (dateStr?: string) => {
+    if (!dateStr) return 'Любая дата';
+    try {
+      return format(new Date(dateStr), 'dd MMMM', { locale: ru });
+    } catch {
+      return 'Любая дата';
+    }
+  };
+
+  // Берем только последние 3 записи из истории
+  const recentSearches = searchHistory.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-20">
@@ -239,24 +213,24 @@ const PassengerDashboard = () => {
         </Card>
       </div>
 
-      {/* Search History */}
-      {searchHistory.length > 0 && (
+      {/* Search History - только последние 3 */}
+      {recentSearches.length > 0 && (
         <div className="px-6 mt-6">
           <div className="space-y-3">
-            {searchHistory.map((item) => (
+            {recentSearches.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-4 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors"
+                className="flex items-center justify-between p-4 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors animate-fade-in"
                 onClick={() => handleSearchHistoryClick(item)}
               >
                 <div className="flex items-center space-x-3">
                   <Clock className="w-5 h-5 text-gray-400" />
                   <div>
                     <div className="text-white font-medium">
-                      {item.from} → {item.to}
+                      {item.from_city} → {item.to_city}
                     </div>
                     <div className="text-gray-400 text-sm">
-                      {item.date} • {item.passengers} пас.
+                      {formatHistoryDate(item.departure_date)} • {item.passengers_count || 1} пас.
                     </div>
                   </div>
                 </div>
@@ -268,20 +242,20 @@ const PassengerDashboard = () => {
       )}
 
       {/* Selectors */}
-      <LocationSelector
+      <UzbekistanCitySelector
         isOpen={showFromCitySelector}
         onClose={() => setShowFromCitySelector(false)}
-        onLocationSelect={setFromCity}
+        onCitySelect={setFromCity}
         title="Откуда вы едете?"
-        currentLocation={fromCity}
+        currentCity={fromCity}
       />
 
-      <LocationSelector
+      <UzbekistanCitySelector
         isOpen={showToCitySelector}
         onClose={() => setShowToCitySelector(false)}
-        onLocationSelect={setToCity}
+        onCitySelect={setToCity}
         title="Куда вы едете?"
-        currentLocation={toCity}
+        currentCity={toCity}
       />
 
       <DateSelector
@@ -289,6 +263,8 @@ const PassengerDashboard = () => {
         onClose={() => setShowDatePicker(false)}
         onDateSelect={setDate}
         selectedDate={date}
+        minDate={startOfToday()}
+        maxDate={addYears(startOfToday(), 1)}
       />
 
       <PassengerSelector
