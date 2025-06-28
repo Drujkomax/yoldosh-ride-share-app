@@ -22,7 +22,6 @@ const ChatsListPage = () => {
 
   const getChatType = (chat: any) => {
     if (!user) return 'passenger';
-    // Определяем тип на основе роли пользователя
     return user.role === 'driver' ? 'passenger' : 'driver';
   };
 
@@ -30,45 +29,48 @@ const ChatsListPage = () => {
     const otherParticipant = getOtherParticipant(chat);
     if (!otherParticipant) return false;
     
-    return otherParticipant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           (chat.ride?.from_city?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-           (chat.ride?.to_city?.toLowerCase().includes(searchQuery.toLowerCase()));
+    const searchLower = searchQuery.toLowerCase();
+    return otherParticipant.name?.toLowerCase().includes(searchLower) ||
+           chat.ride?.from_city?.toLowerCase().includes(searchLower) ||
+           chat.ride?.to_city?.toLowerCase().includes(searchLower);
   });
 
   const formatTime = (dateStr: string) => {
-    const now = new Date();
-    const messageDate = new Date(dateStr);
-    const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
+    if (!dateStr) return '';
     
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes}м назад`;
-    } else if (diffInMinutes < 24 * 60) {
-      return `${Math.floor(diffInMinutes / 60)}ч назад`;
-    } else {
-      return messageDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    try {
+      const now = new Date();
+      const messageDate = new Date(dateStr);
+      const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
+      
+      if (diffInMinutes < 1) {
+        return 'Только что';
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes}м назад`;
+      } else if (diffInMinutes < 24 * 60) {
+        return `${Math.floor(diffInMinutes / 60)}ч назад`;
+      } else {
+        return messageDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      }
+    } catch {
+      return '';
     }
   };
 
   const handleChatClick = (chat: any) => {
     const otherParticipant = getOtherParticipant(chat);
-    if (!otherParticipant) return;
+    if (!otherParticipant?.name) return;
 
-    const params = new URLSearchParams({
-      chatId: chat.id,
-      type: getChatType(chat),
-      rideId: chat.ride_id || '',
-      from: chat.ride?.from_city || '',
-      to: chat.ride?.to_city || '',
-      date: chat.ride?.departure_date ? new Date(chat.ride.departure_date).toLocaleDateString('ru-RU') : '',
-      time: chat.ride?.departure_time || ''
-    });
-    navigate(`/chat/${otherParticipant.name}?${params.toString()}`);
+    navigate(`/chat/${otherParticipant.name}?chatId=${chat.id}`);
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-slate-600">Загрузка чатов...</p>
+        </div>
       </div>
     );
   }
@@ -120,7 +122,7 @@ const ChatsListPage = () => {
           <CardHeader>
             <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
               <MessageCircle className="h-5 w-5 mr-2" />
-              Все чаты
+              Все чаты ({filteredChats.length})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -128,12 +130,12 @@ const ChatsListPage = () => {
               <div className="p-8 text-center text-gray-500">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">
-                  {chats.length === 0 ? 'Нет чатов' : 'Чаты не найдены'}
+                  {chats.length === 0 ? 'Нет активных чатов' : 'Чаты не найдены'}
                 </p>
                 <p className="text-sm">
                   {chats.length === 0 
-                    ? 'Начните поиск поездок, чтобы начать общение'
-                    : 'Попробуйте изменить запрос поиска'
+                    ? 'Чаты появятся после бронирования поездок'
+                    : 'Попробуйте изменить поисковый запрос'
                   }
                 </p>
               </div>
@@ -149,10 +151,10 @@ const ChatsListPage = () => {
                     <div
                       key={chat.id}
                       onClick={() => handleChatClick(chat)}
-                      className="p-6 hover:bg-gradient-to-r hover:from-white hover:to-slate-50 cursor-pointer transition-all duration-300 hover:scale-105 first:rounded-t-3xl last:rounded-b-3xl"
+                      className="p-6 hover:bg-gradient-to-r hover:from-white hover:to-slate-50 cursor-pointer transition-all duration-300 hover:scale-[1.02] first:rounded-t-3xl last:rounded-b-3xl"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center flex-shrink-0">
                           {chatType === 'driver' ? (
                             <Car className="h-6 w-6 text-white" />
                           ) : (
@@ -162,9 +164,11 @@ const ChatsListPage = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center space-x-3">
-                              <span className="font-bold text-lg text-slate-800">{otherParticipant.name}</span>
+                              <span className="font-bold text-lg text-slate-800 truncate">
+                                {otherParticipant.name || 'Пользователь'}
+                              </span>
                               <Badge 
-                                className={`text-xs ${
+                                className={`text-xs flex-shrink-0 ${
                                   chatType === 'driver' 
                                     ? 'bg-yoldosh-primary/10 text-yoldosh-primary border-0' 
                                     : 'bg-yoldosh-secondary/10 text-yoldosh-secondary border-0'
@@ -172,14 +176,19 @@ const ChatsListPage = () => {
                               >
                                 {chatType === 'driver' ? 'Водитель' : 'Пассажир'}
                               </Badge>
+                              {otherParticipant.is_verified && (
+                                <Badge className="bg-green-100 text-green-700 border-0 text-xs flex-shrink-0">
+                                  ✓
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 flex-shrink-0">
                               <span className="text-sm text-slate-500">
                                 {formatTime(chat.last_message_at)}
                               </span>
                               {chat.unreadCount > 0 && (
                                 <Badge className="h-6 w-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                                  {chat.unreadCount}
+                                  {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
                                 </Badge>
                               )}
                             </div>
@@ -188,12 +197,19 @@ const ChatsListPage = () => {
                           {chat.ride && (
                             <div className="flex items-center space-x-3 text-sm text-slate-600 mb-2">
                               <div className="flex items-center space-x-1">
-                                <MapPin className="h-4 w-4" />
-                                <span className="font-medium">{chat.ride.from_city} → {chat.ride.to_city}</span>
+                                <MapPin className="h-4 w-4 flex-shrink-0" />
+                                <span className="font-medium truncate">
+                                  {chat.ride.from_city} → {chat.ride.to_city}
+                                </span>
                               </div>
-                              <div className="flex items-center space-x-1">
+                              <div className="flex items-center space-x-1 flex-shrink-0">
                                 <Clock className="h-4 w-4" />
-                                <span>{new Date(chat.ride.departure_date).toLocaleDateString('ru-RU')}</span>
+                                <span>
+                                  {chat.ride.departure_date ? 
+                                    new Date(chat.ride.departure_date).toLocaleDateString('ru-RU') : 
+                                    'Дата не указана'
+                                  }
+                                </span>
                               </div>
                             </div>
                           )}
