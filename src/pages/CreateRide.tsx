@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,8 @@ const CreateRide = () => {
         car_model: carModel,
         car_color: carColor,
         description,
-        duration_hours: parseInt(duration)
+        duration_hours: parseInt(duration),
+        status: 'active'
       });
       
       toast.success('Поездка успешно создана!');

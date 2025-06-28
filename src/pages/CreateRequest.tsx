@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,8 @@ const CreateRequest = () => {
         preferred_date: preferredDate,
         passengers_count: parseInt(passengersCount),
         max_price_per_seat: maxPrice ? parseFloat(maxPrice) : null,
-        description
+        description,
+        status: 'active'
       });
       
       toast.success('Заявка успешно создана!');
