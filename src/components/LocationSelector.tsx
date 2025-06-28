@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, X } from 'lucide-react';
+import { MapPin, Navigation, X, Clock, ChevronLeft } from 'lucide-react';
 import YandexAddressSearch from './YandexAddressSearch';
 
 interface LocationSelectorProps {
@@ -21,6 +21,10 @@ const uzbekistanCities = [
 
 const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLocation }: LocationSelectorProps) => {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [recentSearches] = useState<string[]>(() => {
+    const saved = localStorage.getItem('yandex_recent_searches');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const handleLocationDetect = () => {
     setIsDetectingLocation(true);
@@ -29,10 +33,9 @@ const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLoc
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            // Используем координаты для получения адреса через Яндекс API
             const { latitude, longitude } = position.coords;
             const response = await fetch(
-              `https://geocode-maps.yandex.ru/1.x/?apikey=fc46d1dc-d099-42f9-baf7-e6d468df0eef&geocode=${longitude},${latitude}&format=json&lang=ru_RU`
+              `https://geocode-maps.yandex.ru/1.x/?apikey=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&geocode=${longitude},${latitude}&format=json&lang=ru_RU`
             );
             
             if (response.ok) {
@@ -63,7 +66,7 @@ const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLoc
         }
       );
     } else {
-      onLocationSelect('Ташкент');
+      onLocationSelect('Ташkent');
       setIsDetectingLocation(false);
       onClose();
     }
@@ -81,53 +84,95 @@ const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLoc
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-full bg-gray-900 text-white border-0 rounded-t-3xl">
-        <SheetHeader className="text-left mb-6">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-2xl font-bold text-white">{title}</SheetTitle>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-gray-800">
-              <X className="h-6 w-6" />
+      <SheetContent side="bottom" className="h-full bg-white text-gray-900 border-0 rounded-t-3xl animate-slide-in-up">
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="flex items-center p-4 border-b border-gray-100">
+            <Button variant="ghost" size="sm" onClick={onClose} className="mr-3">
+              <ChevronLeft className="h-5 w-5" />
             </Button>
+            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           </div>
-        </SheetHeader>
 
-        <div className="space-y-6">
-          {/* Yandex Address Search */}
-          <YandexAddressSearch
-            onAddressSelect={handleAddressSelect}
-            placeholder="Введите точный адрес"
-            value=""
-          />
-
-          {/* Location Detection Button */}
-          <Button
-            onClick={handleLocationDetect}
-            disabled={isDetectingLocation}
-            className="w-full h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-2xl text-lg font-medium flex items-center justify-between px-6"
-          >
-            <div className="flex items-center">
-              <Navigation className="h-6 w-6 mr-4" />
-              {isDetectingLocation ? 'Определяем местоположение...' : 'Использовать мое местоположение'}
+          <div className="flex-1 p-4 space-y-4">
+            {/* Search */}
+            <div className="animate-fade-in">
+              <YandexAddressSearch
+                onAddressSelect={handleAddressSelect}
+                placeholder="Введите полный адрес"
+                value=""
+                compact={true}
+              />
             </div>
-            <div className="text-gray-400">›</div>
-          </Button>
 
-          {/* Popular Cities */}
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            <div className="text-gray-400 text-sm font-medium px-2 mb-3">Популярные города</div>
-            {uzbekistanCities.map((city) => (
-              <Button
-                key={city}
-                variant="ghost"
-                onClick={() => handleLocationSelect(city)}
-                className={`w-full h-14 justify-start text-left hover:bg-gray-800 rounded-2xl px-6 ${
-                  city === currentLocation ? 'bg-gray-800 text-blue-400' : 'text-white'
-                }`}
-              >
-                <MapPin className="h-5 w-5 mr-4 text-gray-400" />
-                <span className="text-lg">{city}</span>
-              </Button>
-            ))}
+            {/* Current Location */}
+            <Button
+              onClick={handleLocationDetect}
+              disabled={isDetectingLocation}
+              className="w-full justify-between p-4 h-auto bg-white border border-gray-200 hover:bg-gray-50 rounded-2xl text-gray-900 animate-scale-in"
+              style={{ animationDelay: '100ms' }}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Navigation className="h-5 w-5 text-blue-600" />
+                </div>
+                <span className="font-medium">
+                  {isDetectingLocation ? 'Определяем местоположение...' : 'Использовать текущее местоположение'}
+                </span>
+              </div>
+              <div className="text-gray-400">›</div>
+            </Button>
+
+            {/* Recent Searches */}
+            {recentSearches.length > 0 && (
+              <div className="space-y-2 animate-scale-in" style={{ animationDelay: '200ms' }}>
+                <div className="flex items-center space-x-2 px-2 py-1">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-600">Недавние поиски</span>
+                </div>
+                {recentSearches.slice(0, 3).map((address, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    onClick={() => handleLocationSelect(address)}
+                    className="w-full justify-between p-4 h-auto bg-white border border-gray-200 hover:bg-gray-50 rounded-2xl animate-fade-in"
+                    style={{ animationDelay: `${300 + index * 50}ms` }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gray-100 rounded-full">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-medium text-gray-900 truncate">{address.split(',')[0]}</div>
+                        <div className="text-sm text-gray-500 truncate">{address}</div>
+                      </div>
+                    </div>
+                    <div className="text-gray-400">›</div>
+                  </Button>
+                ))}
+              </div>
+            )}
+
+            {/* Popular Cities */}
+            <div className="space-y-2 animate-scale-in" style={{ animationDelay: '400ms' }}>
+              <div className="text-gray-600 text-sm font-medium px-2 py-1">Популярные города</div>
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {uzbekistanCities.map((city, index) => (
+                  <Button
+                    key={city}
+                    variant="ghost"
+                    onClick={() => handleLocationSelect(city)}
+                    className={`w-full justify-start text-left hover:bg-gray-50 rounded-2xl px-4 py-3 h-auto animate-fade-in ${
+                      city === currentLocation ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                    }`}
+                    style={{ animationDelay: `${500 + index * 20}ms` }}
+                  >
+                    <MapPin className="h-4 w-4 mr-3 text-gray-400" />
+                    <span>{city}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </SheetContent>

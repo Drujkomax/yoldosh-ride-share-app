@@ -15,7 +15,7 @@ interface RouteResult {
 
 export const useYandexGeocoding = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = 'fc46d1dc-d099-42f9-baf7-e6d468df0eef';
+  const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
 
   const geocodeAddress = async (address: string): Promise<GeocodeResult[]> => {
     if (address.length < 3) return [];
