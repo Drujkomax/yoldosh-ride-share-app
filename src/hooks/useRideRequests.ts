@@ -10,6 +10,12 @@ export interface RideRequest {
   passenger_id: string;
   from_city: string;
   to_city: string;
+  pickup_address?: string;
+  dropoff_address?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+  dropoff_latitude?: number;
+  dropoff_longitude?: number;
   preferred_date: string;
   passengers_count: number;
   max_price_per_seat: number;

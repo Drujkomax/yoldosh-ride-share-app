@@ -9,6 +9,14 @@ export interface Ride {
   driver_id: string;
   from_city: string;
   to_city: string;
+  pickup_address?: string;
+  dropoff_address?: string;
+  pickup_latitude?: number;
+  pickup_longitude?: number;
+  dropoff_latitude?: number;
+  dropoff_longitude?: number;
+  route_data?: any;
+  intermediate_stops?: any[];
   departure_date: string;
   departure_time: string;
   available_seats: number;
