@@ -26,6 +26,7 @@ const SearchRides = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     const criteria = {
@@ -105,246 +106,279 @@ const SearchRides = () => {
     }
   };
 
+  const getTabCounts = () => {
+    const all = searchResults.length;
+    const carpool = searchResults.filter(ride => ride.available_seats <= 4).length;
+    const bus = searchResults.filter(ride => ride.available_seats > 4).length;
+    return { all, carpool, bus };
+  };
+
+  const getFilteredResults = () => {
+    if (activeTab === 'carpool') {
+      return searchResults.filter(ride => ride.available_seats <= 4);
+    }
+    if (activeTab === 'bus') {
+      return searchResults.filter(ride => ride.available_seats > 4);
+    }
+    return searchResults;
+  };
+
+  const { all, carpool, bus } = getTabCounts();
+  const filteredResults = getFilteredResults();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
-        <div className="container mx-auto px-4 py-4">
+      <div className="bg-white shadow-sm border-b">
+        <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="hover:bg-yoldosh-primary/10 hover:scale-105 transition-all duration-300"
+              className="p-2 hover:bg-gray-100"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {t('back')}
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
             </Button>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">{t('search_rides')}</h1>
-            <div></div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Search Criteria Display */}
-        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-200">Параметры поиска</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-                className="hover:scale-105 transition-all duration-300"
-              >
-                <Edit2 className="h-4 w-4 mr-2" />
-                {isEditing ? 'Отмена' : 'Изменить'}
-              </Button>
+      {/* Search Summary */}
+      <div className="bg-white px-4 py-3 border-b">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-semibold text-gray-900 text-lg">
+              {searchCriteria.from} → {searchCriteria.to}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {searchCriteria.date && new Date(searchCriteria.date).toLocaleDateString('ru-RU', { 
+                weekday: 'short', 
+                day: 'numeric', 
+                month: 'short' 
+              })}, {searchCriteria.seats || '1'} пассажир{searchCriteria.seats === '1' ? '' : 'а'}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsEditing(!isEditing)}
+            className="text-blue-600 hover:bg-blue-50"
+          >
+            <Edit2 className="h-4 w-4 mr-1" />
+            Изменить
+          </Button>
+        </div>
+        
+        {isEditing && (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                placeholder="Откуда"
+                value={searchCriteria.from}
+                onChange={(e) => setSearchCriteria(prev => ({ ...prev, from: e.target.value }))}
+                className="text-sm"
+              />
+              <Input
+                placeholder="Куда"
+                value={searchCriteria.to}
+                onChange={(e) => setSearchCriteria(prev => ({ ...prev, to: e.target.value }))}
+                className="text-sm"
+              />
             </div>
-            
-            {isEditing ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Откуда</label>
-                    <Input
-                      placeholder="Город отправления"
-                      value={searchCriteria.from}
-                      onChange={(e) => setSearchCriteria(prev => ({ ...prev, from: e.target.value }))}
-                      className="h-10 rounded-xl border-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Куда</label>
-                    <Input
-                      placeholder="Город прибытия"
-                      value={searchCriteria.to}
-                      onChange={(e) => setSearchCriteria(prev => ({ ...prev, to: e.target.value }))}
-                      className="h-10 rounded-xl border-2"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Дата</label>
-                    <Input
-                      type="date"
-                      value={searchCriteria.date}
-                      onChange={(e) => setSearchCriteria(prev => ({ ...prev, date: e.target.value }))}
-                      className="h-10 rounded-xl border-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-300">Пассажиров</label>
-                    <Input
-                      type="number"
-                      min="1"
-                      placeholder="Количество"
-                      value={searchCriteria.seats}
-                      onChange={(e) => setSearchCriteria(prev => ({ ...prev, seats: e.target.value }))}
-                      className="h-10 rounded-xl border-2"
-                    />
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleUpdateSearch}
-                  className="w-full bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Обновить поиск
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {searchCriteria.from && (
-                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0 hover:scale-105 transition-all duration-300">
-                    Откуда: {searchCriteria.from}
-                  </Badge>
-                )}
-                {searchCriteria.to && (
-                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0 hover:scale-105 transition-all duration-300">
-                    Куда: {searchCriteria.to}
-                  </Badge>
-                )}
-                {searchCriteria.date && (
-                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0 hover:scale-105 transition-all duration-300">
-                    Дата: {new Date(searchCriteria.date).toLocaleDateString('ru-RU')}
-                  </Badge>
-                )}
-                {searchCriteria.seats && (
-                  <Badge className="bg-yoldosh-primary/10 text-yoldosh-primary border-0 hover:scale-105 transition-all duration-300">
-                    Мест: {searchCriteria.seats}
-                  </Badge>
-                )}
-                {!searchCriteria.from && !searchCriteria.to && !searchCriteria.date && !searchCriteria.seats && (
-                  <span className="text-slate-500">Все поездки</span>
-                )}
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                type="date"
+                value={searchCriteria.date}
+                onChange={(e) => setSearchCriteria(prev => ({ ...prev, date: e.target.value }))}
+                className="text-sm"
+              />
+              <Input
+                type="number"
+                min="1"
+                placeholder="Пассажиров"
+                value={searchCriteria.seats}
+                onChange={(e) => setSearchCriteria(prev => ({ ...prev, seats: e.target.value }))}
+                className="text-sm"
+              />
+            </div>
+            <Button 
+              onClick={handleUpdateSearch}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Обновить поиск
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="bg-white border-b">
+        <div className="flex">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 py-4 px-4 text-center font-medium ${
+              activeTab === 'all' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div>Все</div>
+            <div className="text-sm font-normal">{all}</div>
+          </button>
+          <button
+            onClick={() => setActiveTab('carpool')}
+            className={`flex-1 py-4 px-4 text-center font-medium ${
+              activeTab === 'carpool' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div>Попутчики</div>
+            <div className="text-sm font-normal">{carpool}</div>
+          </button>
+          <button
+            onClick={() => setActiveTab('bus')}
+            className={`flex-1 py-4 px-4 text-center font-medium ${
+              activeTab === 'bus' 
+                ? 'text-blue-600 border-b-2 border-blue-600' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div>Автобус</div>
+            <div className="text-sm font-normal">{bus}</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="text-gray-500">Поиск поездок...</div>
+          </div>
+        ) : hasSearched && filteredResults.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">
+              {activeTab === 'bus' ? 'Нет автобусных поездок на этот день' : 'Поездки не найдены'}
+            </div>
+            <div className="text-gray-500 text-sm">
+              Попробуйте изменить параметры поиска
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {/* Date Section */}
+            {filteredResults.length > 0 && (
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                  {searchCriteria.date && formatDate(searchCriteria.date)}
+                </h2>
               </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Search Results */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-              {isLoading ? 'Поиск...' : hasSearched ? `Найдено поездок: ${searchResults.length}` : 'Введите параметры поиска'}
-            </h2>
-          </div>
-          
-          {isLoading ? (
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-              <CardContent className="p-12 text-center">
-                <div className="text-slate-400 text-lg mb-2">Поиск поездок...</div>
-                <div className="text-slate-500 text-sm">Пожалуйста, подождите</div>
-              </CardContent>
-            </Card>
-          ) : hasSearched && searchResults.length === 0 ? (
-            <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-              <CardContent className="p-12 text-center">
-                <div className="text-slate-400 text-lg mb-2">Поездки не найдены</div>
-                <div className="text-slate-500 text-sm">Попробуйте изменить параметры поиска</div>
-              </CardContent>
-            </Card>
-          ) : (
-            searchResults.map((ride) => (
-              <Card key={ride.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
+            {filteredResults.map((ride) => (
+              <Card key={ride.id} className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  {/* Time and Route */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-gray-900">
+                            {formatTime(ride.departure_time)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {Math.floor(ride.duration_hours || 2)}ч{((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 relative">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                          <div className="flex justify-between text-sm mt-1">
+                            <span className="text-gray-600">{ride.from_city}</span>
+                            <span className="text-gray-600">{ride.to_city}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-gray-900">
+                            {formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right ml-4">
+                      <div className="text-xl font-bold text-gray-900">
+                        £{ride.price_per_seat}
+                        <span className="text-sm font-normal text-gray-500">.{String(ride.price_per_seat % 1).split('.')[1]?.padEnd(2, '0') || '00'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Driver Info */}
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center">
-                        <User className="h-6 w-6 text-white" />
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-white" />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                          <span className="text-sm font-medium text-gray-700">
                             {ride.driver?.name || 'Водитель'}
                           </span>
-                          <Badge variant="secondary" className="text-xs bg-yoldosh-success/20 text-yoldosh-success">
-                            ✓ {t('verified')}
-                          </Badge>
+                          <div className="flex items-center space-x-1">
+                            <Star className="h-3 w-3 text-yellow-400 fill-current" />
+                            <span className="text-xs text-gray-600">
+                              {ride.driver?.rating || '5'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1 text-sm">
-                          <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                          <span className="text-slate-600 dark:text-slate-400">
-                            {ride.driver?.rating || '5.0'}
-                          </span>
-                          <span className="text-gray-500">
-                            ({ride.driver?.total_rides || 0} поездок)
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          {ride.car_model && ride.car_color 
-                            ? `${ride.car_model} (${ride.car_color})`
-                            : 'Автомобиль'
-                          }
-                        </div>
+                        {ride.car_model && (
+                          <div className="text-xs text-gray-500">
+                            {ride.car_model} {ride.car_color && `• ${ride.car_color}`}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="font-bold text-2xl text-yoldosh-success">
-                        {ride.price_per_seat.toLocaleString()} {t('sum')}
-                      </div>
-                      <div className="text-sm text-slate-500">
-                        {ride.available_seats} из {ride.available_seats} мест
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-slate-800 dark:text-slate-200">
-                        {ride.from_city} → {ride.to_city}
-                      </span>
+                      <Users className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">{ride.available_seats}</span>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(ride.departure_date)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatTime(ride.departure_time)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Users className="h-4 w-4" />
-                          <span>{ride.available_seats} мест</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {ride.description && (
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        {ride.description}
-                      </div>
-                    )}
                   </div>
                   
-                  <div className="flex space-x-3 mt-4 pt-4 border-t dark:border-slate-600">
+                  {/* Action Button */}
+                  <div className="mt-4">
                     <Button 
-                      variant="outline" 
-                      className="flex-1 rounded-xl border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-105 transition-all duration-300"
                       onClick={() => navigate(`/ride-details/${ride.id}`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      {t('details')}
-                    </Button>
-                    <Button 
-                      onClick={() => handleBookRide(ride.id)}
-                      className="flex-1 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl"
-                    >
-                      {t('book')}
+                      Подробнее
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Create Alert Button */}
+      {hasSearched && filteredResults.length === 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
+          <Button 
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg"
+            onClick={() => navigate('/create-request')}
+          >
+            Создать уведомление о поездке
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
