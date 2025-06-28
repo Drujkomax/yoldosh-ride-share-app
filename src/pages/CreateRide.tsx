@@ -3,29 +3,79 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Plus, Car, Clock, MapPin, Users, DollarSign } from 'lucide-react';
+import { ArrowLeft, Plus, Car, Clock, MapPin, Users, DollarSign, Route, Check } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { toast } from 'sonner';
 import DriverBottomNavigation from '@/components/DriverBottomNavigation';
+import { YandexMapProvider } from '@/components/YandexMapProvider';
+import LocationStep from '@/components/LocationStep';
+import RouteVisualizer from '@/components/RouteVisualizer';
+
+interface RideData {
+  fromCoordinates?: [number, number];
+  fromAddress?: string;
+  toCoordinates?: [number, number];
+  toAddress?: string;
+  routeData?: any;
+  departureDate: string;
+  departureTime: string;
+  availableSeats: string;
+  pricePerSeat: string;
+  carModel: string;
+  carColor: string;
+  description: string;
+  duration: string;
+}
 
 const CreateRide = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { createRide } = useRides();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [rideData, setRideData] = useState<RideData>({
+    departureDate: '',
+    departureTime: '',
+    availableSeats: '',
+    pricePerSeat: '',
+    carModel: '',
+    carColor: '',
+    description: '',
+    duration: ''
+  });
 
-  const [fromCity, setFromCity] = useState('');
-  const [toCity, setToCity] = useState('');
-  const [departureDate, setDepartureDate] = useState('');
-  const [departureTime, setDepartureTime] = useState('');
-  const [availableSeats, setAvailableSeats] = useState('');
-  const [pricePerSeat, setPricePerSeat] = useState('');
-  const [carModel, setCarModel] = useState('');
-  const [carColor, setCarColor] = useState('');
-  const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState('');
+  const steps = [
+    { number: 1, title: 'Откуда', completed: !!rideData.fromAddress },
+    { number: 2, title: 'Куда', completed: !!rideData.toAddress },
+    { number: 3, title: 'Маршрут', completed: !!rideData.routeData },
+    { number: 4, title: 'Детали', completed: false },
+    { number: 5, title: 'Публикация', completed: false }
+  ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFromLocationSelect = (coordinates: [number, number], address: string) => {
+    setRideData(prev => ({
+      ...prev,
+      fromCoordinates: coordinates,
+      fromAddress: address
+    }));
+  };
+
+  const handleToLocationSelect = (coordinates: [number, number], address: string) => {
+    setRideData(prev => ({
+      ...prev,
+      toCoordinates: coordinates,
+      toAddress: address
+    }));
+  };
+
+  const handleRouteCalculated = (routeData: any) => {
+    setRideData(prev => ({
+      ...prev,
+      routeData
+    }));
+  };
+
+  const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user?.id) {
@@ -33,19 +83,31 @@ const CreateRide = () => {
       return;
     }
 
+    if (!rideData.fromCoordinates || !rideData.toCoordinates) {
+      toast.error('Выберите точки отправления и назначения');
+      return;
+    }
+
     try {
       await createRide({
         driver_id: user.id,
-        from_city: fromCity,
-        to_city: toCity,
-        departure_date: departureDate,
-        departure_time: departureTime,
-        available_seats: parseInt(availableSeats),
-        price_per_seat: parseFloat(pricePerSeat),
-        car_model: carModel,
-        car_color: carColor,
-        description,
-        duration_hours: parseInt(duration),
+        from_city: rideData.fromAddress?.split(',')[0] || 'Неизвестно',
+        to_city: rideData.toAddress?.split(',')[0] || 'Неизвестно',
+        pickup_address: rideData.fromAddress,
+        dropoff_address: rideData.toAddress,
+        pickup_latitude: rideData.fromCoordinates[0],
+        pickup_longitude: rideData.fromCoordinates[1],
+        dropoff_latitude: rideData.toCoordinates[0],
+        dropoff_longitude: rideData.toCoordinates[1],
+        route_data: rideData.routeData,
+        departure_date: rideData.departureDate,
+        departure_time: rideData.departureTime,
+        available_seats: parseInt(rideData.availableSeats),
+        price_per_seat: parseFloat(rideData.pricePerSeat),
+        car_model: rideData.carModel,
+        car_color: rideData.carColor,
+        description: rideData.description,
+        duration_hours: parseInt(rideData.duration),
         status: 'active'
       });
       
@@ -57,170 +119,275 @@ const CreateRide = () => {
     }
   };
 
+  const renderStepIndicator = () => (
+    <div className="flex items-center justify-center space-x-2 mb-8">
+      {steps.map((step, index) => (
+        <React.Fragment key={step.number}>
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+            currentStep === step.number 
+              ? 'bg-blue-600 text-white' 
+              : step.completed 
+                ? 'bg-green-500 text-white' 
+                : 'bg-gray-200 text-gray-600'
+          }`}>
+            {step.completed ? <Check className="h-4 w-4" /> : step.number}
+          </div>
+          {index < steps.length - 1 && (
+            <div className={`w-8 h-0.5 ${
+              step.completed ? 'bg-green-500' : 'bg-gray-200'
+            }`} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <LocationStep
+            title="Откуда поедете?"
+            subtitle="Выберите точку посадки пассажиров"
+            onLocationSelect={handleFromLocationSelect}
+            onNext={() => setCurrentStep(2)}
+            selectedLocation={rideData.fromCoordinates}
+            selectedAddress={rideData.fromAddress}
+            icon={<MapPin className="h-6 w-6 mr-3 text-green-600" />}
+          />
+        );
+
+      case 2:
+        return (
+          <LocationStep
+            title="Куда поедете?"
+            subtitle="Выберите точку назначения"
+            onLocationSelect={handleToLocationSelect}
+            onNext={() => setCurrentStep(3)}
+            selectedLocation={rideData.toCoordinates}
+            selectedAddress={rideData.toAddress}
+            icon={<MapPin className="h-6 w-6 mr-3 text-red-600" />}
+          />
+        );
+
+      case 3:
+        return (
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center justify-center">
+                <Route className="h-6 w-6 mr-3 text-blue-600" />
+                Проверьте маршрут
+              </CardTitle>
+              <p className="text-slate-600 mt-1">Убедитесь, что маршрут построен правильно</p>
+            </CardHeader>
+            
+            <CardContent className="p-6">
+              {rideData.fromCoordinates && rideData.toCoordinates && (
+                <RouteVisualizer
+                  startPoint={rideData.fromCoordinates}
+                  endPoint={rideData.toCoordinates}
+                  startAddress={rideData.fromAddress || ''}
+                  endAddress={rideData.toAddress || ''}
+                  onRouteCalculated={handleRouteCalculated}
+                />
+              )}
+              
+              <div className="flex space-x-4 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep(2)}
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  Назад
+                </Button>
+                <Button
+                  onClick={() => setCurrentStep(4)}
+                  disabled={!rideData.routeData}
+                  className="flex-1 h-12 bg-gradient-primary rounded-xl"
+                >
+                  Продолжить
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+      case 4:
+        return (
+          <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-slate-800 flex items-center justify-center">
+                <Car className="h-6 w-6 mr-3 text-yoldosh-primary" />
+                Детали поездки
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">
+              <form onSubmit={handleDetailsSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Дата отправления</label>
+                    <input
+                      type="date"
+                      value={rideData.departureDate}
+                      onChange={(e) => setRideData(prev => ({ ...prev, departureDate: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Время отправления</label>
+                    <input
+                      type="time"
+                      value={rideData.departureTime}
+                      onChange={(e) => setRideData(prev => ({ ...prev, departureTime: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Количество мест</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="8"
+                      value={rideData.availableSeats}
+                      onChange={(e) => setRideData(prev => ({ ...prev, availableSeats: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Цена за место</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={rideData.pricePerSeat}
+                      onChange={(e) => setRideData(prev => ({ ...prev, pricePerSeat: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Модель автомобиля</label>
+                    <input
+                      type="text"
+                      value={rideData.carModel}
+                      onChange={(e) => setRideData(prev => ({ ...prev, carModel: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      placeholder="Например: Toyota Camry"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Цвет автомобиля</label>
+                    <input
+                      type="text"
+                      value={rideData.carColor}
+                      onChange={(e) => setRideData(prev => ({ ...prev, carColor: e.target.value }))}
+                      className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                      placeholder="Например: Белый"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Длительность поездки (в часах)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="24"
+                    value={rideData.duration}
+                    onChange={(e) => setRideData(prev => ({ ...prev, duration: e.target.value }))}
+                    className="w-full h-12 px-4 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">Описание (необязательно)</label>
+                  <textarea
+                    value={rideData.description}
+                    onChange={(e) => setRideData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    placeholder="Дополнительная информация о поездке..."
+                  />
+                </div>
+                
+                <div className="flex space-x-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCurrentStep(3)}
+                    className="flex-1 h-12 rounded-xl"
+                  >
+                    Назад
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1 h-12 bg-gradient-primary rounded-xl"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Создать поездку
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/driver-home')}
-              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Назад
-            </Button>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Создать поездку
-              </h1>
-              <p className="text-slate-600 mt-1">Опубликуйте поездку и найдите пассажиров</p>
+    <YandexMapProvider>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
+        {/* Header */}
+        <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
+          <div className="container mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (currentStep > 1) {
+                    setCurrentStep(currentStep - 1);
+                  } else {
+                    navigate('/driver-home');
+                  }
+                }}
+                className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Назад
+              </Button>
+              <div className="text-center">
+                <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  Создать поездку
+                </h1>
+                <p className="text-slate-600 mt-1">Шаг {currentStep} из {steps.length}</p>
+              </div>
+              <div className="w-16"></div>
             </div>
-            <div className="w-16"></div>
           </div>
         </div>
+
+        {/* Content */}
+        <div className="container mx-auto px-6 py-8">
+          {renderStepIndicator()}
+          {renderCurrentStep()}
+        </div>
+
+        <DriverBottomNavigation />
       </div>
-
-      {/* Form Content */}
-      <div className="container mx-auto px-6 py-8">
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-slate-800 flex items-center">
-              <Car className="h-6 w-6 mr-3 text-yoldosh-primary" />
-              Детали поездки
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="fromCity" className="block text-sm font-medium text-slate-700">Откуда</label>
-                  <input
-                    type="text"
-                    id="fromCity"
-                    value={fromCity}
-                    onChange={(e) => setFromCity(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="toCity" className="block text-sm font-medium text-slate-700">Куда</label>
-                  <input
-                    type="text"
-                    id="toCity"
-                    value={toCity}
-                    onChange={(e) => setToCity(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="departureDate" className="block text-sm font-medium text-slate-700">Дата отправления</label>
-                  <input
-                    type="date"
-                    id="departureDate"
-                    value={departureDate}
-                    onChange={(e) => setDepartureDate(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="departureTime" className="block text-sm font-medium text-slate-700">Время отправления</label>
-                  <input
-                    type="time"
-                    id="departureTime"
-                    value={departureTime}
-                    onChange={(e) => setDepartureTime(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="availableSeats" className="block text-sm font-medium text-slate-700">Количество мест</label>
-                  <input
-                    type="number"
-                    id="availableSeats"
-                    value={availableSeats}
-                    onChange={(e) => setAvailableSeats(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="pricePerSeat" className="block text-sm font-medium text-slate-700">Цена за место</label>
-                  <input
-                    type="number"
-                    id="pricePerSeat"
-                    value={pricePerSeat}
-                    onChange={(e) => setPricePerSeat(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="carModel" className="block text-sm font-medium text-slate-700">Модель автомобиля</label>
-                  <input
-                    type="text"
-                    id="carModel"
-                    value={carModel}
-                    onChange={(e) => setCarModel(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="carColor" className="block text-sm font-medium text-slate-700">Цвет автомобиля</label>
-                  <input
-                    type="text"
-                    id="carColor"
-                    value={carColor}
-                    onChange={(e) => setCarColor(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="duration" className="block text-sm font-medium text-slate-700">Длительность поездки (в часах)</label>
-                <input
-                  type="number"
-                  id="duration"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-slate-700">Описание</label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yoldosh-primary focus:ring-yoldosh-primary sm:text-sm"
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full h-14 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-2xl text-lg font-semibold"
-              >
-                <Plus className="h-6 w-6 mr-3" />
-                Создать поездку
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      <DriverBottomNavigation />
-    </div>
+    </YandexMapProvider>
   );
 };
 

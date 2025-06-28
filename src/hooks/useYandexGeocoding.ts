@@ -7,6 +7,12 @@ interface GeocodeResult {
   coordinates: [number, number];
 }
 
+interface RouteResult {
+  distance: string;
+  duration: string;
+  coordinates: number[][];
+}
+
 export const useYandexGeocoding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const API_KEY = 'fc46d1dc-d099-42f9-baf7-e6d468df0eef';
@@ -63,9 +69,42 @@ export const useYandexGeocoding = () => {
     return 'Неизвестный адрес';
   };
 
+  const calculateRoute = async (startPoint: [number, number], endPoint: [number, number]): Promise<RouteResult | null> => {
+    try {
+      // Используем Yandex Routes API для расчета маршрута
+      const response = await fetch(
+        `https://api.routing.yandex.net/v2/route?apikey=${API_KEY}&waypoints=${startPoint[1]},${startPoint[0]}|${endPoint[1]},${endPoint[0]}&mode=driving&lang=ru_RU`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Route calculation failed');
+      }
+
+      const data = await response.json();
+      const route = data.route;
+      
+      if (route && route.legs && route.legs.length > 0) {
+        const totalDistance = route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0);
+        const totalDuration = route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0);
+        
+        return {
+          distance: `${Math.round(totalDistance / 1000)} км`,
+          duration: `${Math.round(totalDuration / 60)} мин`,
+          coordinates: route.geometry || []
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      return null;
+    }
+  };
+
   return {
     geocodeAddress,
     reverseGeocode,
+    calculateRoute,
     isLoading
   };
 };

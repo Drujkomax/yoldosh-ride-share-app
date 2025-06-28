@@ -307,11 +307,17 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          dropoff_address: string | null
+          dropoff_latitude: number | null
+          dropoff_longitude: number | null
           from_city: string
           id: string
           max_price_per_seat: number | null
           passenger_id: string
           passengers_count: number | null
+          pickup_address: string | null
+          pickup_latitude: number | null
+          pickup_longitude: number | null
           preferred_date: string
           status: string | null
           to_city: string
@@ -320,11 +326,17 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          dropoff_address?: string | null
+          dropoff_latitude?: number | null
+          dropoff_longitude?: number | null
           from_city: string
           id?: string
           max_price_per_seat?: number | null
           passenger_id: string
           passengers_count?: number | null
+          pickup_address?: string | null
+          pickup_latitude?: number | null
+          pickup_longitude?: number | null
           preferred_date: string
           status?: string | null
           to_city: string
@@ -333,11 +345,17 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          dropoff_address?: string | null
+          dropoff_latitude?: number | null
+          dropoff_longitude?: number | null
           from_city?: string
           id?: string
           max_price_per_seat?: number | null
           passenger_id?: string
           passengers_count?: number | null
+          pickup_address?: string | null
+          pickup_latitude?: number | null
+          pickup_longitude?: number | null
           preferred_date?: string
           status?: string | null
           to_city?: string
@@ -363,11 +381,19 @@ export type Database = {
           departure_time: string
           description: string | null
           driver_id: string
+          dropoff_address: string | null
+          dropoff_latitude: number | null
+          dropoff_longitude: number | null
           duration_hours: number | null
           estimated_arrival_time: string | null
           from_city: string
           id: string
+          intermediate_stops: Json | null
+          pickup_address: string | null
+          pickup_latitude: number | null
+          pickup_longitude: number | null
           price_per_seat: number
+          route_data: Json | null
           status: string | null
           to_city: string
           updated_at: string | null
@@ -381,11 +407,19 @@ export type Database = {
           departure_time: string
           description?: string | null
           driver_id: string
+          dropoff_address?: string | null
+          dropoff_latitude?: number | null
+          dropoff_longitude?: number | null
           duration_hours?: number | null
           estimated_arrival_time?: string | null
           from_city: string
           id?: string
+          intermediate_stops?: Json | null
+          pickup_address?: string | null
+          pickup_latitude?: number | null
+          pickup_longitude?: number | null
           price_per_seat: number
+          route_data?: Json | null
           status?: string | null
           to_city: string
           updated_at?: string | null
@@ -399,11 +433,19 @@ export type Database = {
           departure_time?: string
           description?: string | null
           driver_id?: string
+          dropoff_address?: string | null
+          dropoff_latitude?: number | null
+          dropoff_longitude?: number | null
           duration_hours?: number | null
           estimated_arrival_time?: string | null
           from_city?: string
           id?: string
+          intermediate_stops?: Json | null
+          pickup_address?: string | null
+          pickup_latitude?: number | null
+          pickup_longitude?: number | null
           price_per_seat?: number
+          route_data?: Json | null
           status?: string | null
           to_city?: string
           updated_at?: string | null
