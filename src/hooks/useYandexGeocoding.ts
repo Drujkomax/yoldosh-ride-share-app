@@ -18,15 +18,18 @@ export const useYandexGeocoding = () => {
   const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
 
   const geocodeAddress = async (address: string): Promise<GeocodeResult[]> => {
-    if (address.length < 3) return [];
+    if (address.length < 2) return [];
 
     setIsLoading(true);
     try {
+      console.log('Geocoding address:', address);
+      
       const response = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY}&geocode=${encodeURIComponent(address)}&format=json&results=5&lang=ru_RU`
+        `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY}&geocode=${encodeURIComponent(address + ', Узбекистан')}&format=json&results=10&lang=ru_RU&kind=house`
       );
       
       if (!response.ok) {
+        console.error('Geocoding API Error:', response.status);
         throw new Error('Network response was not ok');
       }
 
@@ -39,7 +42,7 @@ export const useYandexGeocoding = () => {
         
         return {
           name: geoObject.name || '',
-          description: geoObject.description || '',
+          description: geoObject.description || geoObject.metaDataProperty?.GeocoderMetaData?.text || '',
           coordinates: coords as [number, number]
         };
       });
@@ -71,34 +74,40 @@ export const useYandexGeocoding = () => {
 
   const calculateRoute = async (startPoint: [number, number], endPoint: [number, number]): Promise<RouteResult | null> => {
     try {
-      // Используем Yandex Routes API для расчета маршрута
-      const response = await fetch(
-        `https://api.routing.yandex.net/v2/route?apikey=${API_KEY}&waypoints=${startPoint[1]},${startPoint[0]}|${endPoint[1]},${endPoint[0]}&mode=driving&lang=ru_RU`
-      );
+      // Используем упрощенный расчет расстояния для демонстрации
+      const distance = calculateDistance(startPoint, endPoint);
+      const duration = Math.round(distance / 60); // примерно 60 км/ч средняя скорость
       
-      if (!response.ok) {
-        throw new Error('Route calculation failed');
-      }
-
-      const data = await response.json();
-      const route = data.route;
-      
-      if (route && route.legs && route.legs.length > 0) {
-        const totalDistance = route.legs.reduce((sum: number, leg: any) => sum + leg.distance.value, 0);
-        const totalDuration = route.legs.reduce((sum: number, leg: any) => sum + leg.duration.value, 0);
-        
-        return {
-          distance: `${Math.round(totalDistance / 1000)} км`,
-          duration: `${Math.round(totalDuration / 60)} мин`,
-          coordinates: route.geometry || []
-        };
-      }
-      
-      return null;
+      return {
+        distance: `${Math.round(distance)} км`,
+        duration: `${duration} ч`,
+        coordinates: [
+          [startPoint[1], startPoint[0]], // lng, lat для карты
+          [endPoint[1], endPoint[0]]
+        ]
+      };
     } catch (error) {
       console.error('Error calculating route:', error);
       return null;
     }
+  };
+
+  // Функция для расчета расстояния между двумя точками
+  const calculateDistance = (point1: [number, number], point2: [number, number]): number => {
+    const R = 6371; // Радиус Земли в км
+    const dLat = toRad(point2[0] - point1[0]);
+    const dLon = toRad(point2[1] - point1[1]);
+    const lat1 = toRad(point1[0]);
+    const lat2 = toRad(point2[0]);
+
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const toRad = (value: number): number => {
+    return value * Math.PI / 180;
   };
 
   return {
