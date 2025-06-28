@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Users, Search, Clock, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ArrowRight } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import BottomNavigation from '@/components/BottomNavigation';
-import CityMapSelector from '@/components/CityMapSelector';
-import FullScreenDatePicker from '@/components/FullScreenDatePicker';
+import LocationSelector from '@/components/LocationSelector';
+import DateSelector from '@/components/DateSelector';
+import PassengerSelector from '@/components/PassengerSelector';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -26,6 +26,7 @@ const PassengerDashboard = () => {
   const [showFromCitySelector, setShowFromCitySelector] = useState(false);
   const [showToCitySelector, setShowToCitySelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showPassengerSelector, setShowPassengerSelector] = useState(false);
 
   // Search history from localStorage
   const getSearchHistory = () => {
@@ -215,27 +216,13 @@ const PassengerDashboard = () => {
               <div className="relative">
                 <div className="flex items-center space-x-3 p-4 bg-gray-700 rounded-xl">
                   <Users className="w-5 h-5 text-gray-400" />
-                  <div className="flex items-center space-x-3 flex-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setPassengers(Math.max(1, passengers - 1))}
-                      className="w-8 h-8 rounded-full p-0 text-white hover:bg-gray-600"
-                    >
-                      -
-                    </Button>
-                    <span className="text-white font-medium min-w-[2rem] text-center">
-                      {passengers}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setPassengers(Math.min(8, passengers + 1))}
-                      className="w-8 h-8 rounded-full p-0 text-white hover:bg-gray-600"
-                    >
-                      +
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowPassengerSelector(true)}
+                    className="flex-1 justify-start text-left text-white hover:bg-gray-600 p-0"
+                  >
+                    {passengers} пассажир{passengers === 1 ? '' : passengers < 5 ? 'а' : 'ов'}
+                  </Button>
                 </div>
               </div>
 
@@ -280,29 +267,35 @@ const PassengerDashboard = () => {
         </div>
       )}
 
-      {/* City Selectors */}
-      <CityMapSelector
+      {/* Selectors */}
+      <LocationSelector
         isOpen={showFromCitySelector}
         onClose={() => setShowFromCitySelector(false)}
-        onCitySelect={setFromCity}
+        onLocationSelect={setFromCity}
         title="Откуда вы едете?"
-        currentCity={fromCity}
+        currentLocation={fromCity}
       />
 
-      <CityMapSelector
+      <LocationSelector
         isOpen={showToCitySelector}
         onClose={() => setShowToCitySelector(false)}
-        onCitySelect={setToCity}
+        onLocationSelect={setToCity}
         title="Куда вы едете?"
-        currentCity={toCity}
+        currentLocation={toCity}
       />
 
-      {/* Date Picker */}
-      <FullScreenDatePicker
+      <DateSelector
         isOpen={showDatePicker}
         onClose={() => setShowDatePicker(false)}
         onDateSelect={setDate}
         selectedDate={date}
+      />
+
+      <PassengerSelector
+        isOpen={showPassengerSelector}
+        onClose={() => setShowPassengerSelector(false)}
+        onPassengerSelect={setPassengers}
+        currentCount={passengers}
       />
 
       {/* Bottom Navigation */}
