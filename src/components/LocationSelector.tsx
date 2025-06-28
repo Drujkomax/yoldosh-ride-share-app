@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MapPin, Navigation, X, Search } from 'lucide-react';
+import { MapPin, Navigation, X } from 'lucide-react';
+import YandexAddressSearch from './YandexAddressSearch';
 
 interface LocationSelectorProps {
   isOpen: boolean;
@@ -20,38 +20,63 @@ const uzbekistanCities = [
 ];
 
 const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLocation }: LocationSelectorProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-
-  const filteredCities = uzbekistanCities.filter(city =>
-    city.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleLocationDetect = () => {
     setIsDetectingLocation(true);
     
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setTimeout(() => {
+        async (position) => {
+          try {
+            // Используем координаты для получения адреса через Яндекс API
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(
+              `https://geocode-maps.yandex.ru/1.x/?apikey=fc46d1dc-d099-42f9-baf7-e6d468df0eef&geocode=${longitude},${latitude}&format=json&lang=ru_RU`
+            );
+            
+            if (response.ok) {
+              const data = await response.json();
+              const geoObject = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
+              if (geoObject) {
+                const address = geoObject.name || geoObject.description || 'Ташкент';
+                onLocationSelect(address);
+              } else {
+                onLocationSelect('Ташкент');
+              }
+            } else {
+              onLocationSelect('Ташкент');
+            }
+          } catch (error) {
+            console.error('Error getting address:', error);
             onLocationSelect('Ташкент');
+          } finally {
             setIsDetectingLocation(false);
             onClose();
-          }, 2000);
+          }
         },
         (error) => {
           console.error('Error getting location:', error);
+          onLocationSelect('Ташкент');
           setIsDetectingLocation(false);
+          onClose();
         }
       );
     } else {
+      onLocationSelect('Ташкент');
       setIsDetectingLocation(false);
+      onClose();
     }
   };
 
   const handleLocationSelect = (location: string) => {
     onLocationSelect(location);
     onClose();
+  };
+
+  const handleAddressSelect = (address: string, coordinates?: [number, number]) => {
+    console.log('Selected address:', address, 'Coordinates:', coordinates);
+    handleLocationSelect(address);
   };
 
   return (
@@ -67,16 +92,12 @@ const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLoc
         </SheetHeader>
 
         <div className="space-y-6">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
-            <Input
-              placeholder="Лесная улица или кафе &quot;Овсянка&quot;"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 bg-gray-800 border-gray-700 text-white placeholder-gray-400 rounded-2xl text-lg focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
+          {/* Yandex Address Search */}
+          <YandexAddressSearch
+            onAddressSelect={handleAddressSelect}
+            placeholder="Введите точный адрес"
+            value=""
+          />
 
           {/* Location Detection Button */}
           <Button
@@ -86,14 +107,15 @@ const LocationSelector = ({ isOpen, onClose, onLocationSelect, title, currentLoc
           >
             <div className="flex items-center">
               <Navigation className="h-6 w-6 mr-4" />
-              Использовать мое местоположение
+              {isDetectingLocation ? 'Определяем местоположение...' : 'Использовать мое местоположение'}
             </div>
             <div className="text-gray-400">›</div>
           </Button>
 
-          {/* Cities List */}
+          {/* Popular Cities */}
           <div className="space-y-3 max-h-96 overflow-y-auto">
-            {filteredCities.map((city) => (
+            <div className="text-gray-400 text-sm font-medium px-2 mb-3">Популярные города</div>
+            {uzbekistanCities.map((city) => (
               <Button
                 key={city}
                 variant="ghost"
