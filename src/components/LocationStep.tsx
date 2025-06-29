@@ -1,163 +1,237 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Navigation, Star, Clock, ChevronRight } from 'lucide-react';
-import { MapProvider2Gis } from '@/components/2GisMapProvider';
-import MapLocationPicker2Gis from '@/components/MapLocationPicker2Gis';
+import { Input } from '@/components/ui/input';
+import { Search, Navigation, Clock, ChevronRight } from 'lucide-react';
+import { use2GisGeocoding } from '@/hooks/use2GisGeocoding';
 import { useFrequentLocations } from '@/hooks/useFrequentLocations';
-import { usePopularStops } from '@/hooks/usePopularStops';
 
 interface LocationStepProps {
   title: string;
-  subtitle: string;
   onLocationSelect: (coordinates: [number, number], address: string) => void;
-  onNext: () => void;
   selectedLocation?: [number, number];
   selectedAddress?: string;
-  icon: React.ReactNode;
+}
+
+interface GeocodeResult {
+  name: string;
+  description: string;
+  coordinates: [number, number];
 }
 
 const LocationStep = ({
   title,
-  subtitle,
   onLocationSelect,
-  onNext,
   selectedLocation,
-  selectedAddress,
-  icon
+  selectedAddress
 }: LocationStepProps) => {
-  const [showMap, setShowMap] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  
+  const { geocodeAddress } = use2GisGeocoding();
   const { frequentLocations } = useFrequentLocations();
-  const { getPopularStopsForCity } = usePopularStops();
-  const [popularStops, setPopularStops] = useState([]);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
-  const handleLocationSelect = (coordinates: [number, number], address: string) => {
-    onLocationSelect(coordinates, address);
-    setShowMap(false);
+  // Поиск адресов через 2GIS API
+  const searchAddresses = async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const results = await geocodeAddress(searchQuery);
+      setSuggestions(results);
+    } catch (error) {
+      console.error('Ошибка поиска адресов:', error);
+      setSuggestions([]);
+    }
   };
 
-  const handleFrequentLocationSelect = async (location: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    setShowSuggestions(true);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (newQuery.trim()) {
+      timeoutRef.current = setTimeout(() => {
+        searchAddresses(newQuery);
+      }, 300);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleAddressSelect = (address: GeocodeResult) => {
+    setQuery(address.name);
+    setShowSuggestions(false);
+    setIsFocused(false);
+    onLocationSelect(address.coordinates, address.description);
+  };
+
+  const handleFrequentLocationSelect = (location: any) => {
     if (location.latitude && location.longitude) {
+      setQuery(location.location_name);
+      setShowSuggestions(false);
+      setIsFocused(false);
       onLocationSelect([location.latitude, location.longitude], location.address);
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'home': return '🏠';
-      case 'work': return '💼';
-      case 'transport_hub': return '🚌';
-      case 'shopping': return '🛍️';
-      case 'landmark': return '🏛️';
-      default: return '📍';
+  const handleCurrentLocation = () => {
+    setIsLocating(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            // Здесь можно добавить обратное геокодирование для получения адреса
+            const address = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            setQuery('Текущее местоположение');
+            onLocationSelect([latitude, longitude], address);
+          } catch (error) {
+            console.error('Ошибка получения адреса:', error);
+          } finally {
+            setIsLocating(false);
+          }
+        },
+        (error) => {
+          console.error('Ошибка получения местоположения:', error);
+          setIsLocating(false);
+        }
+      );
+    } else {
+      setIsLocating(false);
     }
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+    setShowSuggestions(true);
+  };
+
+  const handleBlur = () => {
+    // Задержка чтобы обработать клик по suggestions
+    setTimeout(() => {
+      setIsFocused(false);
+      if (query.length === 0) {
+        setShowSuggestions(false);
+      }
+    }, 200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
-      <Card className="max-w-3xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            {icon}
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="px-6 pt-16 pb-8">
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      </div>
+
+      {/* Search Input */}
+      <div className="px-6 mb-4">
+        <div className="relative">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
-          <h2 className="text-3xl font-bold mb-2">{title}</h2>
-          <p className="text-purple-100 text-lg">{subtitle}</p>
+          <Input
+            value={query}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder="Enter the full address"
+            className="w-full h-14 pl-12 pr-4 bg-gray-100 border-0 rounded-xl text-gray-900 placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500"
+          />
         </div>
+      </div>
 
-        <CardContent className="p-8">
-          {/* Выбранная локация */}
-          {selectedAddress && (
-            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-500 rounded-full">
-                  <MapPin className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <div className="font-bold text-green-800 text-lg">Выбрано</div>
-                  <div className="text-green-700">{selectedAddress}</div>
-                </div>
-              </div>
+      {/* Current Location Button */}
+      <div className="px-6 mb-6">
+        <Button
+          onClick={handleCurrentLocation}
+          disabled={isLocating}
+          className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-gray-900"
+          variant="outline"
+        >
+          <div className="flex items-center">
+            <div className="p-2 bg-gray-100 rounded-full mr-3">
+              <Navigation className="h-5 w-5 text-gray-600" />
             </div>
-          )}
+            <span className="font-medium">
+              {isLocating ? 'Определение местоположения...' : 'Use current location'}
+            </span>
+          </div>
+          <ChevronRight className="h-5 w-5 text-gray-400" />
+        </Button>
+      </div>
 
-          {/* Частые локации */}
-          {frequentLocations.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                <Star className="h-6 w-6 mr-2 text-yellow-500" />
-                Частые места
-              </h3>
-              <div className="grid grid-cols-1 gap-3">
-                {frequentLocations.slice(0, 3).map((location) => (
-                  <Button
-                    key={location.id}
-                    variant="ghost"
-                    onClick={() => handleFrequentLocationSelect(location)}
-                    className="h-auto p-4 bg-white border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 rounded-2xl text-left transition-all duration-300"
-                  >
-                    <div className="flex items-center space-x-4 w-full">
-                      <div className="text-2xl">
-                        {getCategoryIcon(location.location_type)}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-gray-800">{location.location_name}</div>
-                        <div className="text-sm text-gray-500 truncate">{location.address}</div>
-                        <div className="flex items-center mt-1 text-xs text-gray-400">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {location.usage_count} раз
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
-                    </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Выбор на карте */}
-          <div className="space-y-4">
-            <Button
-              onClick={() => setShowMap(true)}
-              className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
-            >
-              <Navigation className="h-6 w-6 mr-3" />
-              Выбрать на карте
-            </Button>
-
-            {selectedAddress && (
+      {/* Suggestions or Frequent Locations */}
+      <div className="px-6">
+        {showSuggestions && isFocused ? (
+          // Показывать результаты поиска когда пользователь печатает
+          <div className="space-y-1">
+            {suggestions.map((address, index) => (
               <Button
-                onClick={onNext}
-                className="w-full h-16 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                key={index}
+                onClick={() => handleAddressSelect(address)}
+                className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
+                variant="outline"
               >
-                Продолжить
-                <ChevronRight className="h-6 w-6 ml-3" />
+                <div className="flex items-center flex-1 min-w-0">
+                  <div className="p-2 bg-gray-100 rounded-full mr-3 flex-shrink-0">
+                    <Clock className="h-4 w-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{address.name}</div>
+                    <div className="text-sm text-gray-500 truncate">{address.description}</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
               </Button>
-            )}
+            ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Карта */}
-      {showMap && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-4xl h-5/6 overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-800">Выберите точку на карте</h3>
-              <Button variant="ghost" onClick={() => setShowMap(false)}>
-                ✕
-              </Button>
+        ) : (
+          // Показывать частые локации когда клавиатура не активна
+          query.length === 0 && frequentLocations.length > 0 && (
+            <div className="space-y-1">
+              {frequentLocations.slice(0, 4).map((location) => (
+                <Button
+                  key={location.id}
+                  onClick={() => handleFrequentLocationSelect(location)}
+                  className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
+                  variant="outline"
+                >
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="p-2 bg-gray-100 rounded-full mr-3 flex-shrink-0">
+                      <Clock className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{location.location_name}</div>
+                      <div className="text-sm text-gray-500 truncate">{location.address}</div>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                </Button>
+              ))}
             </div>
-            <div className="h-full">
-              <MapLocationPicker2Gis
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+          )
+        )}
+      </div>
     </div>
   );
 };
