@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,13 +10,16 @@ import { toast } from 'sonner';
 import BottomNavigation from '@/components/BottomNavigation';
 import { MapProvider2Gis } from '@/components/2GisMapProvider';
 import LocationStep from '@/components/LocationStep';
+import EnhancedCalendar from '@/components/EnhancedCalendar';
+import TimeWheelPicker from '@/components/TimeWheelPicker';
 
 interface RequestData {
   fromCoordinates?: [number, number];
   fromAddress?: string;
   toCoordinates?: [number, number];
   toAddress?: string;
-  preferredDate: string;
+  preferredDate?: Date;
+  preferredTime?: string;
   passengersCount: string;
   maxPrice: string;
   description: string;
@@ -27,16 +31,20 @@ const CreateRequest = () => {
   const { createRequest } = useRideRequests();
   const [currentStep, setCurrentStep] = useState(1);
   const [requestData, setRequestData] = useState<RequestData>({
-    preferredDate: '',
     passengersCount: '1',
     maxPrice: '',
     description: ''
   });
 
+  // Modal states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
   const steps = [
     { number: 1, title: 'Откуда', completed: !!requestData.fromAddress },
     { number: 2, title: 'Куда', completed: !!requestData.toAddress },
-    { number: 3, title: 'Детали', completed: false }
+    { number: 3, title: 'Когда', completed: !!requestData.preferredDate },
+    { number: 4, title: 'Детали', completed: false }
   ];
 
   const handleFromLocationSelect = (coordinates: [number, number], address: string) => {
@@ -55,6 +63,20 @@ const CreateRequest = () => {
     }));
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setRequestData(prev => ({
+      ...prev,
+      preferredDate: date
+    }));
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setRequestData(prev => ({
+      ...prev,
+      preferredTime: time
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -63,8 +85,8 @@ const CreateRequest = () => {
       return;
     }
 
-    if (!requestData.fromCoordinates || !requestData.toCoordinates) {
-      toast.error('Выберите точки отправления и назначения');
+    if (!requestData.fromCoordinates || !requestData.toCoordinates || !requestData.preferredDate) {
+      toast.error('Заполните все обязательные поля');
       return;
     }
 
@@ -79,7 +101,7 @@ const CreateRequest = () => {
         pickup_longitude: requestData.fromCoordinates[1],
         dropoff_latitude: requestData.toCoordinates[0],
         dropoff_longitude: requestData.toCoordinates[1],
-        preferred_date: requestData.preferredDate,
+        preferred_date: requestData.preferredDate.toISOString().split('T')[0],
         passengers_count: parseInt(requestData.passengersCount),
         max_price_per_seat: requestData.maxPrice ? parseFloat(requestData.maxPrice) : null,
         description: requestData.description,
@@ -147,6 +169,70 @@ const CreateRequest = () => {
 
       case 3:
         return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
+            <Card className="max-w-3xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8 text-center">
+                <Calendar className="h-8 w-8 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold mb-2">Когда поедете?</h2>
+                <p className="text-blue-100 text-lg">Выберите дату и время поездки</p>
+              </div>
+
+              <CardContent className="p-8">
+                {/* Выбранные дата и время */}
+                {(requestData.preferredDate || requestData.preferredTime) && (
+                  <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl">
+                    <h3 className="font-bold text-blue-800 text-lg mb-4">Выбрано:</h3>
+                    {requestData.preferredDate && (
+                      <div className="mb-2 text-blue-700">
+                        📅 {requestData.preferredDate.toLocaleDateString('ru-RU', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    )}
+                    {requestData.preferredTime && (
+                      <div className="text-blue-700">
+                        🕐 {requestData.preferredTime}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <Button
+                    onClick={() => setShowDatePicker(true)}
+                    className="w-full h-16 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    <Calendar className="h-6 w-6 mr-3" />
+                    {requestData.preferredDate ? 'Изменить дату' : 'Выбрать дату'}
+                  </Button>
+
+                  <Button
+                    onClick={() => setShowTimePicker(true)}
+                    className="w-full h-16 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    <Users className="h-6 w-6 mr-3" />
+                    {requestData.preferredTime ? `Время: ${requestData.preferredTime}` : 'Выбрать время'}
+                  </Button>
+
+                  {requestData.preferredDate && (
+                    <Button
+                      onClick={() => setCurrentStep(4)}
+                      className="w-full h-16 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                    >
+                      Продолжить
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case 4:
+        return (
           <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
             <Card className="max-w-3xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
               <CardHeader className="text-center pb-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
@@ -183,25 +269,22 @@ const CreateRequest = () => {
                           <div className="text-gray-600">{requestData.toAddress}</div>
                         </div>
                       </div>
+                      {requestData.preferredDate && (
+                        <div className="flex items-center space-x-4 p-4 bg-white/80 rounded-xl shadow-sm">
+                          <Calendar className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <div className="font-semibold text-gray-800">Когда</div>
+                            <div className="text-gray-600">
+                              {requestData.preferredDate.toLocaleDateString('ru-RU')}
+                              {requestData.preferredTime && ` в ${requestData.preferredTime}`}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Остальные поля формы */}
-                  <div className="space-y-3">
-                    <label htmlFor="preferredDate" className="flex items-center text-lg font-semibold text-gray-800">
-                      <Calendar className="h-5 w-5 mr-2 text-purple-600" />
-                      Предпочитаемая дата
-                    </label>
-                    <input
-                      type="date"
-                      id="preferredDate"
-                      value={requestData.preferredDate}
-                      onChange={(e) => setRequestData(prev => ({ ...prev, preferredDate: e.target.value }))}
-                      className="w-full h-14 px-4 text-lg font-medium bg-white border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-300"
-                      required
-                    />
-                  </div>
-
                   <div className="space-y-3">
                     <label htmlFor="passengersCount" className="flex items-center text-lg font-semibold text-gray-800">
                       <Users className="h-5 w-5 mr-2 text-purple-600" />
@@ -254,7 +337,7 @@ const CreateRequest = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setCurrentStep(2)}
+                      onClick={() => setCurrentStep(3)}
                       className="flex-1 h-16 rounded-2xl border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold text-lg"
                     >
                       <ArrowLeft className="h-5 w-5 mr-2" />
@@ -313,7 +396,7 @@ const CreateRequest = () => {
 
         {/* Content */}
         <div className="py-8">
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             renderCurrentStep()
           ) : (
             <>
@@ -324,6 +407,24 @@ const CreateRequest = () => {
             </>
           )}
         </div>
+
+        {/* Date Picker */}
+        <EnhancedCalendar
+          isOpen={showDatePicker}
+          onClose={() => setShowDatePicker(false)}
+          onDateSelect={handleDateSelect}
+          selectedDate={requestData.preferredDate}
+          title="Выберите дату поездки"
+        />
+
+        {/* Time Picker */}
+        <TimeWheelPicker
+          isOpen={showTimePicker}
+          onClose={() => setShowTimePicker(false)}
+          onTimeSelect={handleTimeSelect}
+          selectedTime={requestData.preferredTime}
+          title="Выберите время"
+        />
 
         <BottomNavigation />
       </div>

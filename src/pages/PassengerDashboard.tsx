@@ -3,13 +3,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Users, Clock, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, Users, Clock, ArrowRight, Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useFrequentLocations } from '@/hooks/useFrequentLocations';
 import BottomNavigation from '@/components/BottomNavigation';
 import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
-import DateSelector from '@/components/DateSelector';
+import EnhancedCalendar from '@/components/EnhancedCalendar';
 import PassengerSelector from '@/components/PassengerSelector';
 import { format, startOfToday, addYears } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -19,6 +20,7 @@ const PassengerDashboard = () => {
   const { user } = useUser();
   const { searchRides } = useRides();
   const { searchHistory, addToHistory } = useSearchHistory();
+  const { frequentLocations } = useFrequentLocations();
   
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
@@ -213,6 +215,43 @@ const PassengerDashboard = () => {
         </Card>
       </div>
 
+      {/* Create Request Button */}
+      <div className="px-6 mt-4">
+        <Button
+          onClick={() => navigate('/create-request')}
+          className="w-full h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+        >
+          <Plus className="h-6 w-6 mr-3" />
+          Создать заявку
+        </Button>
+      </div>
+
+      {/* Frequent Locations */}
+      {frequentLocations.length > 0 && (
+        <div className="px-6 mt-6">
+          <h3 className="text-lg font-semibold text-white mb-3">Частые места</h3>
+          <div className="space-y-2">
+            {frequentLocations.slice(0, 2).map((location) => (
+              <div
+                key={location.id}
+                className="flex items-center justify-between p-3 bg-gray-800 rounded-xl"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="text-xl">
+                    {location.location_type === 'home' ? '🏠' : 
+                     location.location_type === 'work' ? '💼' : '📍'}
+                  </div>
+                  <div>
+                    <div className="text-white font-medium">{location.location_name}</div>
+                    <div className="text-gray-400 text-sm truncate">{location.address}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Search History - только последние 3 */}
       {recentSearches.length > 0 && (
         <div className="px-6 mt-6">
@@ -258,7 +297,7 @@ const PassengerDashboard = () => {
         currentCity={toCity}
       />
 
-      <DateSelector
+      <EnhancedCalendar
         isOpen={showDatePicker}
         onClose={() => setShowDatePicker(false)}
         onDateSelect={setDate}

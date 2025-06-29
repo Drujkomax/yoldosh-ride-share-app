@@ -1,14 +1,19 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Search, MapPin, Calendar, Users, DollarSign, MessageCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, MapPin, Calendar, Users, DollarSign, MessageCircle, Loader2, Filter } from 'lucide-react';
 import { useRideRequests } from '@/hooks/useRideRequests';
 import { useUser } from '@/contexts/UserContext';
 import { createChat } from '@/hooks/useChats';
 import { toast } from 'sonner';
 import DriverBottomNavigation from '@/components/DriverBottomNavigation';
+import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
+import EnhancedCalendar from '@/components/EnhancedCalendar';
+import { format, startOfToday, addYears } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const SearchRequests = () => {
   const navigate = useNavigate();
@@ -16,11 +21,17 @@ const SearchRequests = () => {
   const { requests, isLoading } = useRideRequests();
   const [searchFrom, setSearchFrom] = useState('');
   const [searchTo, setSearchTo] = useState('');
+  const [searchDate, setSearchDate] = useState<Date>();
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const filteredRequests = requests.filter(request => {
-    const fromMatch = request.from_city.toLowerCase().includes(searchFrom.toLowerCase());
-    const toMatch = request.to_city.toLowerCase().includes(searchTo.toLowerCase());
-    return fromMatch && toMatch;
+    const fromMatch = !searchFrom || request.from_city.toLowerCase().includes(searchFrom.toLowerCase());
+    const toMatch = !searchTo || request.to_city.toLowerCase().includes(searchTo.toLowerCase());
+    const dateMatch = !searchDate || format(new Date(request.preferred_date), 'yyyy-MM-dd') === format(searchDate, 'yyyy-MM-dd');
+    return fromMatch && toMatch && dateMatch;
   });
 
   const formatDate = (dateStr: string) => {
@@ -49,6 +60,12 @@ const SearchRequests = () => {
       console.error('Error creating chat:', error);
       toast.error('Ошибка при создании чата');
     }
+  };
+
+  const clearFilters = () => {
+    setSearchFrom('');
+    setSearchTo('');
+    setSearchDate(undefined);
   };
 
   if (isLoading) {
@@ -82,41 +99,90 @@ const SearchRequests = () => {
               </h1>
               <p className="text-slate-600 mt-1">Найдите пассажиров для своих поездок</p>
             </div>
-            <div className="w-16"></div>
+            <Button
+              variant="ghost"
+              onClick={() => setShowFilters(!showFilters)}
+              className="rounded-xl hover:bg-blue-50 p-3"
+            >
+              <Filter className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Search Form */}
+        {/* Enhanced Search Form */}
         <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl mb-8">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchFrom}
-                  onChange={(e) => setSearchFrom(e.target.value)}
-                  placeholder="Откуда"
-                  className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
-                />
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowFromSelector(true)}
+                  className="w-full h-12 justify-start border-2 border-slate-200 hover:border-blue-400 bg-white/80 backdrop-blur-sm rounded-xl"
+                >
+                  <MapPin className="h-5 w-5 mr-2 text-slate-400" />
+                  {searchFrom || 'Откуда'}
+                </Button>
               </div>
+              
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchTo}
-                  onChange={(e) => setSearchTo(e.target.value)}
-                  placeholder="Куда"
-                  className="w-full h-12 pl-10 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
-                />
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowToSelector(true)}
+                  className="w-full h-12 justify-start border-2 border-slate-200 hover:border-blue-400 bg-white/80 backdrop-blur-sm rounded-xl"
+                >
+                  <MapPin className="h-5 w-5 mr-2 text-slate-400" />
+                  {searchTo || 'Куда'}
+                </Button>
               </div>
-              <Button className="h-12 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl">
-                <Search className="h-5 w-5 mr-2" />
-                Найти
-              </Button>
+
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowDatePicker(true)}
+                  className="w-full h-12 justify-start border-2 border-slate-200 hover:border-blue-400 bg-white/80 backdrop-blur-sm rounded-xl"
+                >
+                  <Calendar className="h-5 w-5 mr-2 text-slate-400" />
+                  {searchDate ? format(searchDate, 'dd MMM', { locale: ru }) : 'Дата'}
+                </Button>
+              </div>
+
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={clearFilters}
+                  variant="outline"
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  Сбросить
+                </Button>
+                <Button className="flex-1 h-12 bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl">
+                  <Search className="h-5 w-5 mr-2" />
+                  Найти
+                </Button>
+              </div>
             </div>
+
+            {/* Active Filters */}
+            {(searchFrom || searchTo || searchDate) && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {searchFrom && (
+                  <Badge variant="secondary" className="px-3 py-1">
+                    Откуда: {searchFrom}
+                  </Badge>
+                )}
+                {searchTo && (
+                  <Badge variant="secondary" className="px-3 py-1">
+                    Куда: {searchTo}
+                  </Badge>
+                )}
+                {searchDate && (
+                  <Badge variant="secondary" className="px-3 py-1">
+                    Дата: {format(searchDate, 'dd MMMM', { locale: ru })}
+                  </Badge>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -132,7 +198,11 @@ const SearchRequests = () => {
               <div className="p-8 text-center text-gray-500">
                 <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium mb-2">Заявки не найдены</p>
-                <p className="text-sm">Попробуйте изменить параметры поиска</p>
+                {searchFrom || searchTo || searchDate ? (
+                  <p className="text-sm">Попробуйте изменить параметры поиска</p>
+                ) : (
+                  <p className="text-sm">Пока нет активных заявок пассажиров</p>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
@@ -169,14 +239,14 @@ const SearchRequests = () => {
                         {request.max_price_per_seat && (
                           <div className="flex items-center space-x-3 text-sm text-slate-600 mb-2">
                             <DollarSign className="h-4 w-4" />
-                            <span>{request.max_price_per_seat} UZS</span>
+                            <span>до {request.max_price_per_seat} UZS</span>
                           </div>
                         )}
                         <p className="text-slate-700 truncate">{request.description || 'Нет описания'}</p>
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="mt-4"
+                          className="mt-4 bg-blue-50 text-blue-600 hover:bg-blue-100"
                           onClick={() => handleContactPassenger(request)}
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
@@ -191,6 +261,33 @@ const SearchRequests = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Selectors */}
+      <UzbekistanCitySelector
+        isOpen={showFromSelector}
+        onClose={() => setShowFromSelector(false)}
+        onCitySelect={setSearchFrom}
+        title="Откуда ищем пассажиров?"
+        currentCity={searchFrom}
+      />
+
+      <UzbekistanCitySelector
+        isOpen={showToSelector}
+        onClose={() => setShowToSelector(false)}
+        onCitySelect={setSearchTo}
+        title="Куда ищем пассажиров?"
+        currentCity={searchTo}
+      />
+
+      <EnhancedCalendar
+        isOpen={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        onDateSelect={setSearchDate}
+        selectedDate={searchDate}
+        minDate={startOfToday()}
+        maxDate={addYears(startOfToday(), 1)}
+        title="Выберите дату поездки"
+      />
 
       <DriverBottomNavigation />
     </div>

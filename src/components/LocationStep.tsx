@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, ArrowRight, Search, Navigation, ChevronLeft, Clock } from 'lucide-react';
-import MapLocationPicker2Gis from './MapLocationPicker2Gis';
-import YandexAddressSearch from './YandexAddressSearch';
+import { Card, CardContent } from '@/components/ui/card';
+import { MapPin, Navigation, Star, Clock, ChevronRight } from 'lucide-react';
+import { MapProvider2Gis } from '@/components/2GisMapProvider';
+import MapLocationPicker2Gis from '@/components/MapLocationPicker2Gis';
+import { useFrequentLocations } from '@/hooks/useFrequentLocations';
+import { usePopularStops } from '@/hooks/usePopularStops';
 
 interface LocationStepProps {
   title: string;
@@ -13,215 +15,144 @@ interface LocationStepProps {
   onNext: () => void;
   selectedLocation?: [number, number];
   selectedAddress?: string;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
 }
 
-const LocationStep = ({ 
-  title, 
-  subtitle, 
-  onLocationSelect, 
+const LocationStep = ({
+  title,
+  subtitle,
+  onLocationSelect,
   onNext,
   selectedLocation,
   selectedAddress,
   icon
 }: LocationStepProps) => {
-  const [activeTab, setActiveTab] = useState<'search' | 'map'>('search');
-  const [recentSearches] = useState<string[]>(() => {
-    const saved = localStorage.getItem('recent_searches');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [showMap, setShowMap] = useState(false);
+  const { frequentLocations } = useFrequentLocations();
+  const { getPopularStopsForCity } = usePopularStops();
+  const [popularStops, setPopularStops] = useState([]);
 
   const handleLocationSelect = (coordinates: [number, number], address: string) => {
     onLocationSelect(coordinates, address);
+    setShowMap(false);
   };
 
-  const handleAddressSelect = (address: string, coordinates?: [number, number]) => {
-    if (coordinates) {
-      onLocationSelect(coordinates, address);
+  const handleFrequentLocationSelect = async (location: any) => {
+    if (location.latitude && location.longitude) {
+      onLocationSelect([location.latitude, location.longitude], location.address);
     }
   };
 
-  const handleRecentAddressSelect = (address: string) => {
-    // Для недавних поисков пытаемся найти координаты через 2GIS API
-    const geocodeAddress = async () => {
-      try {
-        const response = await fetch(
-          `https://catalog.api.2gis.com/3.0/items/geocode?q=${encodeURIComponent(address)}&key=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&location=69.240073,41.311081&radius=50000&fields=items.point&locale=ru_RU`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          const item = data.result?.items?.[0];
-          if (item) {
-            const coords: [number, number] = [item.point.lat, item.point.lon];
-            onLocationSelect(coords, address);
-          }
-        }
-      } catch (error) {
-        console.error('Error geocoding address:', error);
-      }
-    };
-    geocodeAddress();
-  };
-
-  const handleUseCurrentLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
-          
-          try {
-            const response = await fetch(
-              `https://catalog.api.2gis.com/3.0/items/geocode?lat=${coords[0]}&lon=${coords[1]}&key=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&fields=items.point&locale=ru_RU`
-            );
-            
-            if (response.ok) {
-              const data = await response.json();
-              const item = data.result?.items?.[0];
-              const address = item?.full_name || item?.address_name || 'Текущее местоположение';
-              onLocationSelect(coords, address);
-            } else {
-              onLocationSelect(coords, 'Текущее местоположение');
-            }
-          } catch (error) {
-            console.error('Error getting address:', error);
-            onLocationSelect(coords, 'Текущее местоположение');
-          }
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-        }
-      );
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'home': return '🏠';
+      case 'work': return '💼';
+      case 'transport_hub': return '🚌';
+      case 'shopping': return '🛍️';
+      case 'landmark': return '🏛️';
+      default: return '📍';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in">
-      {/* Header с кнопкой назад */}
-      <div className="bg-white shadow-sm">
-        <div className="flex items-center p-4">
-          <Button variant="ghost" size="sm" className="mr-3">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-        </div>
-      </div>
-
-      <div className="p-4 space-y-4">
-        {/* Кнопки быстрого выбора - расположены горизонтально */}
-        <div className="flex space-x-2 animate-scale-in" style={{ animationDelay: '100ms' }}>
-          <Button
-            onClick={handleUseCurrentLocation}
-            variant="ghost"
-            className="flex-1 justify-center p-3 h-auto bg-white rounded-2xl shadow-sm hover:bg-blue-50 border-2 border-blue-200 hover:border-blue-300"
-          >
-            <div className="flex flex-col items-center space-y-2">
-              <div className="p-2 bg-blue-100 rounded-full">
-                <Navigation className="h-5 w-5 text-blue-600" />
-              </div>
-              <span className="text-blue-700 font-medium text-sm">Текущее</span>
-            </div>
-          </Button>
-
-          <Button
-            onClick={() => setActiveTab('map')}
-            variant="ghost"
-            className="flex-1 justify-center p-3 h-auto bg-white rounded-2xl shadow-sm hover:bg-green-50 border-2 border-green-200 hover:border-green-300"
-          >
-            <div className="flex flex-col items-center space-y-2">
-              <div className="p-2 bg-green-100 rounded-full">
-                <MapPin className="h-5 w-5 text-green-600" />
-              </div>
-              <span className="text-green-700 font-medium text-sm">На карте</span>
-            </div>
-          </Button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
+      <Card className="max-w-3xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-8 text-center">
+          <div className="flex items-center justify-center mb-4">
+            {icon}
+          </div>
+          <h2 className="text-3xl font-bold mb-2">{title}</h2>
+          <p className="text-purple-100 text-lg">{subtitle}</p>
         </div>
 
-        {/* Поиск адреса */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm animate-scale-in" style={{ animationDelay: '200ms' }}>
-          <YandexAddressSearch
-            onAddressSelect={handleAddressSelect}
-            placeholder="Введите полный адрес"
-            value={selectedAddress || ''}
-            compact={true}
-          />
-        </div>
-
-        {/* Недавние поиски */}
-        {recentSearches.length > 0 && (
-          <div className="space-y-2 animate-scale-in" style={{ animationDelay: '300ms' }}>
-            {recentSearches.slice(0, 4).map((address, index) => (
-              <Button
-                key={index}
-                onClick={() => handleRecentAddressSelect(address)}
-                variant="ghost"
-                className="w-full justify-between p-4 h-auto bg-white rounded-2xl shadow-sm hover:bg-gray-50 animate-fade-in"
-                style={{ animationDelay: `${400 + index * 50}ms` }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gray-100 rounded-full">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-gray-900 font-medium truncate">{address.split(',')[0]}</div>
-                    <div className="text-gray-500 text-sm truncate">{address}</div>
-                  </div>
+        <CardContent className="p-8">
+          {/* Выбранная локация */}
+          {selectedAddress && (
+            <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-green-500 rounded-full">
+                  <MapPin className="h-6 w-6 text-white" />
                 </div>
-                <div className="text-gray-400">›</div>
-              </Button>
-            ))}
-          </div>
-        )}
-
-        {/* Отображение выбранного адреса */}
-        {selectedAddress && (
-          <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl shadow-sm animate-scale-in">
-            <div className="flex items-start space-x-4">
-              <div className="p-2 bg-green-500 rounded-full">
-                <MapPin className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-green-800 mb-1">Выбранный адрес</h3>
-                <p className="text-green-700 leading-relaxed">{selectedAddress}</p>
+                <div className="flex-1">
+                  <div className="font-bold text-green-800 text-lg">Выбрано</div>
+                  <div className="text-green-700">{selectedAddress}</div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Кнопка продолжения */}
-        {selectedLocation && selectedAddress && (
-          <div className="pt-4 animate-scale-in">
-            <Button 
-              onClick={onNext}
-              className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          {/* Частые локации */}
+          {frequentLocations.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                <Star className="h-6 w-6 mr-2 text-yellow-500" />
+                Частые места
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {frequentLocations.slice(0, 3).map((location) => (
+                  <Button
+                    key={location.id}
+                    variant="ghost"
+                    onClick={() => handleFrequentLocationSelect(location)}
+                    className="h-auto p-4 bg-white border-2 border-gray-200 hover:border-purple-400 hover:bg-purple-50 rounded-2xl text-left transition-all duration-300"
+                  >
+                    <div className="flex items-center space-x-4 w-full">
+                      <div className="text-2xl">
+                        {getCategoryIcon(location.location_type)}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-800">{location.location_name}</div>
+                        <div className="text-sm text-gray-500 truncate">{location.address}</div>
+                        <div className="flex items-center mt-1 text-xs text-gray-400">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {location.usage_count} раз
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Выбор на карте */}
+          <div className="space-y-4">
+            <Button
+              onClick={() => setShowMap(true)}
+              className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
             >
-              Продолжить
-              <ArrowRight className="h-5 w-5 ml-2" />
+              <Navigation className="h-6 w-6 mr-3" />
+              Выбрать на карте
             </Button>
-          </div>
-        )}
-      </div>
 
-      {/* Полноэкранная карта */}
-      {activeTab === 'map' && (
-        <div className="fixed inset-0 z-50 bg-white animate-slide-in-right">
-          <div className="flex flex-col h-full">
-            <div className="bg-white shadow-sm p-4 flex items-center">
-              <Button 
-                onClick={() => setActiveTab('search')} 
-                variant="ghost" 
-                size="sm" 
-                className="mr-3"
+            {selectedAddress && (
+              <Button
+                onClick={onNext}
+                className="w-full h-16 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
               >
-                <ChevronLeft className="h-5 w-5" />
+                Продолжить
+                <ChevronRight className="h-6 w-6 ml-3" />
               </Button>
-              <h2 className="text-lg font-semibold">Выберите на карте</h2>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Карта */}
+      {showMap && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-4xl h-5/6 overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-800">Выберите точку на карте</h3>
+              <Button variant="ghost" onClick={() => setShowMap(false)}>
+                ✕
+              </Button>
             </div>
-            <div className="flex-1">
+            <div className="h-full">
               <MapLocationPicker2Gis
                 onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-                placeholder="Выберите точку на карте"
+                initialLocation={selectedLocation}
               />
             </div>
           </div>
