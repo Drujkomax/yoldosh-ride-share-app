@@ -58,7 +58,7 @@ export const useOnboarding = () => {
             first_name: onboardingData.firstName,
             last_name: onboardingData.lastName,
             email: onboardingData.email,
-            date_of_birth: onboardingData.dateOfBirth,
+            date_of_birth: onboardingData.dateOfBirth ? onboardingData.dateOfBirth.toISOString().split('T')[0] : null,
             marketing_consent: onboardingData.marketingConsent,
             privacy_consent: onboardingData.privacyConsent,
             registration_method: onboardingData.registrationMethod,

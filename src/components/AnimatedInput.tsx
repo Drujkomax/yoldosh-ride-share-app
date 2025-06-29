@@ -10,6 +10,7 @@ interface AnimatedInputProps {
   type?: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   placeholder?: string;
   maxLength?: number;
   icon?: React.ReactNode;
@@ -22,6 +23,7 @@ const AnimatedInput = ({
   type = "text", 
   value, 
   onChange, 
+  onBlur,
   placeholder, 
   maxLength, 
   icon,
@@ -55,7 +57,10 @@ const AnimatedInput = ({
             value={value}
             onChange={onChange}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
             placeholder={isFocused ? placeholder : ""}
             maxLength={maxLength}
             className={cn(
