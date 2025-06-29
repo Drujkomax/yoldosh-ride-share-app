@@ -8,6 +8,14 @@ import { useChats } from '@/hooks/useChats';
 import { useUser } from '@/contexts/UserContext';
 import { useUserCars } from '@/hooks/useUserCars';
 
+interface NavItem {
+  path: string;
+  icon: React.ComponentType<any>;
+  label: string;
+  color: string;
+  badge?: number;
+}
+
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,8 +31,8 @@ const BottomNavigation = () => {
   };
 
   // Определяем навигационные элементы в зависимости от возможности водить
-  const getNavItems = () => {
-    const baseItems = [
+  const getNavItems = (): NavItem[] => {
+    const baseItems: NavItem[] = [
       {
         path: '/search-rides',
         icon: Search,
