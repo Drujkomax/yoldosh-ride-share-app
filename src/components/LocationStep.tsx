@@ -152,7 +152,7 @@ const LocationStep = ({
             <div className="h-full">
               <MapLocationPicker2Gis
                 onLocationSelect={handleLocationSelect}
-                initialLocation={selectedLocation}
+                selectedLocation={selectedLocation}
               />
             </div>
           </div>
