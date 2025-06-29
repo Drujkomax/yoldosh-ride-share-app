@@ -305,33 +305,60 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          first_name: string | null
           id: string
           is_verified: boolean | null
+          last_name: string | null
+          marketing_consent: boolean | null
           name: string
+          onboarding_completed: boolean | null
           phone: string
+          privacy_consent: boolean | null
           rating: number | null
+          registration_method: string | null
+          terms_accepted_at: string | null
           total_rides: number | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: string
           is_verified?: boolean | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
           name: string
+          onboarding_completed?: boolean | null
           phone: string
+          privacy_consent?: boolean | null
           rating?: number | null
+          registration_method?: string | null
+          terms_accepted_at?: string | null
           total_rides?: number | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string | null
           id?: string
           is_verified?: boolean | null
+          last_name?: string | null
+          marketing_consent?: boolean | null
           name?: string
+          onboarding_completed?: boolean | null
           phone?: string
+          privacy_consent?: boolean | null
           rating?: number | null
+          registration_method?: string | null
+          terms_accepted_at?: string | null
           total_rides?: number | null
           updated_at?: string | null
         }
