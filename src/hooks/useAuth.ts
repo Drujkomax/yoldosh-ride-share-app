@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser, UserRole } from '@/contexts/UserContext';
+import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 
 // Функция для генерации UUID v4
@@ -17,11 +17,11 @@ export const useAuth = () => {
   const { setUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
-  const register = async (phone: string, name: string, role: UserRole) => {
+  const register = async (phone: string, name: string, _role?: string) => {
     setIsLoading(true);
     try {
       console.log('=== НАЧАЛО РЕГИСТРАЦИИ ===');
-      console.log('useAuth - Данные для регистрации:', { phone, name, role });
+      console.log('useAuth - Данные для регистрации:', { phone, name });
       
       const userId = generateUUID();
       console.log('useAuth - Сгенерированный UUID:', userId);
@@ -46,7 +46,7 @@ export const useAuth = () => {
 
       console.log('useAuth - Пользователь не найден, создаем нового...');
       
-      // Создаем профиль пользователя в базе данных
+      // Создаем профиль пользователя БЕЗ роли
       console.log('useAuth - Отправляем данные в Supabase profiles таблицу...');
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -55,7 +55,6 @@ export const useAuth = () => {
             id: userId,
             phone,
             name,
-            role,
             is_verified: false,
             total_rides: 0,
             rating: 0.0
@@ -86,12 +85,11 @@ export const useAuth = () => {
 
       console.log('useAuth - Профиль успешно создан в базе данных:', profile);
 
-      // Сохраняем пользователя в контексте
+      // Сохраняем пользователя в контексте БЕЗ роли
       const userProfile = {
         id: profile.id,
         phone: profile.phone,
         name: profile.name,
-        role: profile.role as UserRole,
         isVerified: profile.is_verified || false,
         totalRides: profile.total_rides || 0,
         rating: profile.rating || 0.0,
@@ -144,7 +142,6 @@ export const useAuth = () => {
         id: profile.id,
         phone: profile.phone,
         name: profile.name,
-        role: profile.role as UserRole,
         isVerified: profile.is_verified || false,
         totalRides: profile.total_rides || 0,
         rating: profile.rating || 0.0,
@@ -165,60 +162,6 @@ export const useAuth = () => {
     }
   };
 
-  // Добавляем функцию для автоматического создания профиля если нужно
-  const ensureUserProfile = async (user: any) => {
-    try {
-      console.log('useAuth - Проверяем/создаем профиль для пользователя:', user);
-      
-      // Проверяем существование профиля в базе данных
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('useAuth - Ошибка при проверке профиля:', checkError);
-        return false;
-      }
-
-      if (existingProfile) {
-        console.log('useAuth - Профиль уже существует в базе данных');
-        return true;
-      }
-
-      console.log('useAuth - Профиль не найден в базе, создаем автоматически...');
-      
-      // Создаем профиль автоматически
-      const { data: newProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: user.id,
-            phone: user.phone,
-            name: user.name,
-            role: user.role,
-            is_verified: user.isVerified || false,
-            total_rides: user.totalRides || 0,
-            rating: user.rating || 0.0
-          }
-        ])
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('useAuth - Ошибка при автоматическом создании профиля:', createError);
-        return false;
-      }
-
-      console.log('useAuth - Профиль автоматически создан:', newProfile);
-      return true;
-    } catch (error) {
-      console.error('useAuth - Ошибка в ensureUserProfile:', error);
-      return false;
-    }
-  };
-
   const logout = () => {
     console.log('useAuth - Выход из системы');
     setUser(null);
@@ -229,7 +172,6 @@ export const useAuth = () => {
     register,
     login,
     logout,
-    ensureUserProfile,
     isLoading,
   };
 };

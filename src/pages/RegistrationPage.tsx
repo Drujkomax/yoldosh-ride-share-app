@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, Users, ArrowLeft, Phone, User } from 'lucide-react';
-import { useUser, UserRole } from '@/contexts/UserContext';
+import { ArrowLeft, Phone, User } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import AnimatedInput from '@/components/AnimatedInput';
@@ -13,29 +13,18 @@ const RegistrationPage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const { register, login, isLoading } = useAuth();
-  const [step, setStep] = useState<'role' | 'phone' | 'code'>('role');
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [isNewUser, setIsNewUser] = useState(true);
-  const [existingUser, setExistingUser] = useState<any>(null);
 
   // Redirect if already authenticated
   React.useEffect(() => {
     if (user) {
-      if (user.role === 'driver') {
-        navigate('/driver');
-      } else {
-        navigate('/passenger');
-      }
+      navigate('/passenger'); // Все пользователи начинают как пассажиры
     }
   }, [user, navigate]);
-
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
-    setStep('phone');
-  };
 
   const handlePhoneSubmit = async () => {
     if (phone.length < 13 || !name.trim()) {
@@ -90,32 +79,24 @@ const RegistrationPage = () => {
       return;
     }
 
-    if (isNewUser && selectedRole) {
-      // Создаем нового пользователя
-      console.log('Creating new user:', { phone, name, role: selectedRole });
-      const result = await register(phone, name, selectedRole);
+    if (isNewUser) {
+      // Создаем нового пользователя БЕЗ роли
+      console.log('Creating new user:', { phone, name });
+      const result = await register(phone, name, 'passenger'); // Временно для совместимости
       
       if (result) {
-        // Перенаправляем в зависимости от роли
-        if (selectedRole === 'driver') {
-          navigate('/driver');
-        } else {
-          navigate('/passenger');
-        }
+        // Все пользователи начинают как пассажиры
+        navigate('/passenger');
       }
     } else {
-      // Входим существующим пользователем (уже вошли в handlePhoneSubmit)
+      // Входим существующим пользователем
       toast({
         title: "Добро пожаловать!",
         description: "Вы успешно вошли в систему",
       });
       
-      // Перенаправляем в зависимости от роли
-      if (user?.role === 'driver') {
-        navigate('/driver');
-      } else {
-        navigate('/passenger');
-      }
+      // Все пользователи попадают на главную страницу поиска
+      navigate('/passenger');
     }
   };
 
@@ -147,7 +128,7 @@ const RegistrationPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => step === 'role' ? navigate('/') : setStep(step === 'code' ? 'phone' : 'role')}
+            onClick={() => step === 'code' ? setStep('phone') : navigate('/')}
             className="text-white hover:bg-white/10 rounded-xl p-3 hover:scale-105 transition-all duration-300"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
@@ -156,44 +137,6 @@ const RegistrationPage = () => {
           <h1 className="text-3xl font-bold text-white">Yoldosh</h1>
           <div className="w-12"></div>
         </div>
-
-        {step === 'role' && (
-          <Card className="animate-fade-in bg-white/95 backdrop-blur-lg border-0 rounded-3xl shadow-2xl">
-            <CardHeader className="text-center pb-6">
-              <CardTitle className="text-3xl font-bold text-slate-800">Выберите роль</CardTitle>
-              <p className="text-slate-600 mt-2">Как вы планируете использовать приложение?</p>
-            </CardHeader>
-            <CardContent className="space-y-6 p-8">
-              <Button
-                onClick={() => handleRoleSelect('passenger')}
-                variant="outline"
-                className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-primary hover:bg-yoldosh-primary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <Users className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="font-bold text-slate-800">Пассажир</span>
-                  <span className="text-sm text-slate-500 mt-1">Ищу поездку</span>
-                </div>
-              </Button>
-              
-              <Button
-                onClick={() => handleRoleSelect('driver')}
-                variant="outline"
-                className="w-full h-24 text-lg border-2 border-slate-200 hover:border-yoldosh-secondary hover:bg-yoldosh-secondary/10 rounded-2xl transition-all duration-300 group hover:scale-105"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
-                    <Car className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="font-bold text-slate-800">Водитель</span>
-                  <span className="text-sm text-slate-500 mt-1">Предлагаю поездки</span>
-                </div>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
         {step === 'phone' && (
           <Card className="animate-slide-up bg-white/95 backdrop-blur-lg border-0 rounded-3xl shadow-2xl">

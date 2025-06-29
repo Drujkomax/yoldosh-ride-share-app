@@ -55,6 +55,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_ride_id_fkey"
             columns: ["ride_id"]
             isOneToOne: false
@@ -66,6 +73,13 @@ export type Database = {
             columns: ["passenger_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bookings_passenger"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
           {
@@ -111,10 +125,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "chats_participant1_id_fkey"
+            columns: ["participant1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "chats_participant2_id_fkey"
             columns: ["participant2_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_participant2_id_fkey"
+            columns: ["participant2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
           {
@@ -132,10 +160,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_chats_participant1"
+            columns: ["participant1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_chats_participant2"
             columns: ["participant2_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_chats_participant2"
+            columns: ["participant2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
           {
@@ -191,6 +233,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_messages_sender"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_chat_id_fkey"
             columns: ["chat_id"]
             isOneToOne: false
@@ -202,6 +251,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
         ]
@@ -254,7 +310,6 @@ export type Database = {
           name: string
           phone: string
           rating: number | null
-          role: string
           total_rides: number | null
           updated_at: string | null
         }
@@ -266,7 +321,6 @@ export type Database = {
           name: string
           phone: string
           rating?: number | null
-          role: string
           total_rides?: number | null
           updated_at?: string | null
         }
@@ -278,7 +332,6 @@ export type Database = {
           name?: string
           phone?: string
           rating?: number | null
-          role?: string
           total_rides?: number | null
           updated_at?: string | null
         }
@@ -334,10 +387,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_reviewed_user_id_fkey"
+            columns: ["reviewed_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reviews_reviewer_id_fkey"
             columns: ["reviewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
         ]
@@ -408,12 +475,20 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ride_requests_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
         ]
       }
       rides: {
         Row: {
           available_seats: number
           car_color: string | null
+          car_id: string | null
           car_model: string | null
           created_at: string | null
           departure_date: string
@@ -442,6 +517,7 @@ export type Database = {
         Insert: {
           available_seats: number
           car_color?: string | null
+          car_id?: string | null
           car_model?: string | null
           created_at?: string | null
           departure_date: string
@@ -470,6 +546,7 @@ export type Database = {
         Update: {
           available_seats?: number
           car_color?: string | null
+          car_id?: string | null
           car_model?: string | null
           created_at?: string | null
           departure_date?: string
@@ -497,10 +574,81 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "rides_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "user_cars"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rides_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_cars: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_verified: boolean | null
+          license_plate: string | null
+          make: string
+          model: string
+          updated_at: string | null
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          license_plate?: string | null
+          make: string
+          model: string
+          updated_at?: string | null
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_verified?: boolean | null
+          license_plate?: string | null
+          make?: string
+          model?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cars_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_cars_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
         ]
@@ -549,7 +697,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_with_role: {
+        Row: {
+          avatar_url: string | null
+          can_drive: boolean | null
+          created_at: string | null
+          id: string | null
+          is_verified: boolean | null
+          name: string | null
+          phone: string | null
+          rating: number | null
+          role: string | null
+          total_rides: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          can_drive?: never
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          name?: string | null
+          phone?: string | null
+          rating?: number | null
+          role?: never
+          total_rides?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          can_drive?: never
+          created_at?: string | null
+          id?: string | null
+          is_verified?: boolean | null
+          name?: string | null
+          phone?: string | null
+          rating?: number | null
+          role?: never
+          total_rides?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       complete_finished_rides: {
@@ -559,6 +748,10 @@ export type Database = {
       deactivate_expired_rides: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: string
       }
     }
     Enums: {
