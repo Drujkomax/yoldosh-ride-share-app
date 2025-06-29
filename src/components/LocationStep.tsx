@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Navigation, Clock, ChevronRight, Home, Briefcase, MapPin } from 'lucide-react';
+import { Search, Navigation, Clock, ChevronRight, Home, Briefcase } from 'lucide-react';
 import { useGoogleGeocoding } from '@/hooks/useGoogleGeocoding';
 import { useFrequentLocations } from '@/hooks/useFrequentLocations';
 
@@ -18,16 +18,6 @@ interface GeocodeResult {
   description: string;
   coordinates: [number, number];
 }
-
-// Статичные популярные места
-const staticLocations = [
-  { name: 'Ташкент', description: 'Ташкент, Узбекистан', coordinates: [41.2995, 69.2401] as [number, number] },
-  { name: 'Самарканд', description: 'Самарканд, Узбекистан', coordinates: [39.6542, 66.9597] as [number, number] },
-  { name: 'Бухара', description: 'Бухара, Узбекистан', coordinates: [39.7747, 64.4286] as [number, number] },
-  { name: 'Андижан', description: 'Андижан, Узбекистан', coordinates: [40.7821, 72.3442] as [number, number] },
-  { name: 'Фергана', description: 'Фергана, Узбекистан', coordinates: [40.3834, 71.7842] as [number, number] },
-  { name: 'Наманган', description: 'Наманган, Узбекистан', coordinates: [41.0004, 71.6726] as [number, number] },
-];
 
 const LocationStep = ({
   title,
@@ -55,6 +45,7 @@ const LocationStep = ({
     try {
       const results = await geocodeAddress(searchQuery);
       setSuggestions(results);
+      console.log('Результаты поиска:', results);
     } catch (error) {
       console.error('Ошибка поиска адресов:', error);
       setSuggestions([]);
@@ -195,34 +186,6 @@ const LocationStep = ({
           </div>
           <ChevronRight className="h-5 w-5 text-gray-400" />
         </Button>
-      </div>
-
-      {/* Static Popular Locations - Always Visible */}
-      <div className="px-6 mb-6">
-        <div className="mb-3">
-          <span className="text-sm font-medium text-gray-600">Популярные города</span>
-        </div>
-        <div className="space-y-1">
-          {staticLocations.map((location, index) => (
-            <Button
-              key={index}
-              onClick={() => handleAddressSelect(location)}
-              className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
-              variant="outline"
-            >
-              <div className="flex items-center flex-1 min-w-0">
-                <div className="p-2 bg-blue-100 rounded-full mr-3 flex-shrink-0">
-                  <MapPin className="h-4 w-4 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{location.name}</div>
-                  <div className="text-sm text-gray-500 truncate">{location.description}</div>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            </Button>
-          ))}
-        </div>
       </div>
 
       {/* Dynamic Content */}

@@ -24,28 +24,98 @@ export const useGoogleGeocoding = () => {
     try {
       console.log('Geocoding address with Google Maps:', address);
       
+      // Используем Google Places API Autocomplete для получения предложений
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address)}&key=${API_KEY}&language=ru&components=country:uz&types=geocode`
+      );
+      
+      if (!response.ok) {
+        console.error('Google Places Autocomplete API Error:', response.status);
+        return generateMockResults(address);
+      }
+
+      const data = await response.json();
+      console.log('Google Places API response:', data);
+      
+      if (data.status === 'REQUEST_DENIED' || data.status === 'INVALID_REQUEST') {
+        console.error('Google Places API Error:', data.status, data.error_message);
+        // Попробуем использовать Geocoding API как fallback
+        return await fallbackGeocode(address);
+      }
+
+      const predictions = data.predictions || [];
+      
+      // Для каждого предложения получаем координаты
+      const results = await Promise.all(
+        predictions.slice(0, 8).map(async (prediction: any) => {
+          try {
+            const detailsResponse = await fetch(
+              `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&key=${API_KEY}&fields=geometry,formatted_address&language=ru`
+            );
+            
+            if (detailsResponse.ok) {
+              const detailsData = await detailsResponse.json();
+              if (detailsData.result && detailsData.result.geometry) {
+                return {
+                  name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
+                  description: prediction.description,
+                  coordinates: [
+                    detailsData.result.geometry.location.lat,
+                    detailsData.result.geometry.location.lng
+                  ] as [number, number]
+                };
+              }
+            }
+            
+            // Если не удалось получить детали, используем базовую информацию
+            return {
+              name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
+              description: prediction.description,
+              coordinates: [41.2995, 69.2401] as [number, number] // Ташкент по умолчанию
+            };
+          } catch (error) {
+            console.error('Error getting place details:', error);
+            return {
+              name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
+              description: prediction.description,
+              coordinates: [41.2995, 69.2401] as [number, number]
+            };
+          }
+        })
+      );
+      
+      return results.filter(result => result !== null);
+    } catch (error) {
+      console.error('Error with Google Places API:', error);
+      return await fallbackGeocode(address);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fallback к обычному Geocoding API
+  const fallbackGeocode = async (address: string): Promise<GeocodeResult[]> => {
+    try {
+      console.log('Using fallback Geocoding API for:', address);
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address + ', Узбекистан')}&key=${API_KEY}&language=ru&region=uz`
       );
       
       if (!response.ok) {
-        console.error('Google Maps Geocoding API Error:', response.status);
         return generateMockResults(address);
       }
 
       const data = await response.json();
       const results = data.results || [];
       
-      return results.map((item: any) => ({
+      return results.slice(0, 5).map((item: any) => ({
         name: item.address_components?.[0]?.long_name || item.formatted_address.split(',')[0] || 'Неизвестное место',
         description: item.formatted_address || 'Нет описания',
         coordinates: [item.geometry.location.lat, item.geometry.location.lng] as [number, number]
-      })).slice(0, 8);
+      }));
     } catch (error) {
-      console.error('Error geocoding address:', error);
+      console.error('Error with fallback geocoding:', error);
       return generateMockResults(address);
-    } finally {
-      setIsLoading(false);
     }
   };
 
