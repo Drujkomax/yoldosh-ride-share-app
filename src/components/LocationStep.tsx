@@ -108,8 +108,37 @@ const LocationStep = ({
       </div>
 
       <div className="p-4 space-y-4">
+        {/* Кнопки быстрого выбора - расположены горизонтально */}
+        <div className="flex space-x-2 animate-scale-in" style={{ animationDelay: '100ms' }}>
+          <Button
+            onClick={handleUseCurrentLocation}
+            variant="ghost"
+            className="flex-1 justify-center p-3 h-auto bg-white rounded-2xl shadow-sm hover:bg-blue-50 border-2 border-blue-200 hover:border-blue-300"
+          >
+            <div className="flex flex-col items-center space-y-2">
+              <div className="p-2 bg-blue-100 rounded-full">
+                <Navigation className="h-5 w-5 text-blue-600" />
+              </div>
+              <span className="text-blue-700 font-medium text-sm">Текущее</span>
+            </div>
+          </Button>
+
+          <Button
+            onClick={() => setActiveTab('map')}
+            variant="ghost"
+            className="flex-1 justify-center p-3 h-auto bg-white rounded-2xl shadow-sm hover:bg-green-50 border-2 border-green-200 hover:border-green-300"
+          >
+            <div className="flex flex-col items-center space-y-2">
+              <div className="p-2 bg-green-100 rounded-full">
+                <MapPin className="h-5 w-5 text-green-600" />
+              </div>
+              <span className="text-green-700 font-medium text-sm">На карте</span>
+            </div>
+          </Button>
+        </div>
+
         {/* Поиск адреса */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm animate-scale-in" style={{ animationDelay: '100ms' }}>
+        <div className="bg-white rounded-2xl p-4 shadow-sm animate-scale-in" style={{ animationDelay: '200ms' }}>
           <YandexAddressSearch
             onAddressSelect={handleAddressSelect}
             placeholder="Введите полный адрес"
@@ -117,22 +146,6 @@ const LocationStep = ({
             compact={true}
           />
         </div>
-
-        {/* Текущее местоположение */}
-        <Button
-          onClick={handleUseCurrentLocation}
-          variant="ghost"
-          className="w-full justify-between p-4 h-auto bg-white rounded-2xl shadow-sm hover:bg-gray-50 animate-scale-in"
-          style={{ animationDelay: '200ms' }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <Navigation className="h-5 w-5 text-blue-600" />
-            </div>
-            <span className="text-gray-900 font-medium">Использовать текущее местоположение</span>
-          </div>
-          <div className="text-gray-400">›</div>
-        </Button>
 
         {/* Недавние поиски */}
         {recentSearches.length > 0 && (
@@ -159,22 +172,6 @@ const LocationStep = ({
             ))}
           </div>
         )}
-
-        {/* Кнопка карты */}
-        <Button
-          onClick={() => setActiveTab('map')}
-          variant="ghost"
-          className="w-full justify-between p-4 h-auto bg-white rounded-2xl shadow-sm hover:bg-gray-50 animate-scale-in"
-          style={{ animationDelay: '600ms' }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 rounded-full">
-              <MapPin className="h-5 w-5 text-green-600" />
-            </div>
-            <span className="text-gray-900 font-medium">Выбрать на карте</span>
-          </div>
-          <div className="text-gray-400">›</div>
-        </Button>
 
         {/* Отображение выбранного адреса */}
         {selectedAddress && (
