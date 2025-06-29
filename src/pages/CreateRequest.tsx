@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '@/contexts/UserContext';
 import { useRideRequests } from '@/hooks/useRideRequests';
 import { toast } from 'sonner';
-import { MapProvider2Gis } from '@/components/2GisMapProvider';
 import LocationStep from '@/components/LocationStep';
 
 interface RequestData {
@@ -84,7 +83,7 @@ const CreateRequest = () => {
       case 1:
         return (
           <LocationStep
-            title="Where are you leaving from?"
+            title="Откуда едете?"
             onLocationSelect={handleFromLocationSelect}
             selectedLocation={requestData.fromCoordinates}
             selectedAddress={requestData.fromAddress}
@@ -94,7 +93,7 @@ const CreateRequest = () => {
       case 2:
         return (
           <LocationStep
-            title="Where are you going to?"
+            title="Куда едете?"
             onLocationSelect={handleToLocationSelect}
             selectedLocation={requestData.toCoordinates}
             selectedAddress={requestData.toAddress}
@@ -106,11 +105,7 @@ const CreateRequest = () => {
     }
   };
 
-  return (
-    <MapProvider2Gis>
-      {renderCurrentStep()}
-    </MapProvider2Gis>
-  );
+  return renderCurrentStep();
 };
 
 export default CreateRequest;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { toast } from 'sonner';
 import DriverBottomNavigation from '@/components/DriverBottomNavigation';
-import { MapProvider2Gis } from '@/components/2GisMapProvider';
 import LocationStep from '@/components/LocationStep';
 import RouteVisualizer from '@/components/RouteVisualizer';
 
@@ -379,54 +379,52 @@ const CreateRide = () => {
   };
 
   return (
-    <MapProvider2Gis>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        {/* Header */}
-        <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
-          <div className="container mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (currentStep > 1) {
-                    setCurrentStep(currentStep - 1);
-                  } else {
-                    navigate('/driver-home');
-                  }
-                }}
-                className="rounded-2xl hover:bg-blue-50 p-4 text-gray-700 font-semibold"
-              >
-                <ArrowLeft className="h-6 w-6 mr-2" />
-                Назад
-              </Button>
-              <div className="text-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Создать поездку
-                </h1>
-                <p className="text-gray-600 mt-2 text-lg">Шаг {currentStep} из {steps.length}</p>
-              </div>
-              <div className="w-24"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Header */}
+      <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20 sticky top-0 z-40">
+        <div className="container mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (currentStep > 1) {
+                  setCurrentStep(currentStep - 1);
+                } else {
+                  navigate('/driver-home');
+                }
+              }}
+              className="rounded-2xl hover:bg-blue-50 p-4 text-gray-700 font-semibold"
+            >
+              <ArrowLeft className="h-6 w-6 mr-2" />
+              Назад
+            </Button>
+            <div className="text-center">
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Создать поездку
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">Шаг {currentStep} из {steps.length}</p>
             </div>
+            <div className="w-24"></div>
           </div>
         </div>
-
-        {/* Content */}
-        <div className="py-8">
-          {currentStep < 3 ? (
-            renderCurrentStep()
-          ) : (
-            <>
-              <div className="container mx-auto px-6 pb-8">
-                {renderStepIndicator()}
-              </div>
-              {renderCurrentStep()}
-            </>
-          )}
-        </div>
-
-        <DriverBottomNavigation />
       </div>
-    </MapProvider2Gis>
+
+      {/* Content */}
+      <div className="py-8">
+        {currentStep < 3 ? (
+          renderCurrentStep()
+        ) : (
+          <>
+            <div className="container mx-auto px-6 pb-8">
+              {renderStepIndicator()}
+            </div>
+            {renderCurrentStep()}
+          </>
+        )}
+      </div>
+
+      <DriverBottomNavigation />
+    </div>
   );
 };
 

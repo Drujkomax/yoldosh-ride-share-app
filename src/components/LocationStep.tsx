@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Navigation, Clock, ChevronRight } from 'lucide-react';
-import { use2GisGeocoding } from '@/hooks/use2GisGeocoding';
+import { Search, Navigation, Clock, ChevronRight, Home, Briefcase, MapPin } from 'lucide-react';
+import { useGoogleGeocoding } from '@/hooks/useGoogleGeocoding';
 import { useFrequentLocations } from '@/hooks/useFrequentLocations';
 
 interface LocationStepProps {
@@ -19,6 +19,16 @@ interface GeocodeResult {
   coordinates: [number, number];
 }
 
+// Статичные популярные места
+const staticLocations = [
+  { name: 'Ташкент', description: 'Ташкент, Узбекистан', coordinates: [41.2995, 69.2401] as [number, number] },
+  { name: 'Самарканд', description: 'Самарканд, Узбекистан', coordinates: [39.6542, 66.9597] as [number, number] },
+  { name: 'Бухара', description: 'Бухара, Узбекистан', coordinates: [39.7747, 64.4286] as [number, number] },
+  { name: 'Андижан', description: 'Андижан, Узбекистан', coordinates: [40.7821, 72.3442] as [number, number] },
+  { name: 'Фергана', description: 'Фергана, Узбекистан', coordinates: [40.3834, 71.7842] as [number, number] },
+  { name: 'Наманган', description: 'Наманган, Узбекистан', coordinates: [41.0004, 71.6726] as [number, number] },
+];
+
 const LocationStep = ({
   title,
   onLocationSelect,
@@ -31,11 +41,11 @@ const LocationStep = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   
-  const { geocodeAddress } = use2GisGeocoding();
+  const { geocodeAddress } = useGoogleGeocoding();
   const { frequentLocations } = useFrequentLocations();
   const timeoutRef = useRef<NodeJS.Timeout>();
 
-  // Поиск адресов через 2GIS API
+  // Поиск адресов через Google Maps API
   const searchAddresses = async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setSuggestions([]);
@@ -93,7 +103,6 @@ const LocationStep = ({
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            // Здесь можно добавить обратное геокодирование для получения адреса
             const address = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
             setQuery('Текущее местоположение');
             onLocationSelect([latitude, longitude], address);
@@ -128,6 +137,14 @@ const LocationStep = ({
     }, 200);
   };
 
+  const getLocationTypeIcon = (type: string) => {
+    switch (type) {
+      case 'home': return <Home className="h-4 w-4" />;
+      case 'work': return <Briefcase className="h-4 w-4" />;
+      default: return <Clock className="h-4 w-4" />;
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -154,7 +171,7 @@ const LocationStep = ({
             onChange={handleInputChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            placeholder="Enter the full address"
+            placeholder="Введите полный адрес"
             className="w-full h-14 pl-12 pr-4 bg-gray-100 border-0 rounded-xl text-gray-900 placeholder-gray-500 focus:bg-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -173,42 +190,78 @@ const LocationStep = ({
               <Navigation className="h-5 w-5 text-gray-600" />
             </div>
             <span className="font-medium">
-              {isLocating ? 'Определение местоположения...' : 'Use current location'}
+              {isLocating ? 'Определение местоположения...' : 'Использовать текущее местоположение'}
             </span>
           </div>
           <ChevronRight className="h-5 w-5 text-gray-400" />
         </Button>
       </div>
 
-      {/* Suggestions or Frequent Locations */}
+      {/* Static Popular Locations - Always Visible */}
+      <div className="px-6 mb-6">
+        <div className="mb-3">
+          <span className="text-sm font-medium text-gray-600">Популярные города</span>
+        </div>
+        <div className="space-y-1">
+          {staticLocations.map((location, index) => (
+            <Button
+              key={index}
+              onClick={() => handleAddressSelect(location)}
+              className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
+              variant="outline"
+            >
+              <div className="flex items-center flex-1 min-w-0">
+                <div className="p-2 bg-blue-100 rounded-full mr-3 flex-shrink-0">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-gray-900 truncate">{location.name}</div>
+                  <div className="text-sm text-gray-500 truncate">{location.description}</div>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Dynamic Content */}
       <div className="px-6">
         {showSuggestions && isFocused ? (
           // Показывать результаты поиска когда пользователь печатает
-          <div className="space-y-1">
-            {suggestions.map((address, index) => (
-              <Button
-                key={index}
-                onClick={() => handleAddressSelect(address)}
-                className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
-                variant="outline"
-              >
-                <div className="flex items-center flex-1 min-w-0">
-                  <div className="p-2 bg-gray-100 rounded-full mr-3 flex-shrink-0">
-                    <Clock className="h-4 w-4 text-gray-600" />
+          query.length > 0 && suggestions.length > 0 && (
+            <div className="space-y-1">
+              <div className="mb-3">
+                <span className="text-sm font-medium text-gray-600">Результаты поиска</span>
+              </div>
+              {suggestions.map((address, index) => (
+                <Button
+                  key={index}
+                  onClick={() => handleAddressSelect(address)}
+                  className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
+                  variant="outline"
+                >
+                  <div className="flex items-center flex-1 min-w-0">
+                    <div className="p-2 bg-green-100 rounded-full mr-3 flex-shrink-0">
+                      <Search className="h-4 w-4 text-green-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{address.name}</div>
+                      <div className="text-sm text-gray-500 truncate">{address.description}</div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900 truncate">{address.name}</div>
-                    <div className="text-sm text-gray-500 truncate">{address.description}</div>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-              </Button>
-            ))}
-          </div>
+                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                </Button>
+              ))}
+            </div>
+          )
         ) : (
           // Показывать частые локации когда клавиатура не активна
           query.length === 0 && frequentLocations.length > 0 && (
             <div className="space-y-1">
+              <div className="mb-3">
+                <span className="text-sm font-medium text-gray-600">Часто используемые</span>
+              </div>
               {frequentLocations.slice(0, 4).map((location) => (
                 <Button
                   key={location.id}
@@ -218,7 +271,7 @@ const LocationStep = ({
                 >
                   <div className="flex items-center flex-1 min-w-0">
                     <div className="p-2 bg-gray-100 rounded-full mr-3 flex-shrink-0">
-                      <Clock className="h-4 w-4 text-gray-600" />
+                      {getLocationTypeIcon(location.location_type)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-gray-900 truncate">{location.location_name}</div>
