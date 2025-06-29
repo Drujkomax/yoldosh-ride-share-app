@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Navigation, Clock, ChevronRight, Home, Briefcase } from 'lucide-react';
 import { useGoogleGeocoding } from '@/hooks/useGoogleGeocoding';
 import { useFrequentLocations } from '@/hooks/useFrequentLocations';
+import BottomNavigation from '@/components/BottomNavigation';
 
 interface LocationStepProps {
   title: string;
@@ -30,10 +31,16 @@ const LocationStep = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
   
-  const { geocodeAddress } = useGoogleGeocoding();
+  const { geocodeAddress, reverseGeocode } = useGoogleGeocoding();
   const { frequentLocations } = useFrequentLocations();
   const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // Проверяем можно ли продолжить
+  useEffect(() => {
+    setCanContinue(selectedLocation !== undefined && selectedAddress !== undefined);
+  }, [selectedLocation, selectedAddress]);
 
   // Поиск адресов через Google Maps API
   const searchAddresses = async (searchQuery: string) => {
@@ -94,11 +101,16 @@ const LocationStep = ({
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            const address = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            // Используем reverse geocoding для получения адреса
+            const address = await reverseGeocode(latitude, longitude);
             setQuery('Текущее местоположение');
             onLocationSelect([latitude, longitude], address);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
+            // Fallback - используем координаты
+            const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+            setQuery('Текущее местоположение');
+            onLocationSelect([latitude, longitude], fallbackAddress);
           } finally {
             setIsLocating(false);
           }
@@ -136,6 +148,15 @@ const LocationStep = ({
     }
   };
 
+  const handleContinue = () => {
+    if (selectedLocation && selectedAddress) {
+      // Если это шаг "Откуда" - переходим к шагу "Куда"
+      // Если это шаг "Куда" - создаем заявку
+      // Логика обрабатывается в родительском компоненте
+      onLocationSelect(selectedLocation, selectedAddress);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -145,7 +166,7 @@ const LocationStep = ({
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
       <div className="px-6 pt-16 pb-8">
         <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
@@ -189,7 +210,7 @@ const LocationStep = ({
       </div>
 
       {/* Dynamic Content */}
-      <div className="px-6">
+      <div className="px-6 mb-6">
         {showSuggestions && isFocused ? (
           // Показывать результаты поиска когда пользователь печатает
           query.length > 0 && suggestions.length > 0 && (
@@ -248,6 +269,21 @@ const LocationStep = ({
           )
         )}
       </div>
+
+      {/* Continue Button */}
+      {canContinue && (
+        <div className="px-6 mb-6">
+          <Button
+            onClick={handleContinue}
+            className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium"
+          >
+            Продолжить
+          </Button>
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };

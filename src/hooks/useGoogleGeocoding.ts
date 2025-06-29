@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -90,18 +89,23 @@ export const useGoogleGeocoding = () => {
 
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
+      console.log('Reverse geocoding coordinates:', latitude, longitude);
+      
       const { data, error } = await supabase.functions.invoke('google-geocoding', {
         body: { query: `${latitude},${longitude}`, type: 'reverse' }
       });
       
       if (!error && data?.results?.[0]) {
+        console.log('Reverse geocoding result:', data.results[0].formatted_address);
         return data.results[0].formatted_address || 'Неизвестный адрес';
       }
+      
+      console.log('Reverse geocoding failed, using fallback');
     } catch (error) {
       console.error('Error reverse geocoding:', error);
     }
     
-    return 'Неизвестный адрес';
+    return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
   };
 
   const calculateRoute = async (startPoint: [number, number], endPoint: [number, number]): Promise<RouteResult | null> => {
