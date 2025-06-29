@@ -56,6 +56,7 @@ const CreateRide = () => {
       fromCoordinates: coordinates,
       fromAddress: address
     }));
+    setCurrentStep(2);
   };
 
   const handleToLocationSelect = (coordinates: [number, number], address: string) => {
@@ -64,6 +65,7 @@ const CreateRide = () => {
       toCoordinates: coordinates,
       toAddress: address
     }));
+    setCurrentStep(3);
   };
 
   const handleRouteCalculated = (routeData: any) => {
@@ -146,12 +148,9 @@ const CreateRide = () => {
         return (
           <LocationStep
             title="Откуда поедете?"
-            subtitle="Выберите точку посадки пассажиров"
             onLocationSelect={handleFromLocationSelect}
-            onNext={() => setCurrentStep(2)}
             selectedLocation={rideData.fromCoordinates}
             selectedAddress={rideData.fromAddress}
-            icon={<MapPin className="h-8 w-8 mr-3 text-green-500" />}
           />
         );
 
@@ -159,12 +158,9 @@ const CreateRide = () => {
         return (
           <LocationStep
             title="Куда поедете?"
-            subtitle="Выберите точку назначения"
             onLocationSelect={handleToLocationSelect}
-            onNext={() => setCurrentStep(3)}
             selectedLocation={rideData.toCoordinates}
             selectedAddress={rideData.toAddress}
-            icon={<MapPin className="h-8 w-8 mr-3 text-red-500" />}
           />
         );
 
