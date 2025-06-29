@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GeocodeResult {
   name: string;
@@ -15,7 +16,6 @@ interface RouteResult {
 
 export const useGoogleGeocoding = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = 'AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68';
 
   const geocodeAddress = async (address: string): Promise<GeocodeResult[]> => {
     if (address.length < 2) return [];
@@ -24,23 +24,21 @@ export const useGoogleGeocoding = () => {
     try {
       console.log('Geocoding address with Google Maps:', address);
       
-      // Используем Google Places API Autocomplete для получения предложений
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address)}&key=${API_KEY}&language=ru&components=country:uz&types=geocode`
-      );
-      
-      if (!response.ok) {
-        console.error('Google Places Autocomplete API Error:', response.status);
+      // Используем Edge Function для безопасного обращения к Google API
+      const { data, error } = await supabase.functions.invoke('google-geocoding', {
+        body: { query: address, type: 'autocomplete' }
+      });
+
+      if (error) {
+        console.error('Error calling Edge Function:', error);
         return generateMockResults(address);
       }
 
-      const data = await response.json();
       console.log('Google Places API response:', data);
       
       if (data.status === 'REQUEST_DENIED' || data.status === 'INVALID_REQUEST') {
         console.error('Google Places API Error:', data.status, data.error_message);
-        // Попробуем использовать Geocoding API как fallback
-        return await fallbackGeocode(address);
+        return generateMockResults(address);
       }
 
       const predictions = data.predictions || [];
@@ -49,22 +47,19 @@ export const useGoogleGeocoding = () => {
       const results = await Promise.all(
         predictions.slice(0, 8).map(async (prediction: any) => {
           try {
-            const detailsResponse = await fetch(
-              `https://maps.googleapis.com/maps/api/place/details/json?place_id=${prediction.place_id}&key=${API_KEY}&fields=geometry,formatted_address&language=ru`
-            );
+            const { data: detailsData, error: detailsError } = await supabase.functions.invoke('google-geocoding', {
+              body: { query: prediction.place_id, type: 'details' }
+            });
             
-            if (detailsResponse.ok) {
-              const detailsData = await detailsResponse.json();
-              if (detailsData.result && detailsData.result.geometry) {
-                return {
-                  name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
-                  description: prediction.description,
-                  coordinates: [
-                    detailsData.result.geometry.location.lat,
-                    detailsData.result.geometry.location.lng
-                  ] as [number, number]
-                };
-              }
+            if (!detailsError && detailsData?.result?.geometry) {
+              return {
+                name: prediction.structured_formatting?.main_text || prediction.description.split(',')[0],
+                description: prediction.description,
+                coordinates: [
+                  detailsData.result.geometry.location.lat,
+                  detailsData.result.geometry.location.lng
+                ] as [number, number]
+              };
             }
             
             // Если не удалось получить детали, используем базовую информацию
@@ -87,48 +82,20 @@ export const useGoogleGeocoding = () => {
       return results.filter(result => result !== null);
     } catch (error) {
       console.error('Error with Google Places API:', error);
-      return await fallbackGeocode(address);
+      return generateMockResults(address);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Fallback к обычному Geocoding API
-  const fallbackGeocode = async (address: string): Promise<GeocodeResult[]> => {
-    try {
-      console.log('Using fallback Geocoding API for:', address);
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address + ', Узбекистан')}&key=${API_KEY}&language=ru&region=uz`
-      );
-      
-      if (!response.ok) {
-        return generateMockResults(address);
-      }
-
-      const data = await response.json();
-      const results = data.results || [];
-      
-      return results.slice(0, 5).map((item: any) => ({
-        name: item.address_components?.[0]?.long_name || item.formatted_address.split(',')[0] || 'Неизвестное место',
-        description: item.formatted_address || 'Нет описания',
-        coordinates: [item.geometry.location.lat, item.geometry.location.lng] as [number, number]
-      }));
-    } catch (error) {
-      console.error('Error with fallback geocoding:', error);
-      return generateMockResults(address);
-    }
-  };
-
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${API_KEY}&language=ru`
-      );
+      const { data, error } = await supabase.functions.invoke('google-geocoding', {
+        body: { query: `${latitude},${longitude}`, type: 'reverse' }
+      });
       
-      if (response.ok) {
-        const data = await response.json();
-        const result = data.results?.[0];
-        return result?.formatted_address || 'Неизвестный адрес';
+      if (!error && data?.results?.[0]) {
+        return data.results[0].formatted_address || 'Неизвестный адрес';
       }
     } catch (error) {
       console.error('Error reverse geocoding:', error);
