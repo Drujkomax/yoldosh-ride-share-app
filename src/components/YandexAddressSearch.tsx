@@ -16,21 +16,39 @@ interface YandexAddressSearchProps {
   compact?: boolean;
 }
 
+// Расширенный список городов и сел Узбекистана
+const uzbekistanCities = [
+  // Крупные города
+  'Ташкент', 'Самарканд', 'Бухара', 'Андижан', 'Наманган', 'Фергана', 'Карши', 'Термез', 'Ургенч', 'Нукус',
+  'Джизак', 'Навои', 'Гулистан', 'Коканд', 'Маргилан', 'Чирчик', 'Ангрен', 'Олмалык', 'Шахрисабз',
+  
+  // Районные центры и города
+  'Алтыарык', 'Ахангаран', 'Беруний', 'Газалкент', 'Денау', 'Зарафшан', 'Китаб', 'Кувасай', 'Кунград',
+  'Мубарек', 'Нурота', 'Пайтуг', 'Риштан', 'Турткуль', 'Учкудук', 'Хазарасп', 'Янгиабад', 'Янгибазар',
+  'Янгиер', 'Янгиюль', 'Бекабад', 'Галляарал', 'Гурлен', 'Кегейли', 'Манит', 'Мангит', 'Питнак',
+  'Тахиаташ', 'Ходжейли', 'Амударья', 'Байсун', 'Бандихан', 'Бойсун', 'Деҳқонобод', 'Жаркурган',
+  'Кизирик', 'Кумкурган', 'Музрабад', 'Сарыосие', 'Термит', 'Узун', 'Шерабад', 'Шуробод',
+  
+  // Села и поселки
+  'Акташ', 'Амирабад', 'Багдад', 'Бахт', 'Бешарик', 'Бустон', 'Вабкент', 'Галабад', 'Гиждуван',
+  'Дехканабад', 'Дустлик', 'Жонгох', 'Зомин', 'Исфара', 'Каган', 'Камбар', 'Каракуль', 'Касан',
+  'Катакурган', 'Кизылтепа', 'Косон', 'Кувасой', 'Мирзаабад', 'Навбахор', 'Нарпай', 'Паркент',
+  'Пастдаргом', 'Пахтаабад', 'Pop', 'Ромитан', 'Сариасия', 'Сырдарья', 'Тайлак', 'Учтепа',
+  'Фариш', 'Хавас', 'Хазарасп', 'Холмирзоев', 'Чимбой', 'Шафиркан', 'Эшонгузар', 'Юкоричирчик'
+];
+
 const YandexAddressSearch = ({ 
   onAddressSelect, 
-  placeholder = "Введите адрес", 
+  placeholder = "Введите название города", 
   value = "",
   compact = false 
 }: YandexAddressSearchProps) => {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState<AddressResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [isFocused, setIsFocused] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
 
   useEffect(() => {
     const saved = localStorage.getItem('recent_searches');
@@ -45,79 +63,39 @@ const YandexAddressSearch = ({
     localStorage.setItem('recent_searches', JSON.stringify(updated));
   };
 
-  const searchAddresses = async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
+  const searchCities = (searchQuery: string) => {
+    if (searchQuery.length < 1) {
       setSuggestions([]);
       return;
     }
 
-    setIsLoading(true);
-    try {
-      console.log('Searching with 2GIS for:', searchQuery);
-      
-      const response = await fetch(
-        `https://catalog.api.2gis.com/3.0/items/geocode?q=${encodeURIComponent(searchQuery)}&key=${API_KEY}&location=69.240073,41.311081&radius=50000&fields=items.point&locale=ru_RU`
-      );
-      
-      console.log('2GIS Response status:', response.status);
-      
-      if (!response.ok) {
-        console.error('2GIS API Error:', response.status, response.statusText);
-        const mockResults = generateMockResults(searchQuery);
-        setSuggestions(mockResults);
-        setShowSuggestions(true);
-        return;
-      }
-
-      const data = await response.json();
-      console.log('2GIS API Response:', data);
-      
-      const results = data.result?.items || [];
-      
-      const addresses: AddressResult[] = results.map((item: any) => ({
-        name: item.name || 'Неизвестное место',
-        description: item.full_name || item.address_name || 'Нет описания',
-        coordinates: [item.point.lat, item.point.lon] as [number, number]
+    const filteredCities = uzbekistanCities
+      .filter(city => city.toLowerCase().includes(searchQuery.toLowerCase()))
+      .slice(0, 10)
+      .map(city => ({
+        name: city,
+        description: `${city}, Узбекистан`,
+        coordinates: getCityCoordinates(city)
       }));
 
-      // Если нет результатов от API, показываем мок данные
-      if (addresses.length === 0) {
-        const mockResults = generateMockResults(searchQuery);
-        setSuggestions(mockResults);
-      } else {
-        setSuggestions(addresses);
-      }
-      
-      setShowSuggestions(true);
-    } catch (error) {
-      console.error('Error searching addresses:', error);
-      const mockResults = generateMockResults(searchQuery);
-      setSuggestions(mockResults);
-      setShowSuggestions(true);
-    } finally {
-      setIsLoading(false);
-    }
+    setSuggestions(filteredCities);
+    setShowSuggestions(true);
   };
 
-  // Генерируем мок данные для демонстрации работы поиска
-  const generateMockResults = (query: string): AddressResult[] => {
-    const uzbekCities = [
-      { name: 'Ташкент', coords: [41.2995, 69.2401] as [number, number] },
-      { name: 'Самарканд', coords: [39.6542, 66.9597] as [number, number] },
-      { name: 'Бухара', coords: [39.7747, 64.4286] as [number, number] },
-      { name: 'Андижан', coords: [40.7821, 72.3442] as [number, number] },
-      { name: 'Фергана', coords: [40.3834, 71.7842] as [number, number] },
-      { name: 'Наманган', coords: [41.0004, 71.6726] as [number, number] }
-    ];
-
-    return uzbekCities
-      .filter(city => city.name.toLowerCase().includes(query.toLowerCase()))
-      .map((city) => ({
-        name: city.name,
-        description: `${city.name}, Узбекистан`,
-        coordinates: city.coords
-      }))
-      .slice(0, 5);
+  const getCityCoordinates = (city: string): [number, number] => {
+    const cityCoords: { [key: string]: [number, number] } = {
+      'Ташкент': [41.2995, 69.2401],
+      'Самарканд': [39.6542, 66.9597],
+      'Бухара': [39.7747, 64.4286],
+      'Андижан': [40.7821, 72.3442],
+      'Фергана': [40.3834, 71.7842],
+      'Наманган': [41.0004, 71.6726],
+      'Карши': [38.8606, 65.7975],
+      'Термез': [37.2242, 67.2783],
+      'Ургенч': [41.5504, 60.6317],
+      'Нукус': [42.4612, 59.6103]
+    };
+    return cityCoords[city] || [41.2995, 69.2401]; // Default to Tashkent
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +108,7 @@ const YandexAddressSearch = ({
 
     if (newQuery.trim()) {
       timeoutRef.current = setTimeout(() => {
-        searchAddresses(newQuery);
+        searchCities(newQuery);
       }, 300);
     } else {
       setSuggestions([]);
@@ -148,7 +126,7 @@ const YandexAddressSearch = ({
 
   const handleRecentSelect = (address: string) => {
     setQuery(address);
-    searchAddresses(address);
+    searchCities(address);
   };
 
   const clearSearch = () => {
@@ -207,7 +185,6 @@ const YandexAddressSearch = ({
               <X className="h-4 w-4" />
             </Button>
           )}
-          {isLoading && <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />}
         </div>
 
         {showSuggestions && (suggestions.length > 0 || (query.length === 0 && recentSearches.length > 0)) && (
@@ -282,10 +259,10 @@ const YandexAddressSearch = ({
                     </Button>
                   ))}
 
-                  {suggestions.length === 0 && query.length >= 2 && !isLoading && (
+                  {suggestions.length === 0 && query.length >= 1 && (
                     <div className="text-center py-8 text-gray-500">
                       <MapPin className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                      <p>Адреса не найдены</p>
+                      <p>Город не найден</p>
                       <p className="text-sm">Попробуйте изменить запрос</p>
                     </div>
                   )}
@@ -313,9 +290,6 @@ const YandexAddressSearch = ({
           onFocus={handleFocus}
           className="pl-14 h-16 bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-800 placeholder-gray-500 rounded-2xl text-lg font-medium shadow-sm focus:shadow-lg transition-all duration-300"
         />
-        {isLoading && (
-          <Loader2 className="absolute right-4 top-4 h-6 w-6 text-blue-500 animate-spin" />
-        )}
       </div>
 
       {showSuggestions && (suggestions.length > 0 || (query.length === 0 && recentSearches.length > 0)) && (
@@ -359,10 +333,10 @@ const YandexAddressSearch = ({
             </Button>
           ))}
 
-          {suggestions.length === 0 && query.length >= 2 && !isLoading && (
+          {suggestions.length === 0 && query.length >= 1 && (
             <div className="text-center py-8 text-gray-500">
               <MapPin className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-              <p>Адреса не найдены</p>
+              <p>Город не найден</p>
               <p className="text-sm">Попробуйте изменить запрос</p>
             </div>
           )}

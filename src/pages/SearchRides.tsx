@@ -10,6 +10,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
+import DateSelector from '@/components/DateSelector';
+import PassengerSelector from '@/components/PassengerSelector';
 
 const SearchRides = () => {
   const navigate = useNavigate();
@@ -27,6 +30,12 @@ const SearchRides = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+
+  // Состояния для модальных окон
+  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
+  const [showToCitySelector, setShowToCitySelector] = useState(false);
+  const [showDateSelector, setShowDateSelector] = useState(false);
+  const [showPassengerSelector, setShowPassengerSelector] = useState(false);
 
   useEffect(() => {
     const criteria = {
@@ -172,34 +181,45 @@ const SearchRides = () => {
         {isEditing && (
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                placeholder="Откуда"
-                value={searchCriteria.from}
-                onChange={(e) => setSearchCriteria(prev => ({ ...prev, from: e.target.value }))}
-                className="text-sm"
-              />
-              <Input
-                placeholder="Куда"
-                value={searchCriteria.to}
-                onChange={(e) => setSearchCriteria(prev => ({ ...prev, to: e.target.value }))}
-                className="text-sm"
-              />
+              <Button
+                variant="outline"
+                onClick={() => setShowFromCitySelector(true)}
+                className="justify-start text-left h-12"
+              >
+                <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                <span className="truncate">{searchCriteria.from || 'Откуда'}</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowToCitySelector(true)}
+                className="justify-start text-left h-12"
+              >
+                <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                <span className="truncate">{searchCriteria.to || 'Куда'}</span>
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Input
-                type="date"
-                value={searchCriteria.date}
-                onChange={(e) => setSearchCriteria(prev => ({ ...prev, date: e.target.value }))}
-                className="text-sm"
-              />
-              <Input
-                type="number"
-                min="1"
-                placeholder="Пассажиров"
-                value={searchCriteria.seats}
-                onChange={(e) => setSearchCriteria(prev => ({ ...prev, seats: e.target.value }))}
-                className="text-sm"
-              />
+              <Button
+                variant="outline"
+                onClick={() => setShowDateSelector(true)}
+                className="justify-start text-left h-12"
+              >
+                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                <span>
+                  {searchCriteria.date 
+                    ? format(new Date(searchCriteria.date), 'dd MMMM', { locale: ru })
+                    : 'Дата'
+                  }
+                </span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowPassengerSelector(true)}
+                className="justify-start text-left h-12"
+              >
+                <Users className="h-4 w-4 mr-2 text-gray-400" />
+                <span>{searchCriteria.seats || '1'} пассажир</span>
+              </Button>
             </div>
             <Button 
               onClick={handleUpdateSearch}
@@ -379,6 +399,45 @@ const SearchRides = () => {
           </Button>
         </div>
       )}
+
+      {/* City Selectors */}
+      <UzbekistanCitySelector
+        isOpen={showFromCitySelector}
+        onClose={() => setShowFromCitySelector(false)}
+        onCitySelect={(city) => setSearchCriteria(prev => ({ ...prev, from: city }))}
+        title="Откуда"
+        currentCity={searchCriteria.from}
+      />
+
+      <UzbekistanCitySelector
+        isOpen={showToCitySelector}
+        onClose={() => setShowToCitySelector(false)}
+        onCitySelect={(city) => setSearchCriteria(prev => ({ ...prev, to: city }))}
+        title="Куда"
+        currentCity={searchCriteria.to}
+      />
+
+      {/* Date Selector */}
+      <DateSelector
+        isOpen={showDateSelector}
+        onClose={() => setShowDateSelector(false)}
+        onDateSelect={(date) => setSearchCriteria(prev => ({ 
+          ...prev, 
+          date: date ? format(date, 'yyyy-MM-dd') : '' 
+        }))}
+        selectedDate={searchCriteria.date ? new Date(searchCriteria.date) : undefined}
+      />
+
+      {/* Passenger Selector */}
+      <PassengerSelector
+        isOpen={showPassengerSelector}
+        onClose={() => setShowPassengerSelector(false)}
+        onPassengerSelect={(count) => setSearchCriteria(prev => ({ 
+          ...prev, 
+          seats: count.toString() 
+        }))}
+        selectedCount={parseInt(searchCriteria.seats) || 1}
+      />
     </div>
   );
 };

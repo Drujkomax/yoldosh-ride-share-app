@@ -36,6 +36,9 @@ const DateSelector = ({
     onClose();
   };
 
+  // Убираем максимальную дату для бесконечного календаря
+  const endDate = addMonths(startOfToday(), 12); // Показываем год вперед
+
   return (
     <div className="fixed inset-0 z-50 bg-white animate-slide-in-right">
       <div className="flex flex-col h-full">
@@ -82,14 +85,13 @@ const DateSelector = ({
             onSelect={handleDateSelect}
             disabled={(date) => {
               if (minDate && date < minDate) return true;
-              if (maxDate && date > maxDate) return true;
               return false;
             }}
             initialFocus
-            numberOfMonths={2}
+            numberOfMonths={6}
             className="pointer-events-auto w-full"
             classNames={{
-              months: "flex flex-col space-y-4 w-full",
+              months: "flex flex-col space-y-6 w-full",
               month: "space-y-4 w-full",
               caption: "flex justify-center pt-1 relative items-center mb-4",
               caption_label: "text-lg font-bold text-gray-800",
@@ -111,7 +113,6 @@ const DateSelector = ({
               day_hidden: "invisible",
             }}
             fromDate={minDate}
-            toDate={maxDate}
             defaultMonth={selectedDate || startOfToday()}
           />
         </div>
