@@ -206,6 +206,45 @@ export type Database = {
           },
         ]
       }
+      popular_stops: {
+        Row: {
+          address: string
+          category: string
+          city_name: string
+          created_at: string
+          id: string
+          latitude: number
+          longitude: number
+          popularity_score: number
+          stop_name: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          category?: string
+          city_name: string
+          created_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          popularity_score?: number
+          stop_name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          category?: string
+          city_name?: string
+          created_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          popularity_score?: number
+          stop_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -389,6 +428,8 @@ export type Database = {
           from_city: string
           id: string
           intermediate_stops: Json | null
+          intermediate_stops_addresses: Json | null
+          intermediate_stops_coordinates: Json | null
           pickup_address: string | null
           pickup_latitude: number | null
           pickup_longitude: number | null
@@ -415,6 +456,8 @@ export type Database = {
           from_city: string
           id?: string
           intermediate_stops?: Json | null
+          intermediate_stops_addresses?: Json | null
+          intermediate_stops_coordinates?: Json | null
           pickup_address?: string | null
           pickup_latitude?: number | null
           pickup_longitude?: number | null
@@ -441,6 +484,8 @@ export type Database = {
           from_city?: string
           id?: string
           intermediate_stops?: Json | null
+          intermediate_stops_addresses?: Json | null
+          intermediate_stops_coordinates?: Json | null
           pickup_address?: string | null
           pickup_latitude?: number | null
           pickup_longitude?: number | null
@@ -459,6 +504,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_frequent_locations: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          last_used: string
+          latitude: number | null
+          location_name: string
+          location_type: string
+          longitude: number | null
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          last_used?: string
+          latitude?: number | null
+          location_name: string
+          location_type?: string
+          longitude?: number | null
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          last_used?: string
+          latitude?: number | null
+          location_name?: string
+          location_type?: string
+          longitude?: number | null
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
