@@ -436,7 +436,7 @@ const SearchRides = () => {
           ...prev, 
           seats: count.toString() 
         }))}
-        selectedCount={parseInt(searchCriteria.seats) || 1}
+        currentCount={parseInt(searchCriteria.seats) || 1}
       />
     </div>
   );
