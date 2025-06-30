@@ -96,7 +96,7 @@ export const useOnboarding = () => {
       setUser(userProfile);
       
       toast.success('Регистрация завершена успешно!');
-      navigate('/search-rides');
+      navigate('/passenger-search');
       return true;
     } catch (error) {
       console.error('Unexpected registration error:', error);

@@ -7,6 +7,7 @@ import { UserProvider } from "@/contexts/UserContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import OnboardingPage from "./pages/OnboardingPage";
+import PassengerSearchPage from "./pages/PassengerSearchPage";
 import SearchRides from "./pages/SearchRides";
 import RideDetails from "./pages/RideDetails";
 import BookRide from "./pages/BookRide";
@@ -30,8 +31,9 @@ function App() {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/passenger-search" element={<PassengerSearchPage />} />
                 <Route path="/search-rides" element={<SearchRides />} />
-                <Route path="/passenger" element={<Navigate to="/search-rides" replace />} />
+                <Route path="/passenger" element={<Navigate to="/passenger-search" replace />} />
                 <Route path="/ride/:id" element={<RideDetails />} />
                 <Route path="/book-ride/:id" element={<BookRide />} />
                 <Route path="/create-driver-ride" element={<CreateDriverRide />} />
