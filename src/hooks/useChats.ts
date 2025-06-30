@@ -36,6 +36,8 @@ export interface Chat {
     content: string;
     created_at: string;
     sender_id: string;
+    message_type?: string;
+    location_data?: any;
   };
   unreadCount: number;
 }
@@ -46,6 +48,12 @@ export interface Message {
   sender_id: string;
   content: string;
   message_type: 'text' | 'location';
+  location_data?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+    timestamp: string;
+  };
   read_at?: string;
   created_at: string;
   sender?: {
@@ -110,7 +118,7 @@ export const useChats = () => {
           // Последнее сообщение
           const { data: lastMessage } = await supabase
             .from('messages')
-            .select('content, created_at, sender_id')
+            .select('content, created_at, sender_id, message_type, location_data')
             .eq('chat_id', chat.id)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -228,8 +236,12 @@ export const useMessages = (chatId: string) => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, messageType = 'text' }: { content: string; messageType?: 'text' | 'location' }) => {
-      console.log('useMessages - Отправка сообщения:', { content, messageType, chatId, userId: user?.id });
+    mutationFn: async ({ content, messageType = 'text', locationData }: { 
+      content: string; 
+      messageType?: 'text' | 'location';
+      locationData?: any;
+    }) => {
+      console.log('useMessages - Отправка сообщения:', { content, messageType, locationData, chatId, userId: user?.id });
       
       if (!user?.id) {
         throw new Error('Пользователь не авторизован');
@@ -246,7 +258,8 @@ export const useMessages = (chatId: string) => {
           chat_id: chatId,
           sender_id: user.id,
           content,
-          message_type: messageType
+          message_type: messageType,
+          location_data: locationData || null
         }])
         .select()
         .single();

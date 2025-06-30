@@ -91,6 +91,41 @@ export type Database = {
           },
         ]
       }
+      car_photos: {
+        Row: {
+          car_id: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          photo_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          car_id: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          car_id?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          photo_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "car_photos_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "user_cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string | null
@@ -195,6 +230,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          location_data: Json | null
           message_type: string | null
           read_at: string | null
           sender_id: string
@@ -204,6 +240,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          location_data?: Json | null
           message_type?: string | null
           read_at?: string | null
           sender_id: string
@@ -213,6 +250,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          location_data?: Json | null
           message_type?: string | null
           read_at?: string | null
           sender_id?: string
@@ -313,9 +351,11 @@ export type Database = {
           last_name: string | null
           marketing_consent: boolean | null
           name: string
+          notification_settings: Json | null
           onboarding_completed: boolean | null
           phone: string
           privacy_consent: boolean | null
+          privacy_settings: Json | null
           rating: number | null
           registration_method: string | null
           terms_accepted_at: string | null
@@ -333,9 +373,11 @@ export type Database = {
           last_name?: string | null
           marketing_consent?: boolean | null
           name: string
+          notification_settings?: Json | null
           onboarding_completed?: boolean | null
           phone: string
           privacy_consent?: boolean | null
+          privacy_settings?: Json | null
           rating?: number | null
           registration_method?: string | null
           terms_accepted_at?: string | null
@@ -353,9 +395,11 @@ export type Database = {
           last_name?: string | null
           marketing_consent?: boolean | null
           name?: string
+          notification_settings?: Json | null
           onboarding_completed?: boolean | null
           phone?: string
           privacy_consent?: boolean | null
+          privacy_settings?: Json | null
           rating?: number | null
           registration_method?: string | null
           terms_accepted_at?: string | null
@@ -722,6 +766,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          related_type: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          related_type?: string | null
+          title: string
+          type?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          related_type?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       profiles_with_role: {
@@ -775,6 +873,25 @@ export type Database = {
       deactivate_expired_rides: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_user_all_trips: {
+        Args: { user_uuid: string }
+        Returns: {
+          trip_id: string
+          trip_type: string
+          from_city: string
+          to_city: string
+          departure_date: string
+          departure_time: string
+          status: string
+          price_per_seat: number
+          seats_count: number
+          other_user_id: string
+          other_user_name: string
+          other_user_rating: number
+          other_user_avatar: string
+          created_at: string
+        }[]
       }
       get_user_role: {
         Args: { user_uuid: string }

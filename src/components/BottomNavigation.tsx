@@ -27,6 +27,10 @@ const BottomNavigation = () => {
   const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
 
   const isActive = (path: string) => {
+    // Для кнопки "Поиск" учитываем и /passenger-search, и /search-rides
+    if (path === '/passenger-search') {
+      return location.pathname === '/passenger-search' || location.pathname === '/search-rides';
+    }
     return location.pathname === path;
   };
 
@@ -34,7 +38,7 @@ const BottomNavigation = () => {
   const getNavItems = (): NavItem[] => {
     const baseItems: NavItem[] = [
       {
-        path: '/search-rides',
+        path: '/passenger-search',
         icon: Search,
         label: 'Поиск',
         color: 'blue'
@@ -56,7 +60,7 @@ const BottomNavigation = () => {
       {
         path: '/my-trips',
         icon: FileText,
-        label: 'Мои поездки',
+        label: 'Ваши поездки',
         color: 'purple'
       },
       {
