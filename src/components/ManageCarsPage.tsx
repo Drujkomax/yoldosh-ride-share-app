@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,8 +22,7 @@ const ManageCarsPage = () => {
     model: '',
     year: '',
     color: '',
-    license_plate: '',
-    seats_count: 4
+    license_plate: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,14 +35,27 @@ const ManageCarsPage = () => {
 
     try {
       if (editingCar) {
-        await updateCar(editingCar.id, formData);
+        await updateCar({ 
+          id: editingCar.id, 
+          updates: {
+            make: formData.make,
+            model: formData.model,
+            year: parseInt(formData.year),
+            color: formData.color,
+            license_plate: formData.license_plate
+          }
+        });
         toast.success('Автомобиль обновлен');
         setEditingCar(null);
       } else {
         await addCar({
-          ...formData,
-          user_id: user.id,
-          year: parseInt(formData.year)
+          make: formData.make,
+          model: formData.model,
+          year: parseInt(formData.year),
+          color: formData.color,
+          license_plate: formData.license_plate,
+          is_verified: false,
+          is_active: true
         });
         toast.success('Автомобиль добавлен');
         setShowAddForm(false);
@@ -53,8 +66,7 @@ const ManageCarsPage = () => {
         model: '',
         year: '',
         color: '',
-        license_plate: '',
-        seats_count: 4
+        license_plate: ''
       });
     } catch (error) {
       console.error('Error saving car:', error);
@@ -69,8 +81,7 @@ const ManageCarsPage = () => {
       model: car.model,
       year: car.year.toString(),
       color: car.color,
-      license_plate: car.license_plate,
-      seats_count: car.seats_count
+      license_plate: car.license_plate
     });
     setShowAddForm(true);
   };
@@ -95,8 +106,7 @@ const ManageCarsPage = () => {
       model: '',
       year: '',
       color: '',
-      license_plate: '',
-      seats_count: 4
+      license_plate: ''
     });
   };
 
@@ -201,32 +211,15 @@ const ManageCarsPage = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Гос. номер</label>
-                        <input
-                          type="text"
-                          value={formData.license_plate}
-                          onChange={(e) => setFormData({...formData, license_plate: e.target.value})}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Количество мест</label>
-                        <select
-                          value={formData.seats_count}
-                          onChange={(e) => setFormData({...formData, seats_count: parseInt(e.target.value)})}
-                          className="w-full p-2 border border-gray-300 rounded-lg"
-                        >
-                          <option value={2}>2 места</option>
-                          <option value={4}>4 места</option>
-                          <option value={5}>5 мест</option>
-                          <option value={6}>6 мест</option>
-                          <option value={7}>7 мест</option>
-                          <option value={8}>8 мест</option>
-                        </select>
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Гос. номер</label>
+                      <input
+                        type="text"
+                        value={formData.license_plate}
+                        onChange={(e) => setFormData({...formData, license_plate: e.target.value})}
+                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        required
+                      />
                     </div>
 
                     <div className="flex space-x-3">
@@ -271,12 +264,14 @@ const ManageCarsPage = () => {
                               {car.year} • {car.color} • {car.license_plate}
                             </p>
                             <div className="flex items-center space-x-2 mt-1">
-                              <Badge className="bg-blue-100 text-blue-800">
-                                {car.seats_count} мест
-                              </Badge>
                               {car.is_verified && (
                                 <Badge className="bg-green-100 text-green-800">
                                   Проверен
+                                </Badge>
+                              )}
+                              {car.is_active && (
+                                <Badge className="bg-blue-100 text-blue-800">
+                                  Активен
                                 </Badge>
                               )}
                             </div>
