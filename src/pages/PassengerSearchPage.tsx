@@ -10,6 +10,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import DatePickerModal from '@/components/DatePickerModal';
 import PassengerCountModal from '@/components/PassengerCountModal';
+import BottomNavigation from '@/components/BottomNavigation';
 import { format, startOfToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -60,13 +61,7 @@ const PassengerSearchPage = () => {
         // Add to search history
         await addToHistory(searchData);
         
-        const results = await searchRides({
-          from_city: fromCity,
-          to_city: toCity,
-          departure_date: format(date, 'yyyy-MM-dd')
-        });
-        console.log('Search results:', results);
-        
+        // Navigate to search results with parameters
         const params = new URLSearchParams({
           from: fromCity,
           to: toCity,
@@ -100,7 +95,7 @@ const PassengerSearchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-200">
+    <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-200 pb-24">
       {/* Notification Permission Modal */}
       {showNotificationPermission && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -327,6 +322,9 @@ const PassengerSearchPage = () => {
         onSelect={setPassengers}
         currentCount={passengers}
       />
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };
