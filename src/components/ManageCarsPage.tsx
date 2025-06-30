@@ -1,388 +1,316 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Car, Plus, Settings, Trash2, Edit3 } from 'lucide-react';
-import { useUserCars, UserCar } from '@/hooks/useUserCars';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, Car, Edit, Trash2, Star } from 'lucide-react';
+import { useUserCars } from '@/hooks/useUserCars';
+import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import BottomNavigation from '@/components/BottomNavigation';
 
 const ManageCarsPage = () => {
   const navigate = useNavigate();
-  const { cars, addCar, updateCar, deleteCar, isAdding, isUpdating, isDeleting } = useUserCars();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingCar, setEditingCar] = useState<UserCar | null>(null);
+  const { user } = useUser();
+  const { cars, isLoading, addCar, updateCar, deleteCar } = useUserCars();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingCar, setEditingCar] = useState(null);
+
   const [formData, setFormData] = useState({
     make: '',
     model: '',
     year: '',
     color: '',
-    license_plate: ''
+    license_plate: '',
+    seats_count: 4
   });
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+
+    try {
+      if (editingCar) {
+        await updateCar(editingCar.id, formData);
+        toast.success('Автомобиль обновлен');
+        setEditingCar(null);
+      } else {
+        await addCar({
+          ...formData,
+          user_id: user.id,
+          year: parseInt(formData.year)
+        });
+        toast.success('Автомобиль добавлен');
+        setShowAddForm(false);
+      }
+      
+      setFormData({
+        make: '',
+        model: '',
+        year: '',
+        color: '',
+        license_plate: '',
+        seats_count: 4
+      });
+    } catch (error) {
+      console.error('Error saving car:', error);
+      toast.error('Ошибка при сохранении автомобиля');
+    }
+  };
+
+  const handleEdit = (car: any) => {
+    setEditingCar(car);
+    setFormData({
+      make: car.make,
+      model: car.model,
+      year: car.year.toString(),
+      color: car.color,
+      license_plate: car.license_plate,
+      seats_count: car.seats_count
+    });
+    setShowAddForm(true);
+  };
+
+  const handleDelete = async (carId: string) => {
+    if (!confirm('Удалить этот автомобиль?')) return;
+    
+    try {
+      await deleteCar(carId);
+      toast.success('Автомобиль удален');
+    } catch (error) {
+      console.error('Error deleting car:', error);
+      toast.error('Ошибка при удалении автомобиля');
+    }
+  };
+
   const resetForm = () => {
+    setShowAddForm(false);
+    setEditingCar(null);
     setFormData({
       make: '',
       model: '',
       year: '',
       color: '',
-      license_plate: ''
-    });
-  };
-
-  const handleAddCar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.make || !formData.model) {
-      toast.error('Заполните обязательные поля');
-      return;
-    }
-
-    try {
-      await addCar({
-        make: formData.make,
-        model: formData.model,
-        year: formData.year ? parseInt(formData.year) : undefined,
-        color: formData.color || undefined,
-        license_plate: formData.license_plate || undefined,
-        is_verified: false,
-        is_active: cars.length === 0 // Первая машина становится активной автоматически
-      });
-      
-      resetForm();
-      setIsAddDialogOpen(false);
-    } catch (error) {
-      console.error('Ошибка добавления машины:', error);
-    }
-  };
-
-  const handleUpdateCar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!editingCar || !formData.make || !formData.model) {
-      toast.error('Заполните обязательные поля');
-      return;
-    }
-
-    try {
-      await updateCar({
-        id: editingCar.id,
-        updates: {
-          make: formData.make,
-          model: formData.model,
-          year: formData.year ? parseInt(formData.year) : undefined,
-          color: formData.color || undefined,
-          license_plate: formData.license_plate || undefined,
-        }
-      });
-      
-      setEditingCar(null);
-      resetForm();
-    } catch (error) {
-      console.error('Ошибка обновления машины:', error);
-    }
-  };
-
-  const handleDeleteCar = async (carId: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот автомобиль?')) {
-      try {
-        await deleteCar(carId);
-      } catch (error) {
-        console.error('Ошибка удаления машины:', error);
-      }
-    }
-  };
-
-  const handleSetActive = async (car: UserCar) => {
-    try {
-      // Сначала деактивируем все машины
-      for (const existingCar of cars) {
-        if (existingCar.is_active && existingCar.id !== car.id) {
-          await updateCar({
-            id: existingCar.id,
-            updates: { is_active: false }
-          });
-        }
-      }
-      
-      // Затем активируем выбранную
-      await updateCar({
-        id: car.id,
-        updates: { is_active: true }
-      });
-    } catch (error) {
-      console.error('Ошибка активации машины:', error);
-    }
-  };
-
-  const startEdit = (car: UserCar) => {
-    setEditingCar(car);
-    setFormData({
-      make: car.make,
-      model: car.model,
-      year: car.year?.toString() || '',
-      color: car.color || '',
-      license_plate: car.license_plate || ''
+      license_plate: '',
+      seats_count: 4
     });
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 pb-24">
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="px-4 py-4">
-          <div className="flex items-center">
+      <div className="bg-white/90 backdrop-blur-lg shadow-lg border-b border-white/20">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               onClick={() => navigate('/profile')}
-              className="p-2 mr-2"
+              className="hover:bg-slate-100"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Назад
             </Button>
-            <h1 className="text-xl font-bold text-gray-900">Мои автомобили</h1>
+            <h1 className="text-xl font-bold text-high-contrast">Мои автомобили</h1>
+            <div className="w-16" />
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-6">
-        {/* Add Car Button */}
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full mb-6 bg-blue-500 hover:bg-blue-600 rounded-xl h-12">
-              <Plus className="h-5 w-5 mr-2" />
-              Добавить автомобиль
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Добавить автомобиль</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddCar} className="space-y-4">
-              <div>
-                <Label htmlFor="make">Марка *</Label>
-                <Input
-                  id="make"
-                  value={formData.make}
-                  onChange={(e) => setFormData({...formData, make: e.target.value})}
-                  placeholder="например, Toyota"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="model">Модель *</Label>
-                <Input
-                  id="model"
-                  value={formData.model}
-                  onChange={(e) => setFormData({...formData, model: e.target.value})}
-                  placeholder="например, Camry"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="year">Год выпуска</Label>
-                <Input
-                  id="year"
-                  type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData({...formData, year: e.target.value})}
-                  placeholder="например, 2020"
-                />
-              </div>
-              <div>
-                <Label htmlFor="color">Цвет</Label>
-                <Input
-                  id="color"
-                  value={formData.color}
-                  onChange={(e) => setFormData({...formData, color: e.target.value})}
-                  placeholder="например, белый"
-                />
-              </div>
-              <div>
-                <Label htmlFor="license_plate">Номер</Label>
-                <Input
-                  id="license_plate"
-                  value={formData.license_plate}
-                  onChange={(e) => setFormData({...formData, license_plate: e.target.value})}
-                  placeholder="например, 01A123BC"
-                />
-              </div>
-              <div className="flex space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsAddDialogOpen(false);
-                    resetForm();
-                  }}
-                  className="flex-1"
-                >
-                  Отмена
-                </Button>
-                <Button type="submit" disabled={isAdding} className="flex-1">
-                  {isAdding ? 'Добавление...' : 'Добавить'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Cars List */}
-        <div className="space-y-4">
-          {cars.length === 0 ? (
-            <Card className="bg-white rounded-2xl shadow-sm">
-              <CardContent className="p-8 text-center">
-                <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Нет автомобилей
-                </h3>
-                <p className="text-gray-500 text-sm">
-                  Добавьте свой первый автомобиль, чтобы стать водителем
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            cars.map((car) => (
-              <Card key={car.id} className="bg-white rounded-2xl shadow-sm">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {car.make} {car.model}
-                        </h3>
-                        {car.is_active && (
-                          <Badge className="bg-green-100 text-green-800">
-                            Активный
-                          </Badge>
-                        )}
-                        {car.is_verified && (
-                          <Badge className="bg-blue-100 text-blue-800">
-                            Проверен
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-1 text-sm text-gray-600">
-                        {car.year && <p>Год: {car.year}</p>}
-                        {car.color && <p>Цвет: {car.color}</p>}
-                        {car.license_plate && <p>Номер: {car.license_plate}</p>}
-                      </div>
-                      
-                      <div className="flex space-x-2 mt-4">
-                        {!car.is_active && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSetActive(car)}
-                            disabled={isUpdating}
-                          >
-                            Сделать активным
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEdit(car)}
-                        >
-                          <Edit3 className="h-4 w-4 mr-1" />
-                          Изменить
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteCar(car.id)}
-                          disabled={isDeleting}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Удалить
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
+      <div className="container mx-auto px-6 py-6">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-slate-500 mt-2">Загрузка автомобилей...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Add Car Button */}
+            {!showAddForm && (
+              <Card className="card-high-contrast rounded-2xl shadow-md">
+                <CardContent className="p-6 text-center">
+                  <Button 
+                    onClick={() => setShowAddForm(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Добавить автомобиль
+                  </Button>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            )}
 
-        {/* Edit Dialog */}
-        <Dialog open={!!editingCar} onOpenChange={() => {
-          setEditingCar(null);
-          resetForm();
-        }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Редактировать автомобиль</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateCar} className="space-y-4">
-              <div>
-                <Label htmlFor="edit-make">Марка *</Label>
-                <Input
-                  id="edit-make"
-                  value={formData.make}
-                  onChange={(e) => setFormData({...formData, make: e.target.value})}
-                  required
-                />
+            {/* Add/Edit Form */}
+            {showAddForm && (
+              <Card className="card-high-contrast rounded-2xl shadow-md">
+                <CardHeader>
+                  <CardTitle>
+                    {editingCar ? 'Редактировать автомобиль' : 'Добавить автомобиль'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Марка</label>
+                        <input
+                          type="text"
+                          value={formData.make}
+                          onChange={(e) => setFormData({...formData, make: e.target.value})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Модель</label>
+                        <input
+                          type="text"
+                          value={formData.model}
+                          onChange={(e) => setFormData({...formData, model: e.target.value})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Год</label>
+                        <input
+                          type="number"
+                          value={formData.year}
+                          onChange={(e) => setFormData({...formData, year: e.target.value})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          min="1990"
+                          max="2025"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Цвет</label>
+                        <input
+                          type="text"
+                          value={formData.color}
+                          onChange={(e) => setFormData({...formData, color: e.target.value})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Гос. номер</label>
+                        <input
+                          type="text"
+                          value={formData.license_plate}
+                          onChange={(e) => setFormData({...formData, license_plate: e.target.value})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Количество мест</label>
+                        <select
+                          value={formData.seats_count}
+                          onChange={(e) => setFormData({...formData, seats_count: parseInt(e.target.value)})}
+                          className="w-full p-2 border border-gray-300 rounded-lg"
+                        >
+                          <option value={2}>2 места</option>
+                          <option value={4}>4 места</option>
+                          <option value={5}>5 мест</option>
+                          <option value={6}>6 мест</option>
+                          <option value={7}>7 мест</option>
+                          <option value={8}>8 мест</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                        {editingCar ? 'Обновить' : 'Добавить'}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={resetForm}>
+                        Отмена
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cars List */}
+            {cars.length === 0 && !showAddForm ? (
+              <Card className="card-high-contrast rounded-2xl shadow-md">
+                <CardContent className="p-8 text-center">
+                  <Car className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-high-contrast mb-2">Нет автомобилей</h3>
+                  <p className="text-slate-600 mb-4">
+                    Добавьте свой автомобиль, чтобы создавать поездки
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {cars.map((car) => (
+                  <Card key={car.id} className="card-high-contrast rounded-2xl shadow-md">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <Car className="h-6 w-6 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-high-contrast">
+                              {car.make} {car.model}
+                            </h3>
+                            <p className="text-slate-600">
+                              {car.year} • {car.color} • {car.license_plate}
+                            </p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge className="bg-blue-100 text-blue-800">
+                                {car.seats_count} мест
+                              </Badge>
+                              {car.is_verified && (
+                                <Badge className="bg-green-100 text-green-800">
+                                  Проверен
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(car)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(car.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <div>
-                <Label htmlFor="edit-model">Модель *</Label>
-                <Input
-                  id="edit-model"
-                  value={formData.model}
-                  onChange={(e) => setFormData({...formData, model: e.target.value})}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-year">Год выпуска</Label>
-                <Input
-                  id="edit-year"
-                  type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData({...formData, year: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-color">Цвет</Label>
-                <Input
-                  id="edit-color"
-                  value={formData.color}
-                  onChange={(e) => setFormData({...formData, color: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-license_plate">Номер</Label>
-                <Input
-                  id="edit-license_plate"
-                  value={formData.license_plate}
-                  onChange={(e) => setFormData({...formData, license_plate: e.target.value})}
-                />
-              </div>
-              <div className="flex space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditingCar(null);
-                    resetForm();
-                  }}
-                  className="flex-1"
-                >
-                  Отмена
-                </Button>
-                <Button type="submit" disabled={isUpdating} className="flex-1">
-                  {isUpdating ? 'Сохранение...' : 'Сохранить'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation />
     </div>
   );
 };

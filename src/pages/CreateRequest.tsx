@@ -5,6 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useRideRequests } from '@/hooks/useRideRequests';
 import { toast } from 'sonner';
 import LocationStep from '@/components/LocationStep';
+import BottomNavigation from '@/components/BottomNavigation';
 
 interface RequestData {
   fromCoordinates?: [number, number];
@@ -105,7 +106,12 @@ const CreateRequest = () => {
     }
   };
 
-  return renderCurrentStep();
+  return (
+    <div className="pb-24">
+      {renderCurrentStep()}
+      <BottomNavigation />
+    </div>
+  );
 };
 
 export default CreateRequest;

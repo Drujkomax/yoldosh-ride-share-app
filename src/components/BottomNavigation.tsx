@@ -5,83 +5,59 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus, FileText, MessageCircle, User } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
-import { useUser } from '@/contexts/UserContext';
-import { useUserCars } from '@/hooks/useUserCars';
-
-interface NavItem {
-  path: string;
-  icon: React.ComponentType<any>;
-  label: string;
-  color: string;
-  badge?: number;
-}
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useUser();
   const { chats } = useChats();
-  const { canDrive } = useUserCars();
 
   // Подсчитываем общее количество непрочитанных сообщений
   const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
 
   const isActive = (path: string) => {
-    // Для кнопки "Поиск" учитываем и /passenger-search, и /search-rides
+    // Для кнопки "Поиск" учитываем несколько путей
     if (path === '/passenger-search') {
-      return location.pathname === '/passenger-search' || location.pathname === '/search-rides';
+      return location.pathname === '/passenger-search' || 
+             location.pathname === '/search-rides' || 
+             location.pathname === '/';
     }
     return location.pathname === path;
   };
 
-  // Определяем навигационные элементы в зависимости от возможности водить
-  const getNavItems = (): NavItem[] => {
-    const baseItems: NavItem[] = [
-      {
-        path: '/passenger-search',
-        icon: Search,
-        label: 'Поиск',
-        color: 'blue'
-      }
-    ];
-
-    // Если пользователь может водить, показываем кнопку "Опубликовать"
-    if (canDrive) {
-      baseItems.push({
-        path: '/create-driver-ride',
-        icon: Plus,
-        label: 'Опубликовать',
-        color: 'green'
-      });
+  // Статичные навигационные элементы
+  const navItems = [
+    {
+      path: '/passenger-search',
+      icon: Search,
+      label: 'Поиск',
+      color: 'blue'
+    },
+    {
+      path: '/create-driver-ride',
+      icon: Plus,
+      label: 'Опубликовать',
+      color: 'green'
+    },
+    {
+      path: '/my-trips',
+      icon: FileText,
+      label: 'Ваши поездки',
+      color: 'purple'
+    },
+    {
+      path: '/chats',
+      icon: MessageCircle,
+      label: 'Входящие',
+      color: 'orange',
+      badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
+    },
+    {
+      path: '/profile',
+      icon: User,
+      label: 'Профиль',
+      color: 'slate'
     }
-
-    // Остальные элементы
-    baseItems.push(
-      {
-        path: '/my-trips',
-        icon: FileText,
-        label: 'Ваши поездки',
-        color: 'purple'
-      },
-      {
-        path: '/chats',
-        icon: MessageCircle,
-        label: 'Чаты',
-        color: 'orange',
-        badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
-      },
-      {
-        path: '/profile',
-        icon: User,
-        label: 'Профиль',
-        color: 'slate'
-      }
-    );
-
-    return baseItems;
-  };
-
-  const navItems = getNavItems();
+  ];
 
   const getActiveStyles = (color: string, isActiveItem: boolean) => {
     if (!isActiveItem) return 'text-slate-600 hover:bg-slate-100';
