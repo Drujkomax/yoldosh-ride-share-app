@@ -18,7 +18,8 @@ serve(async (req) => {
     let url = ''
     
     if (type === 'autocomplete') {
-      url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}&language=ru&components=country:uz&types=geocode`
+      // Focus on cities and streets in Uzbekistan
+      url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}&language=ru&components=country:uz&types=(cities)&region=uz`
     } else if (type === 'details') {
       url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${query}&key=${GOOGLE_API_KEY}&fields=geometry,formatted_address&language=ru`
     } else if (type === 'reverse') {

@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PlacePrediction {
   place_id: string;
@@ -25,8 +26,6 @@ export const useGooglePlaces = () => {
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const GOOGLE_API_KEY = 'AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68';
-
   const searchPlaces = useCallback(async (input: string) => {
     if (input.length < 2) {
       setPredictions([]);
@@ -35,14 +34,30 @@ export const useGooglePlaces = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_API_KEY}&language=ru&components=country:uz`
-      );
+      const { data, error } = await supabase.functions.invoke('google-geocoding', {
+        body: {
+          query: input,
+          type: 'autocomplete'
+        }
+      });
+
+      if (error) {
+        console.error('Error calling google-geocoding function:', error);
+        setPredictions([]);
+        return;
+      }
       
-      const data = await response.json();
-      
-      if (data.predictions) {
-        setPredictions(data.predictions);
+      if (data && data.predictions) {
+        // Filter to focus on Uzbekistan cities and streets
+        const uzbekistanPredictions = data.predictions.filter((prediction: PlacePrediction) => 
+          prediction.description.toLowerCase().includes('узбекистан') ||
+          prediction.description.toLowerCase().includes('uzbekistan') ||
+          prediction.structured_formatting.secondary_text?.toLowerCase().includes('узбекистан') ||
+          prediction.structured_formatting.secondary_text?.toLowerCase().includes('uzbekistan')
+        );
+        setPredictions(uzbekistanPredictions);
+      } else {
+        setPredictions([]);
       }
     } catch (error) {
       console.error('Error fetching places:', error);
@@ -54,13 +69,19 @@ export const useGooglePlaces = () => {
 
   const getPlaceDetails = useCallback(async (placeId: string): Promise<PlaceDetails | null> => {
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_API_KEY}&fields=name,formatted_address,geometry&language=ru`
-      );
+      const { data, error } = await supabase.functions.invoke('google-geocoding', {
+        body: {
+          query: placeId,
+          type: 'details'
+        }
+      });
+
+      if (error) {
+        console.error('Error calling google-geocoding function:', error);
+        return null;
+      }
       
-      const data = await response.json();
-      
-      if (data.result) {
+      if (data && data.result) {
         return data.result;
       }
       return null;
@@ -82,12 +103,24 @@ export const useGooglePlaces = () => {
           const { latitude, longitude } = position.coords;
           
           try {
-            const response = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}&language=ru`
-            );
-            
-            const data = await response.json();
-            const address = data.results?.[0]?.formatted_address || 'Текущее местоположение';
+            const { data, error } = await supabase.functions.invoke('google-geocoding', {
+              body: {
+                query: `${latitude},${longitude}`,
+                type: 'reverse'
+              }
+            });
+
+            if (error) {
+              console.error('Error calling google-geocoding function:', error);
+              resolve({
+                lat: latitude,
+                lng: longitude,
+                address: 'Текущее местоположение'
+              });
+              return;
+            }
+
+            const address = data?.results?.[0]?.formatted_address || 'Текущее местоположение';
             
             resolve({
               lat: latitude,
