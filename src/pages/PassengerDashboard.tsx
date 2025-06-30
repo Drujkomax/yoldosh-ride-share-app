@@ -9,9 +9,9 @@ import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useFrequentLocations } from '@/hooks/useFrequentLocations';
 import BottomNavigation from '@/components/BottomNavigation';
-import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
-import EnhancedCalendar from '@/components/EnhancedCalendar';
-import PassengerSelector from '@/components/PassengerSelector';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
+import DatePickerModal from '@/components/DatePickerModal';
+import PassengerCountModal from '@/components/PassengerCountModal';
 import { format, startOfToday, addYears } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -29,10 +29,25 @@ const PassengerDashboard = () => {
   const [isSearching, setIsSearching] = useState(false);
   
   // Modal states
-  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
-  const [showToCitySelector, setShowToCitySelector] = useState(false);
+  const [showFromSelector, setShowFromSelector] = useState(false);
+  const [showToSelector, setShowToSelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showPassengerSelector, setShowPassengerSelector] = useState(false);
+  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+
+  // Request notification permission on component mount
+  React.useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      setShowNotificationPermission(true);
+    }
+  }, []);
+
+  const handleNotificationPermission = (allow: boolean) => {
+    if (allow && 'Notification' in window) {
+      Notification.requestPermission();
+    }
+    setShowNotificationPermission(false);
+  };
 
   const handleSearch = async () => {
     if (fromCity && toCity && date) {
@@ -45,7 +60,7 @@ const PassengerDashboard = () => {
           passengers_count: passengers
         };
         
-        // Добавляем в историю поиска
+        // Add to search history
         await addToHistory(searchData);
         
         const results = await searchRides({
@@ -87,189 +102,191 @@ const PassengerDashboard = () => {
     }
   };
 
-  const formatHistoryDate = (dateStr?: string) => {
-    if (!dateStr) return 'Любая дата';
-    try {
-      return format(new Date(dateStr), 'dd MMMM', { locale: ru });
-    } catch {
-      return 'Любая дата';
-    }
-  };
-
-  // Берем только последние 3 записи из истории
-  const recentSearches = searchHistory.slice(0, 3);
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-200 pb-20">
+      {/* Notification Permission Modal */}
+      {showNotificationPermission && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              "Yoldosh" хочет отправлять вам уведомления
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Уведомления могут включать оповещения, звуки и значки. Это можно настроить в Настройках.
+            </p>
+            <div className="flex space-x-3">
+              <Button
+                onClick={() => handleNotificationPermission(false)}
+                variant="outline"
+                className="flex-1"
+              >
+                Не разрешать
+              </Button>
+              <Button
+                onClick={() => handleNotificationPermission(true)}
+                className="flex-1 bg-blue-500 hover:bg-blue-600"
+              >
+                Разрешить
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header with Illustration */}
-      <div className="relative bg-gray-900 px-6 pt-16 pb-32">
+      <div className="px-6 pt-16 pb-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-white mb-2">
             Поездки на ваш выбор по самым низким ценам
           </h1>
         </div>
         
-        {/* Bus Illustration */}
+        {/* Transportation Illustration */}
         <div className="flex justify-center items-center mb-8">
           <div className="relative">
             {/* Car */}
-            <div className="w-20 h-12 bg-blue-500 rounded-lg mr-4 relative">
-              <div className="absolute bottom-0 left-2 w-3 h-3 bg-gray-400 rounded-full"></div>
-              <div className="absolute bottom-0 right-2 w-3 h-3 bg-gray-400 rounded-full"></div>
+            <div className="w-20 h-12 bg-teal-600 rounded-lg mr-4 relative">
+              <div className="absolute bottom-0 left-2 w-3 h-3 bg-gray-300 rounded-full"></div>
+              <div className="absolute bottom-0 right-2 w-3 h-3 bg-gray-300 rounded-full"></div>
+              <div className="absolute top-2 left-2 right-2 flex justify-between">
+                <div className="w-2 h-2 bg-yellow-300 rounded-full"></div>
+                <div className="w-2 h-2 bg-yellow-300 rounded-full"></div>
+              </div>
             </div>
             
             {/* Bus */}
             <div className="w-32 h-16 bg-red-500 rounded-lg relative inline-block">
               <div className="absolute top-2 left-2 right-2 flex justify-between">
-                <div className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                </div>
-                <div className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                </div>
-                <div className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                </div>
-                <div className="w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                </div>
+                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
+                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
+                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
+                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
               </div>
-              <div className="absolute bottom-0 left-3 w-4 h-4 bg-gray-400 rounded-full"></div>
-              <div className="absolute bottom-0 right-3 w-4 h-4 bg-gray-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-3 w-4 h-4 bg-gray-300 rounded-full"></div>
+              <div className="absolute bottom-0 right-3 w-4 h-4 bg-gray-300 rounded-full"></div>
+              {/* Passengers silhouettes */}
+              <div className="absolute top-6 left-2 right-2 flex justify-around">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="w-3 h-4 bg-gray-800 rounded-t-full"></div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search Form */}
-      <div className="px-6 -mt-24 relative z-10">
-        <Card className="bg-gray-800 border-gray-700 shadow-xl rounded-2xl">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {/* From City */}
-              <div className="relative">
-                <div className="flex items-center space-x-3 p-4 bg-gray-700 rounded-xl">
-                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowFromCitySelector(true)}
-                    className="flex-1 justify-start text-left text-white hover:bg-gray-600 p-0"
-                  >
-                    {fromCity || 'Откуда'}
-                  </Button>
-                </div>
+      <div className="px-6 mb-6">
+        <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
+          <CardContent className="p-0">
+            <div className="space-y-0">
+              {/* From Location */}
+              <div className="p-4 border-b border-gray-100">
+                <Button
+                  onClick={() => setShowFromSelector(true)}
+                  variant="ghost"
+                  className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
+                >
+                  <div className="flex items-center space-x-3 w-full">
+                    <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-500 text-sm">Откуда</div>
+                      <div className="text-gray-900 font-medium truncate">
+                        {fromCity || 'Выберите место отправления'}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
               </div>
               
-              {/* To City */}
-              <div className="relative">
-                <div className="flex items-center space-x-3 p-4 bg-gray-700 rounded-xl">
-                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowToCitySelector(true)}
-                    className="flex-1 justify-start text-left text-white hover:bg-gray-600 p-0"
-                  >
-                    {toCity || 'Куда'}
-                  </Button>
-                </div>
+              {/* To Location */}
+              <div className="p-4 border-b border-gray-100">
+                <Button
+                  onClick={() => setShowToSelector(true)}
+                  variant="ghost"
+                  className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
+                >
+                  <div className="flex items-center space-x-3 w-full">
+                    <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-500 text-sm">Куда</div>
+                      <div className="text-gray-900 font-medium truncate">
+                        {toCity || 'Выберите место назначения'}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
               </div>
 
               {/* Date */}
-              <div className="relative">
-                <div className="flex items-center space-x-3 p-4 bg-gray-700 rounded-xl">
-                  <Calendar className="w-5 h-5 text-gray-400" />
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowDatePicker(true)}
-                    className="flex-1 justify-start text-left text-white hover:bg-gray-600 p-0"
-                  >
-                    {date ? format(date, 'dd MMMM yyyy', { locale: ru }) : 'Сегодня'}
-                  </Button>
-                </div>
+              <div className="p-4 border-b border-gray-100">
+                <Button
+                  onClick={() => setShowDatePicker(true)}
+                  variant="ghost"
+                  className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
+                >
+                  <div className="flex items-center space-x-3 w-full">
+                    <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-900 font-medium">
+                        {date ? format(date, 'EEE dd MMM', { locale: ru }) : 'Сегодня'}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
               </div>
 
               {/* Passengers */}
-              <div className="relative">
-                <div className="flex items-center space-x-3 p-4 bg-gray-700 rounded-xl">
-                  <Users className="w-5 h-5 text-gray-400" />
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowPassengerSelector(true)}
-                    className="flex-1 justify-start text-left text-white hover:bg-gray-600 p-0"
-                  >
-                    {passengers} пассажир{passengers === 1 ? '' : passengers < 5 ? 'а' : 'ов'}
-                  </Button>
-                </div>
+              <div className="p-4">
+                <Button
+                  onClick={() => setShowPassengerSelector(true)}
+                  variant="ghost"
+                  className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
+                >
+                  <div className="flex items-center space-x-3 w-full">
+                    <Users className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-900 font-medium">
+                        {passengers}
+                      </div>
+                    </div>
+                  </div>
+                </Button>
               </div>
-
-              {/* Search Button */}
-              <Button
-                onClick={handleSearch}
-                disabled={!fromCity || !toCity || !date || isSearching}
-                className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 rounded-xl font-medium text-white"
-              >
-                {isSearching ? 'Поиск...' : 'Поиск'}
-              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Create Request Button */}
-      <div className="px-6 mt-4">
+      {/* Search Button */}
+      <div className="px-6 mb-6">
         <Button
-          onClick={() => navigate('/create-request')}
-          className="w-full h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+          onClick={handleSearch}
+          disabled={!fromCity || !toCity || !date || isSearching}
+          className="w-full h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold text-lg"
         >
-          <Plus className="h-6 w-6 mr-3" />
-          Создать заявку
+          {isSearching ? 'Поиск...' : 'Поиск'}
         </Button>
       </div>
 
-      {/* Frequent Locations */}
-      {frequentLocations.length > 0 && (
-        <div className="px-6 mt-6">
-          <h3 className="text-lg font-semibold text-white mb-3">Частые места</h3>
-          <div className="space-y-2">
-            {frequentLocations.slice(0, 2).map((location) => (
-              <div
-                key={location.id}
-                className="flex items-center justify-between p-3 bg-gray-800 rounded-xl"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="text-xl">
-                    {location.location_type === 'home' ? '🏠' : 
-                     location.location_type === 'work' ? '💼' : '📍'}
-                  </div>
-                  <div>
-                    <div className="text-white font-medium">{location.location_name}</div>
-                    <div className="text-gray-400 text-sm truncate">{location.address}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Search History - только последние 3 */}
-      {recentSearches.length > 0 && (
-        <div className="px-6 mt-6">
+      {/* Recent Searches */}
+      {searchHistory.length > 0 && (
+        <div className="px-6 mb-6">
           <div className="space-y-3">
-            {recentSearches.map((item) => (
+            {searchHistory.slice(0, 3).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-4 bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-700 transition-colors animate-fade-in"
+                className="flex items-center justify-between p-4 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => handleSearchHistoryClick(item)}
               >
                 <div className="flex items-center space-x-3">
                   <Clock className="w-5 h-5 text-gray-400" />
                   <div>
-                    <div className="text-white font-medium">
+                    <div className="text-gray-900 font-medium">
                       {item.from_city} → {item.to_city}
                     </div>
-                    <div className="text-gray-400 text-sm">
-                      {formatHistoryDate(item.departure_date)} • {item.passengers_count || 1} пас.
+                    <div className="text-gray-500 text-sm">
+                      {item.departure_date ? format(new Date(item.departure_date), 'EEE dd MMM', { locale: ru }) : ''} • {item.passengers_count || 1} пас.
                     </div>
                   </div>
                 </div>
@@ -280,36 +297,37 @@ const PassengerDashboard = () => {
         </div>
       )}
 
-      {/* Selectors */}
-      <UzbekistanCitySelector
-        isOpen={showFromCitySelector}
-        onClose={() => setShowFromCitySelector(false)}
-        onCitySelect={setFromCity}
-        title="Откуда вы едете?"
-        currentCity={fromCity}
+      {/* Modals */}
+      <AddressAutocomplete
+        isOpen={showFromSelector}
+        onClose={() => setShowFromSelector(false)}
+        onSelect={(address) => setFromCity(address)}
+        title="Откуда"
+        currentValue={fromCity}
+        placeholder="Откуда вы едете?"
       />
 
-      <UzbekistanCitySelector
-        isOpen={showToCitySelector}
-        onClose={() => setShowToCitySelector(false)}
-        onCitySelect={setToCity}
-        title="Куда вы едете?"
-        currentCity={toCity}
+      <AddressAutocomplete
+        isOpen={showToSelector}
+        onClose={() => setShowToSelector(false)}
+        onSelect={(address) => setToCity(address)}
+        title="Куда"
+        currentValue={toCity}
+        placeholder="Куда вы едете?"
       />
 
-      <EnhancedCalendar
+      <DatePickerModal
         isOpen={showDatePicker}
         onClose={() => setShowDatePicker(false)}
-        onDateSelect={setDate}
+        onSelect={setDate}
         selectedDate={date}
-        minDate={startOfToday()}
-        maxDate={addYears(startOfToday(), 1)}
+        title="Когда вы едете?"
       />
 
-      <PassengerSelector
+      <PassengerCountModal
         isOpen={showPassengerSelector}
         onClose={() => setShowPassengerSelector(false)}
-        onPassengerSelect={setPassengers}
+        onSelect={setPassengers}
         currentCount={passengers}
       />
 

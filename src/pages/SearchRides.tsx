@@ -3,39 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Clock, Search, Edit2 } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { ArrowLeft, Star, User, Users, ChevronLeft } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
-import DateSelector from '@/components/DateSelector';
-import PassengerSelector from '@/components/PassengerSelector';
 
 const SearchRides = () => {
   const navigate = useNavigate();
-  const { t } = useTheme();
   const { searchRides } = useRides();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [searchCriteria, setSearchCriteria] = useState({
     from: '',
     to: '',
     date: '',
     seats: ''
   });
-  const [isEditing, setIsEditing] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
-
-  // Состояния для модальных окон
-  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
-  const [showToCitySelector, setShowToCitySelector] = useState(false);
-  const [showDateSelector, setShowDateSelector] = useState(false);
-  const [showPassengerSelector, setShowPassengerSelector] = useState(false);
 
   useEffect(() => {
     const criteria = {
@@ -83,31 +69,17 @@ const SearchRides = () => {
     }
   };
 
-  const handleUpdateSearch = () => {
-    const params = new URLSearchParams();
-    if (searchCriteria.from) params.set('from', searchCriteria.from);
-    if (searchCriteria.to) params.set('to', searchCriteria.to);
-    if (searchCriteria.date) params.set('date', searchCriteria.date);
-    if (searchCriteria.seats) params.set('seats', searchCriteria.seats);
-    
-    setSearchParams(params);
-    setIsEditing(false);
-    performSearch();
-  };
-
-  const handleBookRide = (rideId: string) => {
-    navigate(`/book-ride/${rideId}`);
-  };
-
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
     try {
-      return format(new Date(dateStr), 'dd MMMM', { locale: ru });
+      return format(new Date(dateStr), 'dd MMMM yyyy', { locale: ru });
     } catch {
       return dateStr;
     }
   };
 
   const formatTime = (timeStr: string) => {
+    if (!timeStr) return '';
     try {
       return timeStr.slice(0, 5); // Get HH:MM format
     } catch {
@@ -138,7 +110,7 @@ const SearchRides = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white border-b">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
@@ -146,89 +118,20 @@ const SearchRides = () => {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-gray-100"
             >
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
+              <ChevronLeft className="h-6 w-6 text-gray-600" />
             </Button>
           </div>
-        </div>
-      </div>
-
-      {/* Search Summary */}
-      <div className="bg-white px-4 py-3 border-b">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-semibold text-gray-900 text-lg">
+          
+          {/* Search Summary */}
+          <div className="mt-4">
+            <h1 className="font-bold text-gray-900 text-lg">
               {searchCriteria.from} → {searchCriteria.to}
             </h1>
-            <p className="text-sm text-gray-500">
-              {searchCriteria.date && new Date(searchCriteria.date).toLocaleDateString('ru-RU', { 
-                weekday: 'short', 
-                day: 'numeric', 
-                month: 'short' 
-              })}, {searchCriteria.seats || '1'} пассажир{searchCriteria.seats === '1' ? '' : 'а'}
+            <p className="text-sm text-gray-500 mt-1">
+              {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsEditing(!isEditing)}
-            className="text-blue-600 hover:bg-blue-50"
-          >
-            <Edit2 className="h-4 w-4 mr-1" />
-            Изменить
-          </Button>
         </div>
-        
-        {isEditing && (
-          <div className="mt-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowFromCitySelector(true)}
-                className="justify-start text-left h-12"
-              >
-                <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                <span className="truncate">{searchCriteria.from || 'Откуда'}</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowToCitySelector(true)}
-                className="justify-start text-left h-12"
-              >
-                <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                <span className="truncate">{searchCriteria.to || 'Куда'}</span>
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDateSelector(true)}
-                className="justify-start text-left h-12"
-              >
-                <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                <span>
-                  {searchCriteria.date 
-                    ? format(new Date(searchCriteria.date), 'dd MMMM', { locale: ru })
-                    : 'Дата'
-                  }
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowPassengerSelector(true)}
-                className="justify-start text-left h-12"
-              >
-                <Users className="h-4 w-4 mr-2 text-gray-400" />
-                <span>{searchCriteria.seats || '1'} пассажир</span>
-              </Button>
-            </div>
-            <Button 
-              onClick={handleUpdateSearch}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              Обновить поиск
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
@@ -236,36 +139,36 @@ const SearchRides = () => {
         <div className="flex">
           <button
             onClick={() => setActiveTab('all')}
-            className={`flex-1 py-4 px-4 text-center font-medium ${
+            className={`flex-1 py-4 text-center font-medium ${
               activeTab === 'all' 
                 ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-500'
             }`}
           >
             <div>Все</div>
-            <div className="text-sm font-normal">{all}</div>
+            <div className="text-sm font-normal text-gray-400">{all}</div>
           </button>
           <button
             onClick={() => setActiveTab('carpool')}
-            className={`flex-1 py-4 px-4 text-center font-medium ${
+            className={`flex-1 py-4 text-center font-medium ${
               activeTab === 'carpool' 
                 ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-500'
             }`}
           >
             <div>Попутчики</div>
-            <div className="text-sm font-normal">{carpool}</div>
+            <div className="text-sm font-normal text-gray-400">{carpool}</div>
           </button>
           <button
             onClick={() => setActiveTab('bus')}
-            className={`flex-1 py-4 px-4 text-center font-medium ${
+            className={`flex-1 py-4 text-center font-medium ${
               activeTab === 'bus' 
                 ? 'text-blue-600 border-b-2 border-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-500'
             }`}
           >
             <div>Автобус</div>
-            <div className="text-sm font-normal">{bus}</div>
+            <div className="text-sm font-normal text-gray-400">{bus}</div>
           </button>
         </div>
       </div>
@@ -279,7 +182,7 @@ const SearchRides = () => {
         ) : hasSearched && filteredResults.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-2">
-              {activeTab === 'bus' ? 'Нет автобусных поездок на этот день' : 'Поездки не найдены'}
+              Поездки не найдены
             </div>
             <div className="text-gray-500 text-sm">
               Попробуйте изменить параметры поиска
@@ -288,10 +191,10 @@ const SearchRides = () => {
         ) : (
           <div className="space-y-3">
             {/* Date Section */}
-            {filteredResults.length > 0 && (
+            {filteredResults.length > 0 && searchCriteria.date && (
               <div className="mb-4">
-                <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                  {searchCriteria.date && formatDate(searchCriteria.date)}
+                <h2 className="text-lg font-bold text-gray-800">
+                  {formatDate(searchCriteria.date)}
                 </h2>
               </div>
             )}
@@ -304,7 +207,7 @@ const SearchRides = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-4">
                         <div className="text-center">
-                          <div className="text-xl font-bold text-gray-900">
+                          <div className="text-lg font-bold text-gray-900">
                             {formatTime(ride.departure_time)}
                           </div>
                           <div className="text-xs text-gray-500">
@@ -318,14 +221,14 @@ const SearchRides = () => {
                             <div className="flex-1 h-px bg-gray-300 mx-2"></div>
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                           </div>
-                          <div className="flex justify-between text-sm mt-1">
-                            <span className="text-gray-600">{ride.from_city}</span>
-                            <span className="text-gray-600">{ride.to_city}</span>
+                          <div className="flex justify-between text-xs mt-1 text-gray-600">
+                            <span>{ride.from_city}</span>
+                            <span>{ride.to_city}</span>
                           </div>
                         </div>
                         
                         <div className="text-center">
-                          <div className="text-xl font-bold text-gray-900">
+                          <div className="text-lg font-bold text-gray-900">
                             {formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00')}
                           </div>
                         </div>
@@ -333,9 +236,11 @@ const SearchRides = () => {
                     </div>
                     
                     <div className="text-right ml-4">
-                      <div className="text-xl font-bold text-gray-900">
-                        £{ride.price_per_seat}
-                        <span className="text-sm font-normal text-gray-500">.{String(ride.price_per_seat % 1).split('.')[1]?.padEnd(2, '0') || '00'}</span>
+                      <div className="text-lg font-bold text-gray-900">
+                        £{Math.floor(ride.price_per_seat)}
+                        <span className="text-sm font-normal text-gray-500">
+                          .{String((ride.price_per_seat % 1) * 100).padStart(2, '0')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -354,7 +259,7 @@ const SearchRides = () => {
                           <div className="flex items-center space-x-1">
                             <Star className="h-3 w-3 text-yellow-400 fill-current" />
                             <span className="text-xs text-gray-600">
-                              {ride.driver?.rating || '5'}
+                              {ride.driver?.rating || '5.0'}
                             </span>
                           </div>
                         </div>
@@ -371,73 +276,12 @@ const SearchRides = () => {
                       <span className="text-sm text-gray-600">{ride.available_seats}</span>
                     </div>
                   </div>
-                  
-                  {/* Action Button */}
-                  <div className="mt-4">
-                    <Button 
-                      onClick={() => navigate(`/ride-details/${ride.id}`)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Подробнее
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
-
-      {/* Create Alert Button */}
-      {hasSearched && filteredResults.length === 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
-          <Button 
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg"
-            onClick={() => navigate('/create-request')}
-          >
-            Создать уведомление о поездке
-          </Button>
-        </div>
-      )}
-
-      {/* City Selectors */}
-      <UzbekistanCitySelector
-        isOpen={showFromCitySelector}
-        onClose={() => setShowFromCitySelector(false)}
-        onCitySelect={(city) => setSearchCriteria(prev => ({ ...prev, from: city }))}
-        title="Откуда"
-        currentCity={searchCriteria.from}
-      />
-
-      <UzbekistanCitySelector
-        isOpen={showToCitySelector}
-        onClose={() => setShowToCitySelector(false)}
-        onCitySelect={(city) => setSearchCriteria(prev => ({ ...prev, to: city }))}
-        title="Куда"
-        currentCity={searchCriteria.to}
-      />
-
-      {/* Date Selector */}
-      <DateSelector
-        isOpen={showDateSelector}
-        onClose={() => setShowDateSelector(false)}
-        onDateSelect={(date) => setSearchCriteria(prev => ({ 
-          ...prev, 
-          date: date ? format(date, 'yyyy-MM-dd') : '' 
-        }))}
-        selectedDate={searchCriteria.date ? new Date(searchCriteria.date) : undefined}
-      />
-
-      {/* Passenger Selector */}
-      <PassengerSelector
-        isOpen={showPassengerSelector}
-        onClose={() => setShowPassengerSelector(false)}
-        onPassengerSelect={(count) => setSearchCriteria(prev => ({ 
-          ...prev, 
-          seats: count.toString() 
-        }))}
-        currentCount={parseInt(searchCriteria.seats) || 1}
-      />
     </div>
   );
 };
