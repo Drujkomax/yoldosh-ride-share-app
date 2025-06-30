@@ -18,10 +18,10 @@ serve(async (req) => {
     let url = ''
     
     if (type === 'autocomplete') {
-      // Focus on cities and streets in Uzbekistan
-      url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}&language=ru&components=country:uz&types=(cities)&region=uz`
+      // Комбинированный поиск для городов и улиц в Узбекистане
+      url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}&language=ru&components=country:uz&types=geocode|establishment&region=uz`
     } else if (type === 'details') {
-      url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${query}&key=${GOOGLE_API_KEY}&fields=geometry,formatted_address&language=ru`
+      url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${query}&key=${GOOGLE_API_KEY}&fields=geometry,formatted_address,name,types&language=ru`
     } else if (type === 'reverse') {
       url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${query}&key=${GOOGLE_API_KEY}&language=ru`
     }
