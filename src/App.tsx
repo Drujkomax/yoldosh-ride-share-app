@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -18,6 +17,7 @@ import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
 import ManageCarsPage from "./components/ManageCarsPage";
 import NotFound from "./pages/NotFound";
+import CreateRideWizard from "./pages/CreateRideWizard";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +43,7 @@ function App() {
                 <Route path="/chat/:chatId" element={<ChatPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/manage-cars" element={<ManageCarsPage />} />
+                <Route path="/create-ride-wizard" element={<CreateRideWizard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

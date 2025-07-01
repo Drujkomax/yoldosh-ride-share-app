@@ -15,10 +15,19 @@ export interface Ride {
   pickup_longitude?: number;
   dropoff_latitude?: number;
   dropoff_longitude?: number;
+  precise_pickup_latitude?: number;
+  precise_pickup_longitude?: number;
+  precise_dropoff_latitude?: number;
+  precise_dropoff_longitude?: number;
   route_data?: any;
+  route_polyline?: string;
+  estimated_duration_minutes?: number;
+  estimated_distance_km?: number;
+  toll_info?: any;
   intermediate_stops?: any[];
   departure_date: string;
   departure_time: string;
+  departure_flexibility?: number;
   available_seats: number;
   price_per_seat: number;
   description?: string;
@@ -26,6 +35,9 @@ export interface Ride {
   car_color?: string;
   duration_hours?: number;
   estimated_arrival_time?: string;
+  passenger_pickup_instructions?: string;
+  passenger_dropoff_instructions?: string;
+  comfort_settings?: any;
   status: 'active' | 'cancelled' | 'completed' | 'full';
   created_at: string;
   driver?: {

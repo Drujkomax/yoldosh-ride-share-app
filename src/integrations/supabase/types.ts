@@ -561,8 +561,10 @@ export type Database = {
           car_color: string | null
           car_id: string | null
           car_model: string | null
+          comfort_settings: Json | null
           created_at: string | null
           departure_date: string
+          departure_flexibility: number | null
           departure_time: string
           description: string | null
           driver_id: string
@@ -571,18 +573,28 @@ export type Database = {
           dropoff_longitude: number | null
           duration_hours: number | null
           estimated_arrival_time: string | null
+          estimated_distance_km: number | null
+          estimated_duration_minutes: number | null
           from_city: string
           id: string
           intermediate_stops: Json | null
           intermediate_stops_addresses: Json | null
           intermediate_stops_coordinates: Json | null
+          passenger_dropoff_instructions: string | null
+          passenger_pickup_instructions: string | null
           pickup_address: string | null
           pickup_latitude: number | null
           pickup_longitude: number | null
+          precise_dropoff_latitude: number | null
+          precise_dropoff_longitude: number | null
+          precise_pickup_latitude: number | null
+          precise_pickup_longitude: number | null
           price_per_seat: number
           route_data: Json | null
+          route_polyline: string | null
           status: string | null
           to_city: string
+          toll_info: Json | null
           updated_at: string | null
         }
         Insert: {
@@ -590,8 +602,10 @@ export type Database = {
           car_color?: string | null
           car_id?: string | null
           car_model?: string | null
+          comfort_settings?: Json | null
           created_at?: string | null
           departure_date: string
+          departure_flexibility?: number | null
           departure_time: string
           description?: string | null
           driver_id: string
@@ -600,18 +614,28 @@ export type Database = {
           dropoff_longitude?: number | null
           duration_hours?: number | null
           estimated_arrival_time?: string | null
+          estimated_distance_km?: number | null
+          estimated_duration_minutes?: number | null
           from_city: string
           id?: string
           intermediate_stops?: Json | null
           intermediate_stops_addresses?: Json | null
           intermediate_stops_coordinates?: Json | null
+          passenger_dropoff_instructions?: string | null
+          passenger_pickup_instructions?: string | null
           pickup_address?: string | null
           pickup_latitude?: number | null
           pickup_longitude?: number | null
+          precise_dropoff_latitude?: number | null
+          precise_dropoff_longitude?: number | null
+          precise_pickup_latitude?: number | null
+          precise_pickup_longitude?: number | null
           price_per_seat: number
           route_data?: Json | null
+          route_polyline?: string | null
           status?: string | null
           to_city: string
+          toll_info?: Json | null
           updated_at?: string | null
         }
         Update: {
@@ -619,8 +643,10 @@ export type Database = {
           car_color?: string | null
           car_id?: string | null
           car_model?: string | null
+          comfort_settings?: Json | null
           created_at?: string | null
           departure_date?: string
+          departure_flexibility?: number | null
           departure_time?: string
           description?: string | null
           driver_id?: string
@@ -629,18 +655,28 @@ export type Database = {
           dropoff_longitude?: number | null
           duration_hours?: number | null
           estimated_arrival_time?: string | null
+          estimated_distance_km?: number | null
+          estimated_duration_minutes?: number | null
           from_city?: string
           id?: string
           intermediate_stops?: Json | null
           intermediate_stops_addresses?: Json | null
           intermediate_stops_coordinates?: Json | null
+          passenger_dropoff_instructions?: string | null
+          passenger_pickup_instructions?: string | null
           pickup_address?: string | null
           pickup_latitude?: number | null
           pickup_longitude?: number | null
+          precise_dropoff_latitude?: number | null
+          precise_dropoff_longitude?: number | null
+          precise_pickup_latitude?: number | null
+          precise_pickup_longitude?: number | null
           price_per_seat?: number
           route_data?: Json | null
+          route_polyline?: string | null
           status?: string | null
           to_city?: string
+          toll_info?: Json | null
           updated_at?: string | null
         }
         Relationships: [
