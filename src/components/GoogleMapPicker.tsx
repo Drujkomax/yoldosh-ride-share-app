@@ -34,11 +34,16 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
+  // Проверяем доступность Google Maps API
+  const checkGoogleMapsAvailability = useCallback(() => {
+    return typeof window !== 'undefined' && window.google && window.google.maps;
+  }, []);
+
   // Инициализация карты
   const initMap = useCallback(() => {
-    if (!mapRef.current || !window.google) return;
+    if (!mapRef.current || !checkGoogleMapsAvailability()) return;
 
-    const map = new google.maps.Map(mapRef.current, {
+    const map = new window.google.maps.Map(mapRef.current, {
       center: { lat: currentLocation[0], lng: currentLocation[1] },
       zoom: 15,
       mapTypeControl: false,
@@ -65,7 +70,7 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
         setCurrentLocation(newLocation);
         
         // Обратное геокодирование для получения адреса
-        const geocoder = new google.maps.Geocoder();
+        const geocoder = new window.google.maps.Geocoder();
         geocoder.geocode({ location: center }, (results, status) => {
           if (status === 'OK' && results && results[0]) {
             setCurrentAddress(results[0].formatted_address);
@@ -76,7 +81,7 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
 
     // Инициализация автокомплита
     if (searchInputRef.current) {
-      const autocomplete = new google.maps.places.Autocomplete(searchInputRef.current, {
+      const autocomplete = new window.google.maps.places.Autocomplete(searchInputRef.current, {
         types: ['establishment', 'geocode'],
         componentRestrictions: { country: 'uz' }
       });
@@ -95,26 +100,37 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
 
       autocompleteRef.current = autocomplete;
     }
-  }, [currentLocation]);
+  }, [currentLocation, checkGoogleMapsAvailability]);
 
   // Загрузка Google Maps API
   useEffect(() => {
     const loadGoogleMaps = () => {
-      if (window.google) {
+      if (checkGoogleMapsAvailability()) {
         initMap();
         return;
       }
 
+      // Получаем API ключ из localStorage
+      const apiKey = localStorage.getItem('google_maps_api_key');
+      if (!apiKey) {
+        console.warn('Google Maps API key not found in localStorage');
+        return;
+      }
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ru`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
       script.async = true;
       script.defer = true;
       script.onload = initMap;
+      script.onerror = () => {
+        console.error('Failed to load Google Maps API');
+        toast.error('Не удалось загрузить Google Maps API');
+      };
       document.head.appendChild(script);
     };
 
     loadGoogleMaps();
-  }, [initMap]);
+  }, [initMap, checkGoogleMapsAvailability]);
 
   // Получение текущего местоположения
   const getCurrentLocation = () => {
@@ -160,6 +176,35 @@ const GoogleMapPicker: React.FC<GoogleMapPickerProps> = ({
   const handleConfirmLocation = () => {
     onLocationSelect(currentLocation, currentAddress);
   };
+
+  // Показываем компонент для ввода API ключа, если его нет
+  if (!localStorage.getItem('google_maps_api_key')) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+        <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl overflow-hidden">
+          <CardContent className="p-8">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Требуется настройка</h2>
+              <p className="text-gray-600">Для работы с картами необходим Google Maps API ключ</p>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+              <p className="text-yellow-800 text-sm">
+                Пожалуйста, добавьте GoogleMapsApiKeyInput компонент на эту страницу для настройки API ключа.
+              </p>
+            </div>
+
+            <Button
+              onClick={() => window.location.reload()}
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl"
+            >
+              Обновить страницу
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">

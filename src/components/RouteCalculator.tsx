@@ -45,13 +45,22 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
+  // Проверяем доступность Google Maps API
+  const checkGoogleMapsAvailability = () => {
+    return typeof window !== 'undefined' && window.google && window.google.maps;
+  };
+
   // Инициализация карты и расчет маршрутов
   useEffect(() => {
     const initializeMap = async () => {
-      if (!mapRef.current || !window.google) return;
+      if (!mapRef.current || !checkGoogleMapsAvailability()) {
+        setError('Google Maps API не загружен');
+        setIsLoading(false);
+        return;
+      }
 
       // Создаем карту
-      const map = new google.maps.Map(mapRef.current, {
+      const map = new window.google.maps.Map(mapRef.current, {
         zoom: 8,
         center: { lat: (startPoint[0] + endPoint[0]) / 2, lng: (startPoint[1] + endPoint[1]) / 2 },
         mapTypeControl: false,
@@ -62,7 +71,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
       mapInstanceRef.current = map;
 
       // Инициализируем сервис маршрутов
-      const directionsService = new google.maps.DirectionsService();
+      const directionsService = new window.google.maps.DirectionsService();
       directionsServiceRef.current = directionsService;
 
       // Запрашиваем маршруты
@@ -70,46 +79,49 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
         const request: google.maps.DirectionsRequest = {
           origin: { lat: startPoint[0], lng: startPoint[1] },
           destination: { lat: endPoint[0], lng: endPoint[1] },
-          travelMode: google.maps.TravelMode.DRIVING,
+          travelMode: window.google.maps.TravelMode.DRIVING,
           provideRouteAlternatives: true,
           avoidHighways: false,
           avoidTolls: false,
           region: 'UZ'
         };
 
-        const result = await directionsService.route(request);
-        
-        if (result.routes && result.routes.length > 0) {
-          const routeOptions: RouteOption[] = result.routes.map((route, index) => {
-            const leg = route.legs[0];
-            return {
-              id: `route-${index}`,
-              summary: route.summary || `Маршрут ${index + 1}`,
-              distance: leg.distance?.text || '',
-              duration: leg.duration?.text || '',
-              distanceValue: leg.distance?.value || 0,
-              durationValue: leg.duration?.value || 0,
-              polyline: route.overview_polyline || '',
-              hasTolls: route.summary?.toLowerCase().includes('toll') || false,
-              tollInfo: route.summary?.toLowerCase().includes('toll') ? {
-                currency: 'UZS',
-                cost: Math.round((leg.distance?.value || 0) * 0.1) // Примерная стоимость
-              } : undefined
-            };
-          });
+        directionsService.route(request, (result, status) => {
+          if (status === 'OK' && result && result.routes && result.routes.length > 0) {
+            const routeOptions: RouteOption[] = result.routes.map((route, index) => {
+              const leg = route.legs[0];
+              return {
+                id: `route-${index}`,
+                summary: route.summary || `Маршрут ${index + 1}`,
+                distance: leg.distance?.text || '',
+                duration: leg.duration?.text || '',
+                distanceValue: leg.distance?.value || 0,
+                durationValue: leg.duration?.value || 0,
+                polyline: route.overview_polyline || '',
+                hasTolls: route.summary?.toLowerCase().includes('toll') || false,
+                tollInfo: route.summary?.toLowerCase().includes('toll') ? {
+                  currency: 'UZS',
+                  cost: Math.round((leg.distance?.value || 0) * 0.1) // Примерная стоимость
+                } : undefined
+              };
+            });
 
-          setRoutes(routeOptions);
-          
-          // Выбираем первый маршрут по умолчанию
-          if (routeOptions.length > 0) {
-            setSelectedRouteId(routeOptions[0].id);
-            displayRoute(result, 0);
+            setRoutes(routeOptions);
+            
+            // Выбираем первый маршрут по умолчанию
+            if (routeOptions.length > 0) {
+              setSelectedRouteId(routeOptions[0].id);
+              displayRoute(result, 0);
+            }
+          } else {
+            console.error('Ошибка расчета маршрута:', status);
+            setError('Не удалось рассчитать маршрут. Проверьте выбранные точки.');
           }
-        }
+          setIsLoading(false);
+        });
       } catch (error) {
         console.error('Ошибка расчета маршрута:', error);
         setError('Не удалось рассчитать маршрут. Проверьте выбранные точки.');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -125,7 +137,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
       directionsRenderersRef.current = [];
 
       // Создаем новый рендерер для выбранного маршрута
-      const renderer = new google.maps.DirectionsRenderer({
+      const renderer = new window.google.maps.DirectionsRenderer({
         routeIndex,
         polylineOptions: {
           strokeColor: '#3B82F6',
@@ -134,7 +146,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
         },
         markerOptions: {
           icon: {
-            path: google.maps.SymbolPath.CIRCLE,
+            path: window.google.maps.SymbolPath.CIRCLE,
             scale: 8,
             fillColor: '#3B82F6',
             fillOpacity: 1,
@@ -149,16 +161,33 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
       directionsRenderersRef.current.push(renderer);
     };
 
-    if (window.google) {
-      initializeMap();
-    } else {
+    const loadGoogleMaps = () => {
+      if (checkGoogleMapsAvailability()) {
+        initializeMap();
+        return;
+      }
+
+      // Получаем API ключ из localStorage
+      const apiKey = localStorage.getItem('google_maps_api_key');
+      if (!apiKey) {
+        setError('Google Maps API ключ не найден');
+        setIsLoading(false);
+        return;
+      }
+
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ru`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
       script.async = true;
       script.defer = true;
       script.onload = initializeMap;
+      script.onerror = () => {
+        setError('Не удалось загрузить Google Maps API');
+        setIsLoading(false);
+      };
       document.head.appendChild(script);
-    }
+    };
+
+    loadGoogleMaps();
 
     return () => {
       // Очистка рендереров при размонтировании

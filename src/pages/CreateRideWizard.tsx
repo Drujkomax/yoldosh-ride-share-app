@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import DriverBottomNavigation from '@/components/DriverBottomNavigation';
 import CitySelect from '@/components/CitySelect';
 import GoogleMapPicker from '@/components/GoogleMapPicker';
 import RouteCalculator from '@/components/RouteCalculator';
+import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 
 interface RideWizardData {
   // Города
@@ -203,6 +203,7 @@ const CreateRideWizard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
+              <GoogleMapsApiKeyInput />
               <CitySelect
                 value={wizardData.fromCity}
                 onValueChange={(value) => updateWizardData({ fromCity: value })}
