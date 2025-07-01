@@ -63,7 +63,7 @@ const DriverSearchRides = () => {
               <p className="text-slate-600 mt-1">Все активные поездки водителей</p>
             </div>
             <Button
-              onClick={() => navigate('/create-driver-ride')}
+              onClick={() => navigate('/create-ride-wizard')}
               className="rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 p-3"
             >
               <Plus className="h-5 w-5" />
@@ -88,7 +88,7 @@ const DriverSearchRides = () => {
                 <p className="text-lg font-medium mb-2">Поездки не найдены</p>
                 <p className="text-sm">Пока нет активных поездок от водителей</p>
                 <Button
-                  onClick={() => navigate('/create-driver-ride')}
+                  onClick={() => navigate('/create-ride-wizard')}
                   className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   <Plus className="h-4 w-4 mr-2" />

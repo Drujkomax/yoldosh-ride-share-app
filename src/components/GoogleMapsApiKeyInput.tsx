@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Key, ExternalLink, Info } from 'lucide-react';
 
-const GoogleMapsApiKeyInput = () => {
+interface GoogleMapsApiKeyInputProps {
+  autoSetKey?: string;
+}
+
+const GoogleMapsApiKeyInput: React.FC<GoogleMapsApiKeyInputProps> = ({ autoSetKey }) => {
   const [apiKey, setApiKey] = useState('');
   const [isValidKey, setIsValidKey] = useState(false);
 
@@ -16,8 +20,13 @@ const GoogleMapsApiKeyInput = () => {
     if (savedKey) {
       setApiKey(savedKey);
       setIsValidKey(true);
+    } else if (autoSetKey) {
+      // Автоматически устанавливаем переданный ключ
+      setApiKey(autoSetKey);
+      localStorage.setItem('google_maps_api_key', autoSetKey);
+      setIsValidKey(true);
     }
-  }, []);
+  }, [autoSetKey]);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {

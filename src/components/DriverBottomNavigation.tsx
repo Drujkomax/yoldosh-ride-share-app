@@ -18,8 +18,8 @@ const DriverBottomNavigation = () => {
     {
       icon: Plus,
       label: 'Опубликовать',
-      path: '/create-driver-ride',
-      isActive: location.pathname === '/create-driver-ride'
+      path: '/create-ride-wizard',
+      isActive: location.pathname === '/create-ride-wizard'
     },
     {
       icon: Car,
