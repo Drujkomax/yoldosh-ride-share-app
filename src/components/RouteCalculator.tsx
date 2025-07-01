@@ -47,35 +47,108 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
 
   // Проверяем доступность Google Maps API
   const checkGoogleMapsAvailability = () => {
-    return typeof window !== 'undefined' && window.google && window.google.maps;
+    return typeof window !== 'undefined' && 
+           window.google && 
+           window.google.maps && 
+           window.google.maps.Map &&
+           window.google.maps.DirectionsService;
+  };
+
+  // Ожидание загрузки Google Maps API
+  const waitForGoogleMaps = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (checkGoogleMapsAvailability()) {
+        resolve();
+        return;
+      }
+
+      let attempts = 0;
+      const maxAttempts = 50; // 10 секунд ожидания
+      
+      const checkInterval = setInterval(() => {
+        attempts++;
+        
+        if (checkGoogleMapsAvailability()) {
+          clearInterval(checkInterval);
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(checkInterval);
+          reject(new Error('Google Maps API не удалось загрузить за отведенное время'));
+        }
+      }, 200);
+    });
+  };
+
+  // Загрузка Google Maps скрипта
+  const loadGoogleMapsScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Получаем API ключ из localStorage
+      const apiKey = localStorage.getItem('google_maps_api_key');
+      if (!apiKey) {
+        reject(new Error('Google Maps API ключ не найден в localStorage'));
+        return;
+      }
+
+      // Проверяем, не загружен ли уже скрипт
+      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+      if (existingScript) {
+        waitForGoogleMaps().then(resolve).catch(reject);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
+      script.async = true;
+      script.defer = true;
+      
+      script.onload = () => {
+        waitForGoogleMaps().then(resolve).catch(reject);
+      };
+      
+      script.onerror = () => {
+        reject(new Error('Не удалось загрузить Google Maps API. Проверьте API ключ.'));
+      };
+      
+      document.head.appendChild(script);
+    });
   };
 
   // Инициализация карты и расчет маршрутов
   useEffect(() => {
     const initializeMap = async () => {
-      if (!mapRef.current || !checkGoogleMapsAvailability()) {
-        setError('Google Maps API не загружен');
+      if (!mapRef.current) {
+        setError('Элемент карты не найден');
         setIsLoading(false);
         return;
       }
 
-      // Создаем карту
-      const map = new window.google.maps.Map(mapRef.current, {
-        zoom: 8,
-        center: { lat: (startPoint[0] + endPoint[0]) / 2, lng: (startPoint[1] + endPoint[1]) / 2 },
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-      });
-
-      mapInstanceRef.current = map;
-
-      // Инициализируем сервис маршрутов
-      const directionsService = new window.google.maps.DirectionsService();
-      directionsServiceRef.current = directionsService;
-
-      // Запрашиваем маршруты
       try {
+        // Ожидаем загрузки Google Maps API
+        if (!checkGoogleMapsAvailability()) {
+          console.log('Загружаем Google Maps API...');
+          await loadGoogleMapsScript();
+        }
+
+        console.log('Google Maps API загружен, инициализируем карту...');
+
+        // Создаем карту
+        const map = new window.google.maps.Map(mapRef.current, {
+          zoom: 8,
+          center: { lat: (startPoint[0] + endPoint[0]) / 2, lng: (startPoint[1] + endPoint[1]) / 2 },
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        });
+
+        mapInstanceRef.current = map;
+
+        // Инициализируем сервис маршрутов
+        const directionsService = new window.google.maps.DirectionsService();
+        directionsServiceRef.current = directionsService;
+
+        console.log('Запрашиваем маршруты...');
+
+        // Запрашиваем маршруты
         const request: google.maps.DirectionsRequest = {
           origin: { lat: startPoint[0], lng: startPoint[1] },
           destination: { lat: endPoint[0], lng: endPoint[1] },
@@ -87,6 +160,8 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
         };
 
         directionsService.route(request, (result, status) => {
+          console.log('Результат запроса маршрута:', status, result);
+          
           if (status === 'OK' && result && result.routes && result.routes.length > 0) {
             const routeOptions: RouteOption[] = result.routes.map((route, index) => {
               const leg = route.legs[0];
@@ -106,6 +181,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
               };
             });
 
+            console.log('Найдено маршрутов:', routeOptions.length);
             setRoutes(routeOptions);
             
             // Выбираем первый маршрут по умолчанию
@@ -115,13 +191,13 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
             }
           } else {
             console.error('Ошибка расчета маршрута:', status);
-            setError('Не удалось рассчитать маршрут. Проверьте выбранные точки.');
+            setError(`Не удалось рассчитать маршрут: ${status}. Проверьте выбранные точки.`);
           }
           setIsLoading(false);
         });
       } catch (error) {
-        console.error('Ошибка расчета маршрута:', error);
-        setError('Не удалось рассчитать маршрут. Проверьте выбранные точки.');
+        console.error('Ошибка инициализации карты:', error);
+        setError(error instanceof Error ? error.message : 'Не удалось инициализировать карту');
         setIsLoading(false);
       }
     };
@@ -161,33 +237,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
       directionsRenderersRef.current.push(renderer);
     };
 
-    const loadGoogleMaps = () => {
-      if (checkGoogleMapsAvailability()) {
-        initializeMap();
-        return;
-      }
-
-      // Получаем API ключ из localStorage
-      const apiKey = localStorage.getItem('google_maps_api_key');
-      if (!apiKey) {
-        setError('Google Maps API ключ не найден');
-        setIsLoading(false);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeMap;
-      script.onerror = () => {
-        setError('Не удалось загрузить Google Maps API');
-        setIsLoading(false);
-      };
-      document.head.appendChild(script);
-    };
-
-    loadGoogleMaps();
+    initializeMap();
 
     return () => {
       // Очистка рендереров при размонтировании
@@ -224,7 +274,7 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <h3 className="text-xl font-semibold text-gray-800 mb-2">Расчет маршрута</h3>
-            <p className="text-gray-600">Подождите, ищем лучшие варианты...</p>
+            <p className="text-gray-600">Загружаем Google Maps и ищем лучшие варианты...</p>
           </div>
         </Card>
       </div>
@@ -237,8 +287,14 @@ const RouteCalculator: React.FC<RouteCalculatorProps> = ({
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-3xl p-8">
           <div className="text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Ошибка</h3>
-            <p className="text-gray-600">{error}</p>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Ошибка загрузки</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Перезагрузить страницу
+            </Button>
           </div>
         </Card>
       </div>
