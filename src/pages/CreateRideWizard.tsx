@@ -55,6 +55,8 @@ interface RouteInfo {
 const CreateRideWizard = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
+  const [showToCitySelector, setShowToCitySelector] = useState(false);
   const [rideData, setRideData] = useState<RideFormData>({
     departure_date: '',
     departure_time: '',
@@ -96,6 +98,20 @@ const CreateRideWizard = () => {
     setRideData(prevData => ({
       ...prevData,
       [field]: value
+    }));
+  };
+
+  const handleFromCitySelect = (city: string) => {
+    setRideData(prevData => ({
+      ...prevData,
+      from_city: city
+    }));
+  };
+
+  const handleToCitySelect = (city: string) => {
+    setRideData(prevData => ({
+      ...prevData,
+      to_city: city
     }));
   };
 
@@ -239,21 +255,25 @@ const CreateRideWizard = () => {
                   <label htmlFor="from_city" className="block text-sm font-medium text-gray-700">
                     Город отправления
                   </label>
-                  <UzbekistanCitySelector
-                    id="from_city"
-                    value={rideData.from_city}
-                    onChange={(city) => handleInputChange(currentStep, 'from_city', city)}
-                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFromCitySelector(true)}
+                    className="mt-1 w-full justify-start text-left h-auto p-3"
+                  >
+                    {rideData.from_city || 'Выберите город отправления'}
+                  </Button>
                 </div>
                 <div>
                   <label htmlFor="to_city" className="block text-sm font-medium text-gray-700">
                     Город прибытия
                   </label>
-                  <UzbekistanCitySelector
-                    id="to_city"
-                    value={rideData.to_city}
-                    onChange={(city) => handleInputChange(currentStep, 'to_city', city)}
-                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowToCitySelector(true)}
+                    className="mt-1 w-full justify-start text-left h-auto p-3"
+                  >
+                    {rideData.to_city || 'Выберите город прибытия'}
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -530,6 +550,23 @@ const CreateRideWizard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* City Selectors */}
+      <UzbekistanCitySelector
+        isOpen={showFromCitySelector}
+        onClose={() => setShowFromCitySelector(false)}
+        onCitySelect={handleFromCitySelect}
+        title="Выберите город отправления"
+        currentCity={rideData.from_city}
+      />
+
+      <UzbekistanCitySelector
+        isOpen={showToCitySelector}
+        onClose={() => setShowToCitySelector(false)}
+        onCitySelect={handleToCitySelect}
+        title="Выберите город прибытия"
+        currentCity={rideData.to_city}
+      />
     </div>
   );
 };
