@@ -8,6 +8,16 @@ import GoogleMapsApiKeyInput from '@/components/GoogleMapsApiKeyInput';
 import UzbekistanCitySelector from '@/components/UzbekistanCitySelector';
 import GoogleMapPicker from '@/components/GoogleMapPicker';
 import RouteCalculator from '@/components/RouteCalculator';
+import EnhancedLocationSearch from '@/components/EnhancedLocationSearch';
+import IntermediateStopsManager from '@/components/IntermediateStopsManager';
+
+interface StopLocation {
+  id: string;
+  name: string;
+  description: string;
+  coordinates: [number, number];
+  selected: boolean;
+}
 
 interface RideFormData {
   departure_date: string;
@@ -28,6 +38,7 @@ interface RideFormData {
   pickup_instructions: string;
   dropoff_instructions: string;
   comfort_settings: ComfortSettings;
+  intermediate_stops: StopLocation[];
 }
 
 interface ComfortSettings {
@@ -55,8 +66,20 @@ interface RouteInfo {
 const CreateRideWizard = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [showFromCitySelector, setShowFromCitySelector] = useState(false);
-  const [showToCitySelector, setShowToCitySelector] = useState(false);
+  const [showFromLocationSearch, setShowFromLocationSearch] = useState(false);
+  const [showToLocationSearch, setShowToLocationSearch] = useState(false);
+  const [showPickupLocationSearch, setShowPickupLocationSearch] = useState(false);
+  const [showDropoffLocationSearch, setShowDropoffLocationSearch] = useState(false);
+  const [showStopsManager, setShowStopsManager] = useState(false);
+  // Доступные промежуточные остановки (будут загружаться из API)
+  const [availableStops] = useState<StopLocation[]>([
+    { id: '1', name: 'Метро Чорсу', description: 'Станция метро Чорсу, Ташкент', coordinates: [41.3264, 69.2401], selected: false },
+    { id: '2', name: 'Аэропорт Ташкент', description: 'Международный аэропорт им. Ислама Каримова', coordinates: [41.2579, 69.2811], selected: false },
+    { id: '3', name: 'Ташкент Сити', description: 'Международный бизнес-центр, Ташкент', coordinates: [41.3111, 69.2797], selected: false },
+    { id: '4', name: 'Железнодорожный вокзал', description: 'Центральный ж/д вокзал, Ташкент', coordinates: [41.2975, 69.2727], selected: false },
+    { id: '5', name: 'Мега Плянет', description: 'Торговый центр Мега Плянет, Ташкент', coordinates: [41.2849, 69.2035], selected: false },
+  ]);
+
   const [rideData, setRideData] = useState<RideFormData>({
     departure_date: '',
     departure_time: '',
@@ -80,7 +103,8 @@ const CreateRideWizard = () => {
       smoking_allowed: false,
       pets_allowed: false,
       air_conditioning: true
-    }
+    },
+    intermediate_stops: []
   });
 
   // Автоматически устанавливаем API ключ при загрузке
@@ -101,17 +125,48 @@ const CreateRideWizard = () => {
     }));
   };
 
-  const handleFromCitySelect = (city: string) => {
+  const handleFromLocationSelect = (location: any) => {
     setRideData(prevData => ({
       ...prevData,
-      from_city: city
+      from_city: location.name,
+      pickup_coordinates: location.coordinates,
+      pickup_address: location.description
     }));
+    setShowFromLocationSearch(false);
   };
 
-  const handleToCitySelect = (city: string) => {
+  const handleToLocationSelect = (location: any) => {
     setRideData(prevData => ({
       ...prevData,
-      to_city: city
+      to_city: location.name,
+      dropoff_coordinates: location.coordinates,
+      dropoff_address: location.description
+    }));
+    setShowToLocationSearch(false);
+  };
+
+  const handlePickupLocationSelect = (location: any) => {
+    setRideData(prevData => ({
+      ...prevData,
+      pickup_coordinates: location.coordinates,
+      pickup_address: location.name
+    }));
+    setShowPickupLocationSearch(false);
+  };
+
+  const handleDropoffLocationSelect = (location: any) => {
+    setRideData(prevData => ({
+      ...prevData,
+      dropoff_coordinates: location.coordinates,
+      dropoff_address: location.name
+    }));
+    setShowDropoffLocationSearch(false);
+  };
+
+  const handleStopsChange = (stops: StopLocation[]) => {
+    setRideData(prevData => ({
+      ...prevData,
+      intermediate_stops: stops
     }));
   };
 
@@ -157,14 +212,16 @@ const CreateRideWizard = () => {
       case 3:
         return rideData.from_city !== '' && rideData.to_city !== '';
       case 4:
-        return rideData.available_seats > 0 && rideData.price_per_seat >= 0;
-      case 5:
         return rideData.pickup_address !== '';
-      case 6:
+      case 5:
         return rideData.dropoff_address !== '';
+      case 6:
+        return true; // Промежуточные остановки опциональны
       case 7:
-        return rideData.route_info !== null;
+        return rideData.available_seats > 0 && rideData.price_per_seat >= 0;
       case 8:
+        return rideData.route_info !== null;
+      case 9:
         return true;
       default:
         return false;
@@ -244,42 +301,159 @@ const CreateRideWizard = () => {
       case 3:
         return (
           <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Выберите города отправления и прибытия
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="from_city" className="block text-sm font-medium text-gray-700">
-                    Город отправления
-                  </label>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFromCitySelector(true)}
-                    className="mt-1 w-full justify-start text-left h-auto p-3"
-                  >
-                    {rideData.from_city || 'Выберите город отправления'}
-                  </Button>
-                </div>
-                <div>
-                  <label htmlFor="to_city" className="block text-sm font-medium text-gray-700">
-                    Город прибытия
-                  </label>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowToCitySelector(true)}
-                    className="mt-1 w-full justify-start text-left h-auto p-3"
-                  >
-                    {rideData.to_city || 'Выберите город прибытия'}
-                  </Button>
-                </div>
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">Откуда вы едете?</h2>
+              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-gray-400" />
+                <span onClick={() => setShowFromLocationSearch(true)} className="flex-1 cursor-pointer">
+                  {rideData.from_city || 'Введите полный адрес'}
+                </span>
               </div>
-            </CardContent>
+              <Button
+                variant="ghost"
+                onClick={() => setShowFromLocationSearch(true)}
+                className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-blue-600 font-medium">
+                    Использовать текущее местоположение
+                  </span>
+                </div>
+              </Button>
+              {rideData.from_city && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-700">{rideData.from_city}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         );
       case 4:
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">Где вы хотите забрать пассажиров?</h2>
+              <div className="bg-blue-50 rounded-xl p-4 text-left">
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-blue-100 rounded-full mt-1">
+                    <span className="text-blue-600 text-xs">?</span>
+                  </div>
+                  <div>
+                    <p className="text-blue-800 font-medium">Зачем точное местоположение?</p>
+                    <p className="text-blue-700 text-sm mt-1">
+                      Это поможет пассажирам легче найти вас
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-gray-400" />
+                <span onClick={() => setShowPickupLocationSearch(true)} className="flex-1 cursor-pointer">
+                  {rideData.pickup_address || 'Введите полный адрес'}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">Куда вы едете?</h2>
+              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-gray-400" />
+                <span onClick={() => setShowToLocationSearch(true)} className="flex-1 cursor-pointer">
+                  {rideData.to_city || 'Введите полный адрес'}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => setShowToLocationSearch(true)}
+                className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-blue-600 font-medium">
+                    Использовать текущее местоположение
+                  </span>
+                </div>
+              </Button>
+              {rideData.to_city && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-700">{rideData.to_city}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">Где вы хотите высадить пассажиров?</h2>
+              <div className="bg-blue-50 rounded-xl p-4 text-left">
+                <div className="flex items-start space-x-3">
+                  <div className="p-1 bg-blue-100 rounded-full mt-1">
+                    <span className="text-blue-600 text-xs">?</span>
+                  </div>
+                  <div>
+                    <p className="text-blue-800 font-medium">Зачем точное местоположение?</p>
+                    <p className="text-blue-700 text-sm mt-1">
+                      Это поможет пассажирам точно знать место высадки
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
+                <MapPin className="h-5 w-5 text-gray-400" />
+                <span onClick={() => setShowDropoffLocationSearch(true)} className="flex-1 cursor-pointer">
+                  {rideData.dropoff_address || 'Введите полный адрес'}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      case 7:
+        return (
+          <div className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-gray-800">Добавьте остановки для привлечения большего количества пассажиров</h2>
+              <Button
+                onClick={() => setShowStopsManager(true)}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
+              >
+                <MapPin className="h-5 w-5 mr-2" />
+                Управление остановками {rideData.intermediate_stops.length > 0 && `(${rideData.intermediate_stops.length})`}
+              </Button>
+              {rideData.intermediate_stops.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium text-gray-600">Выбранные остановки:</h3>
+                  {rideData.intermediate_stops.map((stop) => (
+                    <div key={stop.id} className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                      <MapPin className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <div className="font-medium text-gray-900">{stop.name}</div>
+                        <div className="text-sm text-gray-500">{stop.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 8:
         return (
           <div className="space-y-6">
             <CardHeader>
@@ -315,45 +489,7 @@ const CreateRideWizard = () => {
             </CardContent>
           </div>
         );
-      case 5:
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Выберите место посадки
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <GoogleMapPicker
-                onLocationSelect={(coordinates, address) => handleLocationSelect(currentStep, coordinates, address)}
-                initialLocation={[41.2995, 69.2401]} // Ташкент
-                initialAddress={rideData.pickup_address}
-                title="Укажите место посадки"
-                placeholder="Начните вводить адрес..."
-              />
-            </CardContent>
-          </div>
-        );
-      case 6:
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Выберите место высадки
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <GoogleMapPicker
-                onLocationSelect={(coordinates, address) => handleLocationSelect(currentStep, coordinates, address)}
-                initialLocation={[41.2995, 69.2401]} // Ташкент
-                initialAddress={rideData.dropoff_address}
-                title="Укажите место высадки"
-                placeholder="Начните вводить адрес..."
-              />
-            </CardContent>
-          </div>
-        );
-      case 7:
+      case 9:
         return (
           <div className="space-y-6">
             <CardHeader>
@@ -379,7 +515,7 @@ const CreateRideWizard = () => {
             </CardContent>
           </div>
         );
-      case 8:
+      case 10:
         return (
           <div className="space-y-6">
             <CardHeader>
@@ -551,22 +687,49 @@ const CreateRideWizard = () => {
         </Card>
       </div>
 
-      {/* City Selectors */}
-      <UzbekistanCitySelector
-        isOpen={showFromCitySelector}
-        onClose={() => setShowFromCitySelector(false)}
-        onCitySelect={handleFromCitySelect}
-        title="Выберите город отправления"
-        currentCity={rideData.from_city}
-      />
+      {/* Location Search Modals */}
+      {showFromLocationSearch && (
+        <EnhancedLocationSearch
+          title="Откуда вы едете?"
+          onLocationSelect={handleFromLocationSelect}
+          onBack={() => setShowFromLocationSearch(false)}
+        />
+      )}
 
-      <UzbekistanCitySelector
-        isOpen={showToCitySelector}
-        onClose={() => setShowToCitySelector(false)}
-        onCitySelect={handleToCitySelect}
-        title="Выберите город прибытия"
-        currentCity={rideData.to_city}
-      />
+      {showToLocationSearch && (
+        <EnhancedLocationSearch
+          title="Куда вы едете?"
+          onLocationSelect={handleToLocationSelect}
+          onBack={() => setShowToLocationSearch(false)}
+        />
+      )}
+
+      {showPickupLocationSearch && (
+        <EnhancedLocationSearch
+          title="Где вы хотите забрать пассажиров?"
+          onLocationSelect={handlePickupLocationSelect}
+          onBack={() => setShowPickupLocationSearch(false)}
+        />
+      )}
+
+      {showDropoffLocationSearch && (
+        <EnhancedLocationSearch
+          title="Где вы хотите высадить пассажиров?"
+          onLocationSelect={handleDropoffLocationSelect}
+          onBack={() => setShowDropoffLocationSearch(false)}
+        />
+      )}
+
+      {showStopsManager && (
+        <IntermediateStopsManager
+          title="Добавьте остановки"
+          availableStops={availableStops}
+          selectedStops={rideData.intermediate_stops}
+          onStopsChange={handleStopsChange}
+          onBack={() => setShowStopsManager(false)}
+          onContinue={() => setShowStopsManager(false)}
+        />
+      )}
     </div>
   );
 };
