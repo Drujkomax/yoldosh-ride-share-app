@@ -10,6 +10,10 @@ import GoogleMapPicker from '@/components/GoogleMapPicker';
 import RouteCalculator from '@/components/RouteCalculator';
 import EnhancedLocationSearch from '@/components/EnhancedLocationSearch';
 import IntermediateStopsManager from '@/components/IntermediateStopsManager';
+import AddressSearchPage from '@/components/AddressSearchPage';
+import MapSelectionPage from '@/components/MapSelectionPage';
+import FullScreenCalendar from '@/components/FullScreenCalendar';
+import TimePickerPage from '@/components/TimePickerPage';
 
 interface StopLocation {
   id: string;
@@ -66,11 +70,15 @@ interface RouteInfo {
 const CreateRideWizard = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [showFromLocationSearch, setShowFromLocationSearch] = useState(false);
-  const [showToLocationSearch, setShowToLocationSearch] = useState(false);
-  const [showPickupLocationSearch, setShowPickupLocationSearch] = useState(false);
-  const [showDropoffLocationSearch, setShowDropoffLocationSearch] = useState(false);
-  const [showStopsManager, setShowStopsManager] = useState(false);
+  
+  // New flow states
+  const [showAddressSearch, setShowAddressSearch] = useState(false);
+  const [showMapSelection, setShowMapSelection] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to' | 'pickup' | 'dropoff'>('from');
+  const [tempAddress, setTempAddress] = useState('');
+  const [tempCoordinates, setTempCoordinates] = useState<[number, number]>([0, 0]);
   // Доступные промежуточные остановки (будут загружаться из API)
   const [availableStops] = useState<StopLocation[]>([
     { id: '1', name: 'Метро Чорсу', description: 'Станция метро Чорсу, Ташкент', coordinates: [41.3264, 69.2401], selected: false },
@@ -125,43 +133,6 @@ const CreateRideWizard = () => {
     }));
   };
 
-  const handleFromLocationSelect = (location: any) => {
-    setRideData(prevData => ({
-      ...prevData,
-      from_city: location.name,
-      pickup_coordinates: location.coordinates,
-      pickup_address: location.description
-    }));
-    setShowFromLocationSearch(false);
-  };
-
-  const handleToLocationSelect = (location: any) => {
-    setRideData(prevData => ({
-      ...prevData,
-      to_city: location.name,
-      dropoff_coordinates: location.coordinates,
-      dropoff_address: location.description
-    }));
-    setShowToLocationSearch(false);
-  };
-
-  const handlePickupLocationSelect = (location: any) => {
-    setRideData(prevData => ({
-      ...prevData,
-      pickup_coordinates: location.coordinates,
-      pickup_address: location.name
-    }));
-    setShowPickupLocationSearch(false);
-  };
-
-  const handleDropoffLocationSelect = (location: any) => {
-    setRideData(prevData => ({
-      ...prevData,
-      dropoff_coordinates: location.coordinates,
-      dropoff_address: location.name
-    }));
-    setShowDropoffLocationSearch(false);
-  };
 
   const handleStopsChange = (stops: StopLocation[]) => {
     setRideData(prevData => ({
@@ -226,6 +197,61 @@ const CreateRideWizard = () => {
       default:
         return false;
     }
+  };
+
+  const handlePublishClick = () => {
+    setCurrentAddressType('from');
+    setShowAddressSearch(true);
+  };
+
+  const handleAddressSelect = (address: string, coordinates: [number, number]) => {
+    setTempAddress(address);
+    setTempCoordinates(coordinates);
+    setShowAddressSearch(false);
+    setShowMapSelection(true);
+  };
+
+  const handleMapLocationSelect = (coordinates: [number, number], address: string) => {
+    // Update ride data based on current address type
+    if (currentAddressType === 'from') {
+      setRideData(prev => ({
+        ...prev,
+        from_city: address,
+        pickup_coordinates: coordinates,
+        pickup_address: address
+      }));
+      setCurrentAddressType('to');
+      setShowMapSelection(false);
+      setShowAddressSearch(true);
+    } else if (currentAddressType === 'to') {
+      setRideData(prev => ({
+        ...prev,
+        to_city: address,
+        dropoff_coordinates: coordinates,
+        dropoff_address: address
+      }));
+      setShowMapSelection(false);
+      setShowCalendar(true);
+    }
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setRideData(prev => ({
+      ...prev,
+      departure_date: date.toISOString().split('T')[0]
+    }));
+    setShowCalendar(false);
+    setShowTimePicker(true);
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setRideData(prev => ({
+      ...prev,
+      departure_time: time
+    }));
+    setShowTimePicker(false);
+    // Continue with original wizard flow
+    setCurrentStep(7); // Jump to seats/price step
   };
 
   const handleCreateRide = async () => {
@@ -305,13 +331,12 @@ const CreateRideWizard = () => {
               <h2 className="text-2xl font-bold text-gray-800">Откуда вы едете?</h2>
               <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span onClick={() => setShowFromLocationSearch(true)} className="flex-1 cursor-pointer">
+                <span className="flex-1 cursor-pointer">
                   {rideData.from_city || 'Введите полный адрес'}
                 </span>
               </div>
               <Button
                 variant="ghost"
-                onClick={() => setShowFromLocationSearch(true)}
                 className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
               >
                 <div className="flex items-center space-x-3">
@@ -354,7 +379,7 @@ const CreateRideWizard = () => {
               </div>
               <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span onClick={() => setShowPickupLocationSearch(true)} className="flex-1 cursor-pointer">
+                <span className="flex-1 cursor-pointer">
                   {rideData.pickup_address || 'Введите полный адрес'}
                 </span>
               </div>
@@ -368,13 +393,12 @@ const CreateRideWizard = () => {
               <h2 className="text-2xl font-bold text-gray-800">Куда вы едете?</h2>
               <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span onClick={() => setShowToLocationSearch(true)} className="flex-1 cursor-pointer">
+                <span className="flex-1 cursor-pointer">
                   {rideData.to_city || 'Введите полный адрес'}
                 </span>
               </div>
               <Button
                 variant="ghost"
-                onClick={() => setShowToLocationSearch(true)}
                 className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
               >
                 <div className="flex items-center space-x-3">
@@ -417,7 +441,7 @@ const CreateRideWizard = () => {
               </div>
               <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
                 <MapPin className="h-5 w-5 text-gray-400" />
-                <span onClick={() => setShowDropoffLocationSearch(true)} className="flex-1 cursor-pointer">
+                <span className="flex-1 cursor-pointer">
                   {rideData.dropoff_address || 'Введите полный адрес'}
                 </span>
               </div>
@@ -430,7 +454,6 @@ const CreateRideWizard = () => {
             <div className="text-center space-y-4">
               <h2 className="text-2xl font-bold text-gray-800">Добавьте остановки для привлечения большего количества пассажиров</h2>
               <Button
-                onClick={() => setShowStopsManager(true)}
                 className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
               >
                 <MapPin className="h-5 w-5 mr-2" />
@@ -663,7 +686,15 @@ const CreateRideWizard = () => {
                 Назад
               </Button>
               
-              {currentStep < 8 ? (
+              {currentStep === 1 ? (
+                <Button
+                  onClick={handlePublishClick}
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Опубликовать
+                </Button>
+              ) : currentStep < 8 ? (
                 <Button
                   onClick={() => setCurrentStep(Math.min(8, currentStep + 1))}
                   disabled={!canProceedToNextStep()}
@@ -687,47 +718,50 @@ const CreateRideWizard = () => {
         </Card>
       </div>
 
-      {/* Location Search Modals */}
-      {showFromLocationSearch && (
-        <EnhancedLocationSearch
-          title="Откуда вы едете?"
-          onLocationSelect={handleFromLocationSelect}
-          onBack={() => setShowFromLocationSearch(false)}
+
+      {/* New Flow Modals */}
+      {showAddressSearch && (
+        <AddressSearchPage
+          title={currentAddressType === 'from' ? 'Откуда вы едете?' : 'Куда вы едете?'}
+          placeholder={currentAddressType === 'from' ? 'Введите адрес отправления' : 'Введите адрес назначения'}
+          onAddressSelect={handleAddressSelect}
+          onBack={() => setShowAddressSearch(false)}
         />
       )}
 
-      {showToLocationSearch && (
-        <EnhancedLocationSearch
-          title="Куда вы едете?"
-          onLocationSelect={handleToLocationSelect}
-          onBack={() => setShowToLocationSearch(false)}
+      {showMapSelection && (
+        <MapSelectionPage
+          title={currentAddressType === 'from' ? 'Выберите точку отправления' : 'Выберите точку назначения'}
+          initialAddress={tempAddress}
+          initialCoordinates={tempCoordinates}
+          onLocationSelect={handleMapLocationSelect}
+          onBack={() => {
+            setShowMapSelection(false);
+            setShowAddressSearch(true);
+          }}
         />
       )}
 
-      {showPickupLocationSearch && (
-        <EnhancedLocationSearch
-          title="Где вы хотите забрать пассажиров?"
-          onLocationSelect={handlePickupLocationSelect}
-          onBack={() => setShowPickupLocationSearch(false)}
+      {showCalendar && (
+        <FullScreenCalendar
+          selectedDate={rideData.departure_date ? new Date(rideData.departure_date) : undefined}
+          onDateSelect={handleDateSelect}
+          onBack={() => {
+            setShowCalendar(false);
+            setCurrentAddressType('to');
+            setShowAddressSearch(true);
+          }}
         />
       )}
 
-      {showDropoffLocationSearch && (
-        <EnhancedLocationSearch
-          title="Где вы хотите высадить пассажиров?"
-          onLocationSelect={handleDropoffLocationSelect}
-          onBack={() => setShowDropoffLocationSearch(false)}
-        />
-      )}
-
-      {showStopsManager && (
-        <IntermediateStopsManager
-          title="Добавьте остановки"
-          availableStops={availableStops}
-          selectedStops={rideData.intermediate_stops}
-          onStopsChange={handleStopsChange}
-          onBack={() => setShowStopsManager(false)}
-          onContinue={() => setShowStopsManager(false)}
+      {showTimePicker && (
+        <TimePickerPage
+          selectedTime={rideData.departure_time}
+          onTimeSelect={handleTimeSelect}
+          onBack={() => {
+            setShowTimePicker(false);
+            setShowCalendar(true);
+          }}
         />
       )}
     </div>
