@@ -582,6 +582,7 @@ export type Database = {
           estimated_duration_minutes: number | null
           from_city: string
           id: string
+          instant_booking_enabled: boolean | null
           intermediate_stops: Json | null
           intermediate_stops_addresses: Json | null
           intermediate_stops_coordinates: Json | null
@@ -595,6 +596,7 @@ export type Database = {
           precise_pickup_latitude: number | null
           precise_pickup_longitude: number | null
           price_per_seat: number
+          return_trip_id: string | null
           route_data: Json | null
           route_polyline: string | null
           status: string | null
@@ -623,6 +625,7 @@ export type Database = {
           estimated_duration_minutes?: number | null
           from_city: string
           id?: string
+          instant_booking_enabled?: boolean | null
           intermediate_stops?: Json | null
           intermediate_stops_addresses?: Json | null
           intermediate_stops_coordinates?: Json | null
@@ -636,6 +639,7 @@ export type Database = {
           precise_pickup_latitude?: number | null
           precise_pickup_longitude?: number | null
           price_per_seat: number
+          return_trip_id?: string | null
           route_data?: Json | null
           route_polyline?: string | null
           status?: string | null
@@ -664,6 +668,7 @@ export type Database = {
           estimated_duration_minutes?: number | null
           from_city?: string
           id?: string
+          instant_booking_enabled?: boolean | null
           intermediate_stops?: Json | null
           intermediate_stops_addresses?: Json | null
           intermediate_stops_coordinates?: Json | null
@@ -677,6 +682,7 @@ export type Database = {
           precise_pickup_latitude?: number | null
           precise_pickup_longitude?: number | null
           price_per_seat?: number
+          return_trip_id?: string | null
           route_data?: Json | null
           route_polyline?: string | null
           status?: string | null
@@ -685,6 +691,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_return_trip"
+            columns: ["return_trip_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "rides_car_id_fkey"
             columns: ["car_id"]

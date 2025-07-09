@@ -18,6 +18,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ManageCarsPage from "./components/ManageCarsPage";
 import NotFound from "./pages/NotFound";
 import CreateRideWizard from "./pages/CreateRideWizard";
+import RideCreationFlow from "./pages/RideCreationFlow";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/manage-cars" element={<ManageCarsPage />} />
                 <Route path="/create-ride-wizard" element={<CreateRideWizard />} />
+                <Route path="/ride-creation-flow" element={<RideCreationFlow />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
