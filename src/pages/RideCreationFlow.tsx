@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useRides } from '@/hooks/useRides';
 import AddressSearchPage from '@/components/AddressSearchPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
@@ -32,11 +33,13 @@ interface RideFormData {
 
 const RideCreationFlow = () => {
   const navigate = useNavigate();
+  const { createRide, isCreating } = useRides();
   const [user, setUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepHistory, setStepHistory] = useState<number[]>([]);
   const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to'>('from');
   const [userHasPhoto, setUserHasPhoto] = useState(false);
+  const [isUserLoading, setIsUserLoading] = useState(true);
   
   const [rideData, setRideData] = useState<RideFormData>({
     departure_date: '',
@@ -58,10 +61,17 @@ const RideCreationFlow = () => {
   // Get current user and check if user has profile photo
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      
-      if (user) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          console.log('RideCreationFlow - Пользователь не авторизован, редирект на авторизацию');
+          navigate('/onboarding');
+          return;
+        }
+        
+        setUser(user);
+        
         const { data } = await supabase
           .from('profiles')
           .select('avatar_url')
@@ -69,11 +79,16 @@ const RideCreationFlow = () => {
           .single();
         
         setUserHasPhoto(!!data?.avatar_url);
+      } catch (error) {
+        console.error('RideCreationFlow - Ошибка получения пользователя:', error);
+        navigate('/onboarding');
+      } finally {
+        setIsUserLoading(false);
       }
     };
     
     getCurrentUser();
-  }, []);
+  }, [navigate]);
 
   const goToNextStep = () => {
     setStepHistory(prev => [...prev, currentStep]);
@@ -184,65 +199,52 @@ const RideCreationFlow = () => {
   };
 
   const createRides = async () => {
-    try {
-      // Create main ride
-      const { data: mainRide, error: mainError } = await supabase
-        .from('rides')
-        .insert({
-          driver_id: user?.id,
-          departure_date: rideData.departure_date,
-          departure_time: rideData.departure_time,
-          from_city: rideData.from_city,
-          to_city: rideData.to_city,
-          available_seats: rideData.available_seats,
-          price_per_seat: rideData.price_per_seat,
-          description: rideData.description,
-          pickup_address: rideData.pickup_address,
-          dropoff_address: rideData.dropoff_address,
-          pickup_latitude: rideData.pickup_coordinates[0],
-          pickup_longitude: rideData.pickup_coordinates[1],
-          dropoff_latitude: rideData.dropoff_coordinates[0],
-          dropoff_longitude: rideData.dropoff_coordinates[1],
-          instant_booking_enabled: rideData.instant_booking_enabled
-        })
-        .select()
-        .single();
-
-      if (mainError) throw mainError;
-
-      // Create return trip if requested
-      if (rideData.return_trip_data) {
-        const { error: returnError } = await supabase
-          .from('rides')
-          .insert({
-            driver_id: user?.id,
-            departure_date: rideData.return_trip_data.departure_date,
-            departure_time: rideData.return_trip_data.departure_time,
-            from_city: rideData.return_trip_data.from_city,
-            to_city: rideData.return_trip_data.to_city,
-            available_seats: rideData.return_trip_data.available_seats,
-            price_per_seat: rideData.return_trip_data.price_per_seat,
-            description: rideData.return_trip_data.description,
-            pickup_address: rideData.return_trip_data.pickup_address,
-            dropoff_address: rideData.return_trip_data.dropoff_address,
-            pickup_latitude: rideData.return_trip_data.pickup_coordinates[0],
-            pickup_longitude: rideData.return_trip_data.pickup_coordinates[1],
-            dropoff_latitude: rideData.return_trip_data.dropoff_coordinates[0],
-            dropoff_longitude: rideData.return_trip_data.dropoff_coordinates[1],
-            instant_booking_enabled: rideData.instant_booking_enabled,
-            return_trip_id: mainRide.id
-          });
-
-        if (returnError) throw returnError;
-      }
-
+    console.log('RideCreationFlow - Начало создания поездки, user:', user);
+    console.log('RideCreationFlow - Данные поездки:', rideData);
+    
+    if (!user?.id) {
+      console.error('RideCreationFlow - Пользователь не найден');
       toast({
-        title: "Поездка успешно создана!",
-        description: rideData.return_trip_data ? "Созданы поездки туда и обратно" : "Поездка опубликована"
+        title: "Ошибка авторизации",
+        description: "Необходимо войти в систему",
+        variant: "destructive"
       });
+      navigate('/onboarding');
+      return;
+    }
 
+    try {
+      // Создаем основную поездку через useRides hook
+      const mainRideData = {
+        driver_id: user.id,
+        departure_date: rideData.departure_date,
+        departure_time: rideData.departure_time,
+        from_city: rideData.from_city,
+        to_city: rideData.to_city,
+        available_seats: rideData.available_seats,
+        price_per_seat: rideData.price_per_seat,
+        description: rideData.description,
+        pickup_address: rideData.pickup_address,
+        dropoff_address: rideData.dropoff_address,
+        pickup_latitude: rideData.pickup_coordinates[0],
+        pickup_longitude: rideData.pickup_coordinates[1],
+        dropoff_latitude: rideData.dropoff_coordinates[0],
+        dropoff_longitude: rideData.dropoff_coordinates[1],
+        instant_booking_enabled: rideData.instant_booking_enabled,
+        status: 'active' as const
+      };
+
+      console.log('RideCreationFlow - Создание основной поездки:', mainRideData);
+
+      // Используем createRide из useRides hook - он автоматически создаст профиль если нужно
+      createRide(mainRideData);
+
+      // TODO: Добавить поддержку обратной поездки через useRides
+      // Пока что основная поездка создается через надежный hook
+      
       navigate('/driver-home');
     } catch (error) {
+      console.error('RideCreationFlow - Ошибка создания поездки:', error);
       toast({
         title: "Ошибка при создании поездки",
         description: "Попробуйте еще раз",
@@ -341,6 +343,18 @@ const RideCreationFlow = () => {
         return null;
     }
   };
+
+  // Показываем загрузку пока получаем данные пользователя
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Загрузка...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background relative">
