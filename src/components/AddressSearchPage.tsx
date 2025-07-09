@@ -52,7 +52,7 @@ const AddressSearchPage = ({
         {
           input: searchQuery,
           componentRestrictions: { country: 'uz' },
-          types: ['establishment', 'geocode']
+          types: ['(cities)']
         },
         (predictions, status) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {

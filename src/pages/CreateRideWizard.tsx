@@ -11,11 +11,11 @@ import RouteCalculator from '@/components/RouteCalculator';
 import EnhancedLocationSearch from '@/components/EnhancedLocationSearch';
 import IntermediateStopsManager from '@/components/IntermediateStopsManager';
 import AddressSearchPage from '@/components/AddressSearchPage';
-import MapSelectionPage from '@/components/MapSelectionPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
 import PassengerCountPage from '@/components/PassengerCountPage';
 import PriceSettingPage from '@/components/PriceSettingPage';
+import DriverBottomNavigation from '@/components/DriverBottomNavigation';
 
 interface StopLocation {
   id: string;
@@ -75,14 +75,12 @@ const CreateRideWizard = () => {
   
   // New flow states
   const [showAddressSearch, setShowAddressSearch] = useState(false);
-  const [showMapSelection, setShowMapSelection] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showPassengerCount, setShowPassengerCount] = useState(false);
   const [showPriceSetting, setShowPriceSetting] = useState(false);
-  const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to' | 'pickup' | 'dropoff'>('from');
-  const [tempAddress, setTempAddress] = useState('');
-  const [tempCoordinates, setTempCoordinates] = useState<[number, number]>([0, 0]);
+  const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to'>('from');
+
   // Доступные промежуточные остановки (будут загружаться из API)
   const [availableStops] = useState<StopLocation[]>([
     { id: '1', name: 'Метро Чорсу', description: 'Станция метро Чорсу, Ташкент', coordinates: [41.3264, 69.2401], selected: false },
@@ -136,7 +134,6 @@ const CreateRideWizard = () => {
       [field]: value
     }));
   };
-
 
   const handleStopsChange = (stops: StopLocation[]) => {
     setRideData(prevData => ({
@@ -209,14 +206,7 @@ const CreateRideWizard = () => {
   };
 
   const handleAddressSelect = (address: string, coordinates: [number, number]) => {
-    setTempAddress(address);
-    setTempCoordinates(coordinates);
-    setShowAddressSearch(false);
-    setShowMapSelection(true);
-  };
-
-  const handleMapLocationSelect = (coordinates: [number, number], address: string) => {
-    // Update ride data based on current address type
+    // Directly update ride data without map confirmation
     if (currentAddressType === 'from') {
       setRideData(prev => ({
         ...prev,
@@ -225,7 +215,6 @@ const CreateRideWizard = () => {
         pickup_address: address
       }));
       setCurrentAddressType('to');
-      setShowMapSelection(false);
       setShowAddressSearch(true);
     } else if (currentAddressType === 'to') {
       setRideData(prev => ({
@@ -234,7 +223,7 @@ const CreateRideWizard = () => {
         dropoff_coordinates: coordinates,
         dropoff_address: address
       }));
-      setShowMapSelection(false);
+      setShowAddressSearch(false);
       setShowCalendar(true);
     }
   };
@@ -299,288 +288,26 @@ const CreateRideWizard = () => {
               <div className="bg-blue-50 rounded-xl p-4 text-left">
                 <h3 className="font-semibold text-blue-800 mb-2">Что вас ждет:</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Выбор маршрута поездки</li>
-                  <li>• Точное указание мест посадки и высадки</li>
-                  <li>• Расчет оптимального маршрута</li>
-                  <li>• Настройка деталей поездки</li>
+                  <li>• Выбор городов отправления и назначения</li>
+                  <li>• Выбор даты и времени поездки</li>
+                  <li>• Настройка количества мест и цены</li>
+                  <li>• Дополнительные настройки комфорта</li>
                 </ul>
               </div>
             </div>
           </div>
         );
-      case 2:
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Дата и время отправления
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="departure_date" className="block text-sm font-medium text-gray-700">
-                    Дата отправления
-                  </label>
-                  <input
-                    type="date"
-                    id="departure_date"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value={rideData.departure_date}
-                    onChange={(e) => handleInputChange(currentStep, 'departure_date', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="departure_time" className="block text-sm font-medium text-gray-700">
-                    Время отправления
-                  </label>
-                  <input
-                    type="time"
-                    id="departure_time"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    value={rideData.departure_time}
-                    onChange={(e) => handleInputChange(currentStep, 'departure_time', e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800">Откуда вы едете?</h2>
-              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="flex-1 cursor-pointer">
-                  {rideData.from_city || 'Введите полный адрес'}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <span className="text-blue-600 font-medium">
-                    Использовать текущее местоположение
-                  </span>
-                </div>
-              </Button>
-              {rideData.from_city && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-700">{rideData.from_city}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800">Где вы хотите забрать пассажиров?</h2>
-              <div className="bg-blue-50 rounded-xl p-4 text-left">
-                <div className="flex items-start space-x-3">
-                  <div className="p-1 bg-blue-100 rounded-full mt-1">
-                    <span className="text-blue-600 text-xs">?</span>
-                  </div>
-                  <div>
-                    <p className="text-blue-800 font-medium">Зачем точное местоположение?</p>
-                    <p className="text-blue-700 text-sm mt-1">
-                      Это поможет пассажирам легче найти вас
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="flex-1 cursor-pointer">
-                  {rideData.pickup_address || 'Введите полный адрес'}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
-      case 5:
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800">Куда вы едете?</h2>
-              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="flex-1 cursor-pointer">
-                  {rideData.to_city || 'Введите полный адрес'}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <span className="text-blue-600 font-medium">
-                    Использовать текущее местоположение
-                  </span>
-                </div>
-              </Button>
-              {rideData.to_city && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-700">{rideData.to_city}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      case 6:
-        return (
-          <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800">Где вы хотите высадить пассажиров?</h2>
-              <div className="bg-blue-50 rounded-xl p-4 text-left">
-                <div className="flex items-start space-x-3">
-                  <div className="p-1 bg-blue-100 rounded-full mt-1">
-                    <span className="text-blue-600 text-xs">?</span>
-                  </div>
-                  <div>
-                    <p className="text-blue-800 font-medium">Зачем точное местоположение?</p>
-                    <p className="text-blue-700 text-sm mt-1">
-                      Это поможет пассажирам точно знать место высадки
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-100 rounded-2xl p-4 text-gray-500 text-left flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-gray-400" />
-                <span className="flex-1 cursor-pointer">
-                  {rideData.dropoff_address || 'Введите полный адрес'}
-                </span>
-              </div>
-            </div>
-          </div>
-        );
+        
       case 7:
         return (
           <div className="space-y-6">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-gray-800">Добавьте остановки для привлечения большего количества пассажиров</h2>
-              <Button
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
-              >
-                <MapPin className="h-5 w-5 mr-2" />
-                Управление остановками {rideData.intermediate_stops.length > 0 && `(${rideData.intermediate_stops.length})`}
-              </Button>
-              {rideData.intermediate_stops.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-gray-600">Выбранные остановки:</h3>
-                  {rideData.intermediate_stops.map((stop) => (
-                    <div key={stop.id} className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                      <MapPin className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-gray-900">{stop.name}</div>
-                        <div className="text-sm text-gray-500">{stop.description}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      case 8:
-        return (
-          <div className="space-y-6">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Детали поездки
+              <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
+                <Car className="h-6 w-6 mr-2 text-blue-600" />
+                Информация о машине
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="available_seats" className="block text-sm font-medium text-gray-700">
-                  Количество мест
-                </label>
-                <input
-                  type="number"
-                  id="available_seats"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  value={rideData.available_seats}
-                  onChange={(e) => handleInputChange(currentStep, 'available_seats', parseInt(e.target.value))}
-                />
-              </div>
-              <div>
-                <label htmlFor="price_per_seat" className="block text-sm font-medium text-gray-700">
-                  Цена за место (UZS)
-                </label>
-                <input
-                  type="number"
-                  id="price_per_seat"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  value={rideData.price_per_seat}
-                  onChange={(e) => handleInputChange(currentStep, 'price_per_seat', parseFloat(e.target.value))}
-                />
-              </div>
-            </CardContent>
-          </div>
-        );
-      case 9:
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Маршрут
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {rideData.pickup_coordinates[0] === 0 || rideData.dropoff_coordinates[0] === 0 ? (
-                <div className="text-center p-6 text-gray-500">
-                  <MapPin className="h-10 w-10 mx-auto mb-4" />
-                  <p>Пожалуйста, выберите места посадки и высадки, чтобы рассчитать маршрут.</p>
-                </div>
-              ) : (
-                <RouteCalculator
-                  startPoint={rideData.pickup_coordinates}
-                  endPoint={rideData.dropoff_coordinates}
-                  startAddress={rideData.pickup_address}
-                  endAddress={rideData.dropoff_address}
-                  onRouteSelect={handleRouteSelect}
-                />
-              )}
-            </CardContent>
-          </div>
-        );
-      case 10:
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold text-gray-800">
-                Дополнительная информация
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Описание поездки
-                </label>
-                <textarea
-                  id="description"
-                  rows={3}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                  value={rideData.description}
-                  onChange={(e) => handleInputChange(currentStep, 'description', e.target.value)}
-                />
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="car_model" className="block text-sm font-medium text-gray-700">
@@ -590,6 +317,7 @@ const CreateRideWizard = () => {
                     type="text"
                     id="car_model"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    placeholder="Например: Toyota Camry"
                     value={rideData.car_model}
                     onChange={(e) => handleInputChange(currentStep, 'car_model', e.target.value)}
                   />
@@ -602,85 +330,170 @@ const CreateRideWizard = () => {
                     type="text"
                     id="car_color"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    placeholder="Например: белый"
                     value={rideData.car_color}
                     onChange={(e) => handleInputChange(currentStep, 'car_color', e.target.value)}
                   />
                 </div>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-md font-semibold text-gray-700">Настройки комфорта:</h4>
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="rounded text-blue-500 focus:ring-blue-500"
-                      checked={rideData.comfort_settings.music_allowed}
-                      onChange={(e) => handleComfortSettingsChange('music_allowed', e.target.checked)}
-                    />
-                    <span>Музыка разрешена</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="rounded text-blue-500 focus:ring-blue-500"
-                      checked={rideData.comfort_settings.smoking_allowed}
-                      onChange={(e) => handleComfortSettingsChange('smoking_allowed', e.target.checked)}
-                    />
-                    <span>Курение разрешено</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="rounded text-blue-500 focus:ring-blue-500"
-                      checked={rideData.comfort_settings.pets_allowed}
-                      onChange={(e) => handleComfortSettingsChange('pets_allowed', e.target.checked)}
-                    />
-                    <span>Животные разрешены</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      className="rounded text-blue-500 focus:ring-blue-500"
-                      checked={rideData.comfort_settings.air_conditioning}
-                      onChange={(e) => handleComfortSettingsChange('air_conditioning', e.target.checked)}
-                    />
-                    <span>Кондиционер</span>
-                  </label>
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Дополнительная информация
+                </label>
+                <textarea
+                  id="description"
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  placeholder="Расскажите пассажирам о своей поездке..."
+                  value={rideData.description}
+                  onChange={(e) => handleInputChange(currentStep, 'description', e.target.value)}
+                />
+              </div>
+            </CardContent>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-6">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-gray-800 flex items-center">
+                <MessageSquare className="h-6 w-6 mr-2 text-blue-600" />
+                Настройки комфорта
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={rideData.comfort_settings.music_allowed}
+                    onChange={(e) => handleComfortSettingsChange('music_allowed', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Музыка разрешена</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={rideData.comfort_settings.smoking_allowed}
+                    onChange={(e) => handleComfortSettingsChange('smoking_allowed', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Курение разрешено</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={rideData.comfort_settings.pets_allowed}
+                    onChange={(e) => handleComfortSettingsChange('pets_allowed', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Животные разрешены</span>
+                </label>
+                <label className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    checked={rideData.comfort_settings.air_conditioning}
+                    onChange={(e) => handleComfortSettingsChange('air_conditioning', e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Кондиционер</span>
+                </label>
+              </div>
+
+              {/* Сводка поездки */}
+              <div className="bg-blue-50 rounded-xl p-4 mt-6">
+                <h3 className="font-semibold text-blue-800 mb-3">Сводка поездки</h3>
+                <div className="space-y-2 text-sm text-blue-700">
+                  <div><strong>Маршрут:</strong> {rideData.from_city} → {rideData.to_city}</div>
+                  <div><strong>Дата:</strong> {rideData.departure_date} в {rideData.departure_time}</div>
+                  <div><strong>Места:</strong> {rideData.available_seats} пассажир(а)</div>
+                  <div><strong>Цена:</strong> {rideData.price_per_seat} сум за место</div>
+                  {rideData.car_model && <div><strong>Автомобиль:</strong> {rideData.car_model} ({rideData.car_color})</div>}
                 </div>
               </div>
             </CardContent>
           </div>
         );
+
       default:
         return null;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pb-20">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/driver-home')}
-              className="rounded-xl hover:bg-blue-50 p-3"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Назад
-            </Button>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Создание поездки
-              </h1>
-              <p className="text-slate-600 mt-1">Шаг {currentStep} из 8</p>
-            </div>
-            <div className="w-20" />
-          </div>
+  // New flow rendering
+  if (showAddressSearch) {
+    return (
+      <div className="min-h-screen bg-white relative">
+        <AddressSearchPage
+          title={currentAddressType === 'from' ? "Откуда едете?" : "Куда едете?"}
+          onAddressSelect={handleAddressSelect}
+          onBack={() => setShowAddressSearch(false)}
+          placeholder={currentAddressType === 'from' ? "Город отправления" : "Город назначения"}
+        />
+        <div className="pb-20">
+          <DriverBottomNavigation />
         </div>
       </div>
+    );
+  }
 
+  if (showCalendar) {
+    return (
+      <FullScreenCalendar
+        selectedDate={rideData.departure_date ? new Date(rideData.departure_date) : undefined}
+        onDateSelect={handleDateSelect}
+        onBack={() => {
+          setShowCalendar(false);
+          setCurrentAddressType('to');
+          setShowAddressSearch(true);
+        }}
+      />
+    );
+  }
+
+  if (showTimePicker) {
+    return (
+      <TimePickerPage
+        selectedTime={rideData.departure_time}
+        onTimeSelect={handleTimeSelect}
+        onBack={() => {
+          setShowTimePicker(false);
+          setShowCalendar(true);
+        }}
+      />
+    );
+  }
+
+  if (showPassengerCount) {
+    return (
+      <PassengerCountPage
+        selectedCount={rideData.available_seats}
+        onCountSelect={handlePassengerCountSelect}
+        onBack={() => {
+          setShowPassengerCount(false);
+          setShowTimePicker(true);
+        }}
+      />
+    );
+  }
+
+  if (showPriceSetting) {
+    return (
+      <PriceSettingPage
+        selectedPrice={rideData.price_per_seat}
+        onPriceSelect={handlePriceSelect}
+        onBack={() => {
+          setShowPriceSetting(false);
+          setShowPassengerCount(true);
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="container mx-auto px-6 py-8">
         {/* Progress Bar */}
         <div className="mb-8">
@@ -739,75 +552,6 @@ const CreateRideWizard = () => {
           </CardContent>
         </Card>
       </div>
-
-
-      {/* New Flow Modals */}
-      {showAddressSearch && (
-        <AddressSearchPage
-          title={currentAddressType === 'from' ? 'Откуда вы едете?' : 'Куда вы едете?'}
-          placeholder={currentAddressType === 'from' ? 'Введите адрес отправления' : 'Введите адрес назначения'}
-          onAddressSelect={handleAddressSelect}
-          onBack={() => setShowAddressSearch(false)}
-        />
-      )}
-
-      {showMapSelection && (
-        <MapSelectionPage
-          title={currentAddressType === 'from' ? 'Выберите точку отправления' : 'Выберите точку назначения'}
-          initialAddress={tempAddress}
-          initialCoordinates={tempCoordinates}
-          onLocationSelect={handleMapLocationSelect}
-          onBack={() => {
-            setShowMapSelection(false);
-            setShowAddressSearch(true);
-          }}
-        />
-      )}
-
-      {showCalendar && (
-        <FullScreenCalendar
-          selectedDate={rideData.departure_date ? new Date(rideData.departure_date) : undefined}
-          onDateSelect={handleDateSelect}
-          onBack={() => {
-            setShowCalendar(false);
-            setCurrentAddressType('to');
-            setShowAddressSearch(true);
-          }}
-        />
-      )}
-
-      {showTimePicker && (
-        <TimePickerPage
-          selectedTime={rideData.departure_time}
-          onTimeSelect={handleTimeSelect}
-          onBack={() => {
-            setShowTimePicker(false);
-            setShowCalendar(true);
-          }}
-        />
-      )}
-
-      {showPassengerCount && (
-        <PassengerCountPage
-          selectedCount={rideData.available_seats}
-          onCountSelect={handlePassengerCountSelect}
-          onBack={() => {
-            setShowPassengerCount(false);
-            setShowTimePicker(true);
-          }}
-        />
-      )}
-
-      {showPriceSetting && (
-        <PriceSettingPage
-          selectedPrice={rideData.price_per_seat}
-          onPriceSelect={handlePriceSelect}
-          onBack={() => {
-            setShowPriceSetting(false);
-            setShowPassengerCount(true);
-          }}
-        />
-      )}
     </div>
   );
 };
