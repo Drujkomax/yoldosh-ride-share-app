@@ -14,6 +14,8 @@ import AddressSearchPage from '@/components/AddressSearchPage';
 import MapSelectionPage from '@/components/MapSelectionPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
+import PassengerCountPage from '@/components/PassengerCountPage';
+import PriceSettingPage from '@/components/PriceSettingPage';
 
 interface StopLocation {
   id: string;
@@ -76,6 +78,8 @@ const CreateRideWizard = () => {
   const [showMapSelection, setShowMapSelection] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showPassengerCount, setShowPassengerCount] = useState(false);
+  const [showPriceSetting, setShowPriceSetting] = useState(false);
   const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to' | 'pickup' | 'dropoff'>('from');
   const [tempAddress, setTempAddress] = useState('');
   const [tempCoordinates, setTempCoordinates] = useState<[number, number]>([0, 0]);
@@ -250,8 +254,26 @@ const CreateRideWizard = () => {
       departure_time: time
     }));
     setShowTimePicker(false);
-    // Continue with original wizard flow
-    setCurrentStep(7); // Jump to seats/price step
+    setShowPassengerCount(true);
+  };
+
+  const handlePassengerCountSelect = (count: number) => {
+    setRideData(prev => ({
+      ...prev,
+      available_seats: count
+    }));
+    setShowPassengerCount(false);
+    setShowPriceSetting(true);
+  };
+
+  const handlePriceSelect = (price: number) => {
+    setRideData(prev => ({
+      ...prev,
+      price_per_seat: price
+    }));
+    setShowPriceSetting(false);
+    // Jump to wizard step 7 for additional options
+    setCurrentStep(7);
   };
 
   const handleCreateRide = async () => {
@@ -761,6 +783,28 @@ const CreateRideWizard = () => {
           onBack={() => {
             setShowTimePicker(false);
             setShowCalendar(true);
+          }}
+        />
+      )}
+
+      {showPassengerCount && (
+        <PassengerCountPage
+          selectedCount={rideData.available_seats}
+          onCountSelect={handlePassengerCountSelect}
+          onBack={() => {
+            setShowPassengerCount(false);
+            setShowTimePicker(true);
+          }}
+        />
+      )}
+
+      {showPriceSetting && (
+        <PriceSettingPage
+          selectedPrice={rideData.price_per_seat}
+          onPriceSelect={handlePriceSelect}
+          onBack={() => {
+            setShowPriceSetting(false);
+            setShowPassengerCount(true);
           }}
         />
       )}
