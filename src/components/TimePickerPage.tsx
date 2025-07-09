@@ -145,16 +145,6 @@ const TimePickerPage = ({
         </div>
       </div>
 
-      {/* Confirm Button */}
-      <div className="p-4">
-        <Button 
-          onClick={handleConfirm}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
-        >
-          <Check className="h-5 w-5 mr-2" />
-          Подтвердить время
-        </Button>
-      </div>
 
     </div>
   );

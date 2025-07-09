@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Zap, Eye } from 'lucide-react';
+import { ArrowLeft, Zap, Eye, Check } from 'lucide-react';
 
 interface InstantBookingPageProps {
   onSelect: (enabled: boolean) => void;
@@ -8,6 +8,13 @@ interface InstantBookingPageProps {
 }
 
 const InstantBookingPage = ({ onSelect, onBack }: InstantBookingPageProps) => {
+  const [selectedOption, setSelectedOption] = useState<boolean | null>(null);
+
+  const handleContinue = () => {
+    if (selectedOption !== null) {
+      onSelect(selectedOption);
+    }
+  };
   return (
     <div className="fixed inset-0 bg-background z-50">
       {/* Header */}
@@ -32,10 +39,13 @@ const InstantBookingPage = ({ onSelect, onBack }: InstantBookingPageProps) => {
         </div>
 
         <div className="space-y-4">
-          <Button
-            onClick={() => onSelect(true)}
-            className="w-full justify-start text-left p-6 h-auto bg-green-50 hover:bg-green-100 border-2 border-green-200"
-            variant="outline"
+          <div
+            onClick={() => setSelectedOption(true)}
+            className={`w-full justify-start text-left p-6 h-auto border-2 rounded-xl cursor-pointer transition-colors ${
+              selectedOption === true 
+                ? 'bg-green-50 border-green-500' 
+                : 'bg-green-50 hover:bg-green-100 border-green-200'
+            }`}
           >
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-green-100 rounded-full">
@@ -49,13 +59,27 @@ const InstantBookingPage = ({ onSelect, onBack }: InstantBookingPageProps) => {
                   Пассажиры смогут мгновенно забронировать места без вашего подтверждения
                 </div>
               </div>
+              <div className="flex-shrink-0">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  selectedOption === true 
+                    ? 'bg-green-600 border-green-600' 
+                    : 'border-gray-300'
+                }`}>
+                  {selectedOption === true && (
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  )}
+                </div>
+              </div>
             </div>
-          </Button>
+          </div>
 
-          <Button
-            onClick={() => onSelect(false)}
-            className="w-full justify-start text-left p-6 h-auto bg-blue-50 hover:bg-blue-100 border-2 border-blue-200"
-            variant="outline"
+          <div
+            onClick={() => setSelectedOption(false)}
+            className={`w-full justify-start text-left p-6 h-auto border-2 rounded-xl cursor-pointer transition-colors ${
+              selectedOption === false 
+                ? 'bg-blue-50 border-blue-500' 
+                : 'bg-blue-50 hover:bg-blue-100 border-blue-200'
+            }`}
           >
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-blue-100 rounded-full">
@@ -69,8 +93,19 @@ const InstantBookingPage = ({ onSelect, onBack }: InstantBookingPageProps) => {
                   Вы будете получать запросы на бронирование и сможете выбирать пассажиров
                 </div>
               </div>
+              <div className="flex-shrink-0">
+                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                  selectedOption === false 
+                    ? 'bg-blue-600 border-blue-600' 
+                    : 'border-gray-300'
+                }`}>
+                  {selectedOption === false && (
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  )}
+                </div>
+              </div>
             </div>
-          </Button>
+          </div>
         </div>
 
         <div className="bg-muted/50 rounded-xl p-4">
@@ -80,6 +115,18 @@ const InstantBookingPage = ({ onSelect, onBack }: InstantBookingPageProps) => {
             так как пассажиры получают моментальное подтверждение.
           </p>
         </div>
+      </div>
+
+      {/* Next Button */}
+      <div className="p-6">
+        <Button 
+          onClick={handleContinue}
+          disabled={selectedOption === null}
+          className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full text-lg disabled:opacity-50"
+        >
+          <Check className="h-5 w-5 mr-2" />
+          Далее
+        </Button>
       </div>
     </div>
   );

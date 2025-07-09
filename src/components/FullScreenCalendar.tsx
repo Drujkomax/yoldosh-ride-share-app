@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, isBefore, startOfToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -18,7 +18,14 @@ const FullScreenCalendar = ({
   title = "Выберите дату отправления"
 }: FullScreenCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
+  const [internalSelectedDate, setInternalSelectedDate] = useState<Date | undefined>(selectedDate);
   const today = startOfToday();
+
+  const handleContinue = () => {
+    if (internalSelectedDate) {
+      onDateSelect(internalSelectedDate);
+    }
+  };
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -32,7 +39,7 @@ const FullScreenCalendar = ({
 
   const handleDateClick = (date: Date) => {
     if (!isBefore(date, today)) {
-      onDateSelect(date);
+      setInternalSelectedDate(date);
     }
   };
 
@@ -43,7 +50,7 @@ const FullScreenCalendar = ({
       return `${baseClass} text-gray-300 cursor-not-allowed`;
     }
     
-    if (selectedDate && format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')) {
+    if (internalSelectedDate && format(date, 'yyyy-MM-dd') === format(internalSelectedDate, 'yyyy-MM-dd')) {
       return `${baseClass} bg-blue-600 text-white`;
     }
     
@@ -153,6 +160,18 @@ const FullScreenCalendar = ({
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Next Button */}
+      <div className="p-6">
+        <Button 
+          onClick={handleContinue}
+          disabled={!internalSelectedDate}
+          className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full text-lg disabled:opacity-50"
+        >
+          <Check className="h-5 w-5 mr-2" />
+          Далее
+        </Button>
       </div>
     </div>
   );
