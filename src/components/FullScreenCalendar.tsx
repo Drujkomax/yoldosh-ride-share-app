@@ -40,6 +40,7 @@ const FullScreenCalendar = ({
   const handleDateClick = (date: Date) => {
     if (!isBefore(date, today)) {
       setInternalSelectedDate(date);
+      onDateSelect(date); // Сразу переходим на следующий шаг
     }
   };
 

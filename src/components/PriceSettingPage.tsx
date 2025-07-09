@@ -126,14 +126,14 @@ const PriceSettingPage = ({
         </div>
       </div>
 
-      {/* Continue Button */}
+      {/* Next Button */}
       <div className="p-6">
         <Button 
           onClick={handleConfirm}
           className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-full text-lg"
         >
           <ArrowLeft className="h-5 w-5 mr-2 rotate-180" />
-          Продолжить
+          Далее
         </Button>
       </div>
     </div>

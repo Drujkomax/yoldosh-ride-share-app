@@ -11,7 +11,7 @@ import InstantBookingPage from '@/components/InstantBookingPage';
 import ReturnTripPage from '@/components/ReturnTripPage';
 import ProfilePhotoPage from '@/components/ProfilePhotoPage';
 import RideCommentsPage from '@/components/RideCommentsPage';
-import DriverBottomNavigation from '@/components/DriverBottomNavigation';
+import BottomNavigation from '@/components/BottomNavigation';
 
 interface RideFormData {
   departure_date: string;
@@ -346,7 +346,7 @@ const RideCreationFlow = () => {
     <div className="min-h-screen bg-background relative">
       {renderStep()}
       <div className="pb-20">
-        <DriverBottomNavigation />
+        <BottomNavigation />
       </div>
     </div>
   );

@@ -33,7 +33,7 @@ const BottomNavigation = () => {
       color: 'blue'
     },
     {
-      path: '/create-driver-ride',
+      path: '/ride-creation-flow',
       icon: Plus,
       label: 'Опубликовать',
       color: 'green'
