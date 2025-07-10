@@ -9,6 +9,7 @@ import OnboardingPage from "./pages/OnboardingPage";
 import PassengerSearchPage from "./pages/PassengerSearchPage";
 import SearchRides from "./pages/SearchRides";
 import RideDetails from "./pages/RideDetails";
+import RideDetailsPage from "./pages/RideDetailsPage";
 import BookRide from "./pages/BookRide";
 import CreateDriverRide from "./pages/CreateDriverRide";
 import MyTripsPage from "./pages/MyTripsPage";
@@ -39,6 +40,7 @@ function App() {
                 <Route path="/search-rides" element={<SearchRides />} />
                 <Route path="/passenger" element={<Navigate to="/passenger-search" replace />} />
                 <Route path="/ride/:id" element={<RideDetails />} />
+                <Route path="/ride-details/:id" element={<RideDetailsPage />} />
                 <Route path="/book-ride/:id" element={<BookRide />} />
                 <Route path="/create-driver-ride" element={<CreateDriverRide />} />
                 <Route path="/my-trips" element={<MyTripsPage />} />

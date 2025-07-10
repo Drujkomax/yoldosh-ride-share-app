@@ -95,16 +95,25 @@ const SearchRides = () => {
 
   const createRideAlert = async () => {
     if (!user?.id) {
-      toast.error('Необходимо войти в систему');
+      toast.error('Необходимо войти в систему для создания уведомлений');
       return;
     }
 
     setIsCreatingAlert(true);
     try {
+      // Get current user session to ensure auth context
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error('Необходимо войти в систему');
+        setIsCreatingAlert(false);
+        return;
+      }
+
       const { error } = await supabase
         .from('ride_alerts')
         .insert({
-          user_id: user.id,
+          user_id: session.user.id,
           from_city: searchCriteria.from,
           to_city: searchCriteria.to,
           departure_date: searchCriteria.date || null,
@@ -267,7 +276,11 @@ const SearchRides = () => {
             )}
 
             {filteredResults.map((ride) => (
-              <Card key={ride.id} className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
+              <Card 
+                key={ride.id} 
+                className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/ride-details/${ride.id}`)}
+              >
                 <CardContent className="p-4">
                   {/* Time and Route */}
                   <div className="flex items-center justify-between mb-4">
