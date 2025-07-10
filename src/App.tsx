@@ -36,7 +36,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/passenger-search" element={<PassengerSearchPage />} />
-                <Route path="/search-rides" element={<Navigate to="/passenger-search" replace />} />
+                <Route path="/search-rides" element={<SearchRides />} />
                 <Route path="/passenger" element={<Navigate to="/passenger-search" replace />} />
                 <Route path="/ride/:id" element={<RideDetails />} />
                 <Route path="/book-ride/:id" element={<BookRide />} />
