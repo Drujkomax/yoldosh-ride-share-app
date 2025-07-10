@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useRides } from '@/hooks/useRides';
+import { useUser } from '@/contexts/UserContext';
 import AddressSearchPage from '@/components/AddressSearchPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
@@ -34,7 +35,8 @@ interface RideFormData {
 const RideCreationFlow = () => {
   const navigate = useNavigate();
   const { createRide, isCreating } = useRides();
-  const [user, setUser] = useState<any>(null);
+  const { user, isAuthenticated } = useUser();
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepHistory, setStepHistory] = useState<number[]>([]);
   const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to'>('from');
@@ -62,33 +64,37 @@ const RideCreationFlow = () => {
   useEffect(() => {
     const getCurrentUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
+        // Проверяем пользователя из контекста
         if (!user) {
           console.log('RideCreationFlow - Пользователь не авторизован, редирект на авторизацию');
           navigate('/onboarding');
           return;
         }
         
-        setUser(user);
+        // Пытаемся получить пользователя из Supabase Auth для полной интеграции
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        setSupabaseUser(authUser);
         
-        const { data } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', user.id)
-          .single();
-        
-        setUserHasPhoto(!!data?.avatar_url);
+        // Проверяем есть ли фото профиля
+        if (user.id) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+          
+          setUserHasPhoto(!!data?.avatar_url);
+        }
       } catch (error) {
         console.error('RideCreationFlow - Ошибка получения пользователя:', error);
-        navigate('/onboarding');
+        // Не редиректим на onboarding при ошибке, если пользователь есть в контексте
       } finally {
         setIsUserLoading(false);
       }
     };
     
     getCurrentUser();
-  }, [navigate]);
+  }, [navigate, user]);
 
   const goToNextStep = () => {
     setStepHistory(prev => [...prev, currentStep]);
