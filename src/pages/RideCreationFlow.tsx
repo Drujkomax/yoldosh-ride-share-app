@@ -248,7 +248,7 @@ const RideCreationFlow = () => {
       // TODO: Добавить поддержку обратной поездки через useRides
       // Пока что основная поездка создается через надежный hook
       
-      navigate('/driver-home');
+      navigate('/ride-published');
     } catch (error) {
       console.error('RideCreationFlow - Ошибка создания поездки:', error);
       toast({
