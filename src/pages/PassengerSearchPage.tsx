@@ -48,13 +48,16 @@ const PassengerSearchPage = () => {
   };
 
   const handleSearch = async () => {
-    if (fromCity && toCity && date) {
+    if (fromCity && toCity) {
       setIsSearching(true);
       try {
+        // Если дата не выбрана, используем сегодняшнюю дату
+        const searchDate = date || startOfToday();
+        
         const searchData = {
           from_city: fromCity,
           to_city: toCity,
-          departure_date: format(date, 'yyyy-MM-dd'),
+          departure_date: format(searchDate, 'yyyy-MM-dd'),
           passengers_count: passengers
         };
         
@@ -65,7 +68,7 @@ const PassengerSearchPage = () => {
         const params = new URLSearchParams({
           from: fromCity,
           to: toCity,
-          date: format(date, 'yyyy-MM-dd'),
+          date: format(searchDate, 'yyyy-MM-dd'),
           seats: passengers.toString()
         });
         navigate(`/search-rides?${params.toString()}`);
@@ -254,7 +257,7 @@ const PassengerSearchPage = () => {
       <div className="px-6 mb-6">
         <Button
           onClick={handleSearch}
-          disabled={!fromCity || !toCity || !date || isSearching}
+          disabled={!fromCity || !toCity || isSearching}
           className="w-full h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold text-lg"
         >
           {isSearching ? 'Поиск...' : 'Поиск'}

@@ -188,6 +188,21 @@ const SearchRides = () => {
               Попробуйте изменить параметры поиска
             </div>
           </div>
+        ) : filteredResults.length === 0 && activeTab === 'bus' ? (
+          <div className="text-center py-12">
+            <div className="text-gray-800 text-xl font-bold mb-4">
+              {searchCriteria.date && formatDate(searchCriteria.date)}
+            </div>
+            <div className="text-gray-600 text-lg mb-6">
+              No bus rides for this day
+            </div>
+            <Button 
+              className="bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3 font-semibold"
+              onClick={() => {/* TODO: Implement ride alert */}}
+            >
+              Create a ride alert
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3">
             {/* Date Section */}
@@ -200,7 +215,7 @@ const SearchRides = () => {
             )}
 
             {filteredResults.map((ride) => (
-              <Card key={ride.id} className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+              <Card key={ride.id} className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   {/* Time and Route */}
                   <div className="flex items-center justify-between mb-4">
@@ -217,9 +232,9 @@ const SearchRides = () => {
                         
                         <div className="flex-1 relative">
                           <div className="flex items-center">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
                             <div className="flex-1 h-px bg-gray-300 mx-2"></div>
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                           </div>
                           <div className="flex justify-between text-xs mt-1 text-gray-600">
                             <span>{ride.from_city}</span>
@@ -279,6 +294,18 @@ const SearchRides = () => {
                 </CardContent>
               </Card>
             ))}
+            
+            {/* Create ride alert button */}
+            {filteredResults.length > 0 && (
+              <div className="text-center pt-6">
+                <Button 
+                  className="bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3 font-semibold"
+                  onClick={() => {/* TODO: Implement ride alert */}}
+                >
+                  Create a ride alert
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
