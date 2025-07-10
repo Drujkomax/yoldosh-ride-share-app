@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Calendar, Clock, Star, User, ChevronRight, Share2, FileText, AlertTriangle, PawPrint, Users, Shield, CreditCard, MessageSquare } from 'lucide-react';
-import { useBookings } from '@/hooks/useBookings';
+import { useMyTrips } from '@/hooks/useMyTrips';
 import { useUser } from '@/contexts/UserContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import { format } from 'date-fns';
@@ -14,7 +14,7 @@ import { ru } from 'date-fns/locale';
 const MyTripsPage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: userLoading } = useUser();
-  const { bookings, isLoading, error } = useBookings();
+  const { trips, activeTrips, completedTrips, isLoading, error } = useMyTrips();
   const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
 
   // Redirect to registration if not authenticated
@@ -164,29 +164,25 @@ const MyTripsPage = () => {
     );
   }
 
-  // Separate current and archived rides
-  const currentRides = bookings.filter(booking => 
-    booking.status === 'confirmed' || booking.status === 'pending'
-  );
-  const archivedRides = bookings.filter(booking => 
-    booking.status === 'completed' || booking.status === 'cancelled'
-  );
+  // Use trips from useMyTrips hook
+  const currentRides = activeTrips;
+  const archivedRides = completedTrips;
 
-  const TripCard = ({ booking, isArchived = false }: { booking: any, isArchived?: boolean }) => {
-    const isSelected = selectedTrip === booking.id;
+  const TripCard = ({ trip, isArchived = false }: { trip: any, isArchived?: boolean }) => {
+    const isSelected = selectedTrip === trip.trip_id;
     
     return (
       <Card 
         className={`bg-white rounded-2xl shadow-sm border-0 mb-4 transition-all duration-300 hover:shadow-md ${
           isSelected ? 'ring-2 ring-blue-200' : ''
         }`}
-        onClick={() => setSelectedTrip(isSelected ? null : booking.id)}
+        onClick={() => navigate(`/ride/${trip.trip_id}`)}
       >
         <CardContent className="p-6">
           {/* Date Header */}
           <div className="mb-4">
             <h3 className="text-lg font-bold text-gray-900 mb-1">
-              {formatDate(booking.ride?.departure_date || '')}
+              {formatDate(trip.departure_date)}
             </h3>
           </div>
 
@@ -202,10 +198,10 @@ const MyTripsPage = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <div className="font-semibold text-gray-900">
-                      {formatTime(booking.ride?.departure_time || '')}
+                      {formatTime(trip.departure_time)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {booking.ride?.from_city}
+                      {trip.from_city}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -213,11 +209,11 @@ const MyTripsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-semibold text-gray-900">
-                      {/* Calculate arrival time */}
-                      {formatTime(booking.ride?.departure_time || '')}
+                      {/* Calculate arrival time - можно добавить логику расчета */}
+                      {formatTime(trip.departure_time)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {booking.ride?.to_city}
+                      {trip.to_city}
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-gray-400" />
@@ -226,7 +222,7 @@ const MyTripsPage = () => {
             </div>
           </div>
 
-          {/* Driver Info */}
+          {/* Other User Info (Driver/Passenger) */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
@@ -234,129 +230,42 @@ const MyTripsPage = () => {
               </div>
               <div>
                 <div className="font-medium text-gray-900">
-                  {booking.ride?.driver?.name || 'Водитель'}
+                  {trip.other_user_name || (trip.trip_type === 'driver' ? 'Пассажир' : 'Водитель')}
                 </div>
-                {booking.ride?.driver?.rating && (
+                {trip.other_user_rating && (
                   <div className="flex items-center space-x-1">
                     <Star className="h-3 w-3 text-yellow-400 fill-current" />
                     <span className="text-xs text-gray-600">
-                      {booking.ride.driver.rating}
+                      {trip.other_user_rating}
                     </span>
                   </div>
                 )}
               </div>
             </div>
-            <Badge className={getStatusColor(booking.status)}>
-              {getStatusText(booking.status)}
-            </Badge>
+            <div className="flex flex-col items-end space-y-1">
+              <Badge className={getStatusColor(trip.status)}>
+                {getStatusText(trip.status)}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {trip.trip_type === 'driver' ? 'Водитель' : 'Пассажир'}
+              </Badge>
+            </div>
           </div>
 
-          {/* Expanded Details */}
-          {isSelected && (
-            <div className="mt-6 pt-6 border-t border-gray-100 animate-fade-in">
-              <div className="space-y-4">
-                {/* Price Details */}
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Оплачено онлайн</span>
-                    <span className="text-lg font-bold text-gray-900">
-                      £{(booking.total_price / 100).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {booking.seats_booked} место{booking.seats_booked > 1 ? (booking.seats_booked > 4 ? '' : 'а') : ''}
-                  </div>
-                </div>
-
-                {/* Car Details */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold text-gray-900">MERCEDES CLASSE E</div>
-                    <div className="text-sm text-gray-500">Grey</div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
-                </div>
-
-                {/* Trip Features */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">
-                      Passenger bookings won't be confirmed until you approve their request
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Users className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Max. 2 in the back</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <PawPrint className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Pets are welcome</span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-2 pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 rounded-xl"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement share functionality
-                    }}
-                  >
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share ride
-                  </Button>
-                  <Button 
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 rounded-xl"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement manage ride functionality
-                    }}
-                  >
-                    Manage ride
-                  </Button>
-                </div>
-
-                {/* Additional Actions */}
-                <div className="space-y-2 pt-2">
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-blue-500 hover:text-blue-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement add to calendar
-                    }}
-                  >
-                    Add to calendar
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-blue-500 hover:text-blue-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement see ride offer
-                    }}
-                  >
-                    See ride offer
-                  </Button>
-                  {booking.status === 'confirmed' && (
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-blue-500 hover:text-blue-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Implement modify/cancel booking
-                      }}
-                    >
-                      Modify or cancel booking
-                    </Button>
-                  )}
-                </div>
-              </div>
+          {/* Price and Seats Info */}
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">
+                {trip.trip_type === 'driver' ? 'Доход' : 'Стоимость'}
+              </span>
+              <span className="text-lg font-bold text-gray-900">
+                {trip.price_per_seat.toLocaleString()} сум
+              </span>
             </div>
-          )}
+            <div className="text-sm text-gray-500">
+              {trip.seats_count} место{trip.seats_count > 1 ? (trip.seats_count > 4 ? '' : 'а') : ''}
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
@@ -381,7 +290,7 @@ const MyTripsPage = () => {
       </div>
 
       <div className="px-4 py-6">
-        {bookings.length === 0 ? (
+        {trips.length === 0 ? (
           <Card className="bg-white rounded-2xl shadow-sm">
             <CardContent className="p-12 text-center">
               <div className="text-gray-400 text-lg mb-2">Поездок пока нет</div>
@@ -401,8 +310,8 @@ const MyTripsPage = () => {
             {/* Current Rides */}
             {currentRides.length > 0 && (
               <div className="space-y-4">
-                {currentRides.map((booking) => (
-                  <TripCard key={booking.id} booking={booking} />
+                {currentRides.map((trip) => (
+                  <TripCard key={trip.trip_id} trip={trip} />
                 ))}
               </div>
             )}
