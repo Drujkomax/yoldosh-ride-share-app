@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Navigation, MapPin, Clock, ChevronLeft, Loader2 } from 'lucide-react';
 import { useUzbekistanPlaces } from '@/hooks/useUzbekistanPlaces';
 import { cn } from '@/lib/utils';
+import { standardizeCityName } from '@/lib/cityNormalizer';
 
 interface AddressAutocompleteProps {
   isOpen: boolean;
@@ -60,14 +61,15 @@ const AddressAutocomplete = ({
   const handleSelectPrediction = async (prediction: any) => {
     const details = await getPlaceDetails(prediction.place_id);
     const address = prediction.description;
+    const normalizedAddress = standardizeCityName(address);
     
     // Сохраняем в недавние поиски
-    const newRecentSearches = [address, ...recentSearches.filter(item => item !== address)].slice(0, 5);
+    const newRecentSearches = [normalizedAddress, ...recentSearches.filter(item => item !== normalizedAddress)].slice(0, 5);
     setRecentSearches(newRecentSearches);
     localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
     
     const coordinates = details ? [details.geometry.location.lat, details.geometry.location.lng] as [number, number] : undefined;
-    onSelect(address, coordinates);
+    onSelect(normalizedAddress, coordinates);
     onClose();
   };
 
@@ -75,13 +77,15 @@ const AddressAutocomplete = ({
     try {
       const location = await getCurrentLocation();
       
+      // Нормализуем адрес текущего местоположения
+      const normalizedAddress = standardizeCityName(location.address);
+      
       // Сохраняем текущее местоположение в недавние поиски
-      const locationAddress = location.address;
-      const newRecentSearches = [locationAddress, ...recentSearches.filter(item => item !== locationAddress)].slice(0, 5);
+      const newRecentSearches = [normalizedAddress, ...recentSearches.filter(item => item !== normalizedAddress)].slice(0, 5);
       setRecentSearches(newRecentSearches);
       localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
       
-      onSelect(location.address, [location.lat, location.lng]);
+      onSelect(normalizedAddress, [location.lat, location.lng]);
       onClose();
     } catch (error) {
       console.error('Error getting current location:', error);

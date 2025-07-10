@@ -7,6 +7,7 @@ import { MapPin, Calendar, Users, ArrowRight, Clock } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { standardizeCityName } from '@/lib/cityNormalizer';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import DatePickerModal from '@/components/DatePickerModal';
 import PassengerCountModal from '@/components/PassengerCountModal';
@@ -54,9 +55,13 @@ const PassengerSearchPage = () => {
         // Если дата не выбрана, используем сегодняшнюю дату
         const searchDate = date || startOfToday();
         
+        // Нормализуем названия городов для поиска и сохранения
+        const normalizedFromCity = standardizeCityName(fromCity);
+        const normalizedToCity = standardizeCityName(toCity);
+        
         const searchData = {
-          from_city: fromCity,
-          to_city: toCity,
+          from_city: normalizedFromCity,
+          to_city: normalizedToCity,
           departure_date: format(searchDate, 'yyyy-MM-dd'),
           passengers_count: passengers
         };
@@ -66,8 +71,8 @@ const PassengerSearchPage = () => {
         
         // Navigate to search results with parameters
         const params = new URLSearchParams({
-          from: fromCity,
-          to: toCity,
+          from: normalizedFromCity,
+          to: normalizedToCity,
           date: format(searchDate, 'yyyy-MM-dd'),
           seats: passengers.toString()
         });
