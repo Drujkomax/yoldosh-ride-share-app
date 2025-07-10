@@ -408,6 +408,45 @@ export type Database = {
           },
         ]
       }
+      ride_alerts: {
+        Row: {
+          created_at: string
+          departure_date: string | null
+          from_city: string
+          id: string
+          is_active: boolean
+          max_price_per_seat: number | null
+          min_seats: number | null
+          to_city: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          departure_date?: string | null
+          from_city: string
+          id?: string
+          is_active?: boolean
+          max_price_per_seat?: number | null
+          min_seats?: number | null
+          to_city: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          departure_date?: string | null
+          from_city?: string
+          id?: string
+          is_active?: boolean
+          max_price_per_seat?: number | null
+          min_seats?: number | null
+          to_city?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ride_requests: {
         Row: {
           created_at: string | null

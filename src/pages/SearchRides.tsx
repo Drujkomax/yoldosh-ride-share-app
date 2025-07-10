@@ -3,14 +3,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi } from 'lucide-react';
+import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useUser } from '@/contexts/UserContext';
+import { toast } from 'sonner';
 
 const SearchRides = () => {
   const navigate = useNavigate();
   const { searchRides } = useRides();
+  const { user } = useUser();
   const [searchParams] = useSearchParams();
   const [searchCriteria, setSearchCriteria] = useState({
     from: '',
@@ -22,6 +26,8 @@ const SearchRides = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [isCreatingAlert, setIsCreatingAlert] = useState(false);
+  const [alertCreated, setAlertCreated] = useState(false);
 
   useEffect(() => {
     const criteria = {
@@ -87,10 +93,35 @@ const SearchRides = () => {
     }
   };
 
-  // Функция для конвертации цены в сумы (примерный курс: 1 USD = 12,000 сум)
-  const formatPriceInSums = (price: number) => {
-    const priceInSums = Math.round(price * 12000); // Конвертируем в сумы
-    return priceInSums.toLocaleString('uz-UZ');
+  const createRideAlert = async () => {
+    if (!user?.id) {
+      toast.error('Необходимо войти в систему');
+      return;
+    }
+
+    setIsCreatingAlert(true);
+    try {
+      const { error } = await supabase
+        .from('ride_alerts')
+        .insert({
+          user_id: user.id,
+          from_city: searchCriteria.from,
+          to_city: searchCriteria.to,
+          departure_date: searchCriteria.date || null,
+          min_seats: searchCriteria.seats ? parseInt(searchCriteria.seats) : 1
+        });
+
+      if (error) throw error;
+
+      setTimeout(() => {
+        setAlertCreated(true);
+        toast.success('Уведомление создано! Мы сообщим вам о новых поездках');
+      }, 1000);
+    } catch (error) {
+      console.error('Error creating ride alert:', error);
+      toast.error('Ошибка при создании уведомления');
+      setIsCreatingAlert(false);
+    }
   };
 
   const getTabCounts = () => {
@@ -203,10 +234,25 @@ const SearchRides = () => {
               No bus rides for this day
             </div>
             <Button 
-              className="bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3 font-semibold"
-              onClick={() => {/* TODO: Implement ride alert */}}
+              onClick={createRideAlert}
+              disabled={isCreatingAlert || alertCreated}
+              className={`
+                ${alertCreated 
+                  ? 'bg-green-500 hover:bg-green-500 w-12 h-12 rounded-full p-0' 
+                  : isCreatingAlert 
+                    ? 'bg-blue-500 hover:bg-blue-500 w-12 h-12 rounded-full p-0' 
+                    : 'bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3'
+                } 
+                font-semibold transition-all duration-300
+              `}
             >
-              Create a ride alert
+              {alertCreated ? (
+                <Check className="h-6 w-6 text-white" />
+              ) : isCreatingAlert ? (
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
+              ) : (
+                'Создать уведомление'
+              )}
             </Button>
           </div>
         ) : (
@@ -258,7 +304,7 @@ const SearchRides = () => {
                     
                      <div className="text-right ml-4">
                        <div className="text-lg font-bold text-gray-900">
-                         {formatPriceInSums(ride.price_per_seat)}
+                         {Math.floor(ride.price_per_seat).toLocaleString('uz-UZ')}
                          <span className="text-sm font-normal text-gray-500"> сум</span>
                        </div>
                      </div>
@@ -312,10 +358,25 @@ const SearchRides = () => {
             {filteredResults.length > 0 && (
               <div className="text-center pt-6">
                 <Button 
-                  className="bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3 font-semibold"
-                  onClick={() => {/* TODO: Implement ride alert */}}
+                  onClick={createRideAlert}
+                  disabled={isCreatingAlert || alertCreated}
+                  className={`
+                    ${alertCreated 
+                      ? 'bg-green-500 hover:bg-green-500 w-12 h-12 rounded-full p-0' 
+                      : isCreatingAlert 
+                        ? 'bg-blue-500 hover:bg-blue-500 w-12 h-12 rounded-full p-0' 
+                        : 'bg-white text-blue-500 border-2 border-blue-500 hover:bg-blue-50 rounded-full px-8 py-3'
+                    } 
+                    font-semibold transition-all duration-300
+                  `}
                 >
-                  Create a ride alert
+                  {alertCreated ? (
+                    <Check className="h-6 w-6 text-white" />
+                  ) : isCreatingAlert ? (
+                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  ) : (
+                    'Создать уведомление'
+                  )}
                 </Button>
               </div>
             )}
