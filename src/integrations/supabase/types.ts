@@ -874,6 +874,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      set_current_user_id: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

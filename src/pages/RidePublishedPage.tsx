@@ -6,7 +6,14 @@ const RidePublishedPage = () => {
   const navigate = useNavigate();
 
   const handleSeeMyRide = () => {
-    navigate('/driver-home');
+    // Получаем ID последней созданной поездки из localStorage или переходим на главную водителя
+    const lastRideId = localStorage.getItem('lastCreatedRideId');
+    if (lastRideId) {
+      navigate(`/ride/${lastRideId}`);
+      localStorage.removeItem('lastCreatedRideId'); // Очищаем после использования
+    } else {
+      navigate('/driver-home');
+    }
   };
 
   return (

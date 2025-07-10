@@ -230,6 +230,11 @@ export const useRides = () => {
       console.log('useRides - Успешное создание поездки, обновляем кэш');
       queryClient.invalidateQueries({ queryKey: ['rides'] });
       toast.success("Ваша поездка успешно опубликована");
+      
+      // Сохраняем ID созданной поездки для навигации
+      if (data?.id) {
+        localStorage.setItem('lastCreatedRideId', data.id);
+      }
     },
     onError: (error: any) => {
       console.error('useRides - Ошибка создания поездки в onError:', error);

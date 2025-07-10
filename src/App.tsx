@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import CreateRideWizard from "./pages/CreateRideWizard";
 import RideCreationFlow from "./pages/RideCreationFlow";
 import RidePublishedPage from "./pages/RidePublishedPage";
+import DriverHomePage from "./pages/DriverHomePage";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ function App() {
                 <Route path="/create-ride-wizard" element={<CreateRideWizard />} />
                 <Route path="/ride-creation-flow" element={<RideCreationFlow />} />
                 <Route path="/ride-published" element={<RidePublishedPage />} />
+                <Route path="/driver-home" element={<DriverHomePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
