@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { compareCities, standardizeCityName } from '@/lib/cityNormalizer';
 
 export interface Ride {
   id: string;
@@ -167,14 +168,18 @@ export const useRides = () => {
 
       console.log('useRides - Базовая валидация пройдена');
 
-      // Попытка создать поездку напрямую
+      // Нормализуем названия городов перед сохранением
+      const normalizedRideData = {
+        ...newRide,
+        from_city: standardizeCityName(newRide.from_city),
+        to_city: standardizeCityName(newRide.to_city),
+        duration_hours: newRide.duration_hours || 2
+      };
+      
       console.log('useRides - Попытка создания поездки...');
       const { data, error } = await supabase
         .from('rides')
-        .insert([{
-          ...newRide,
-          duration_hours: newRide.duration_hours || 2
-        }])
+        .insert([normalizedRideData])
         .select()
         .single();
 
@@ -292,6 +297,15 @@ export const useRides = () => {
   }) => {
     console.log('useRides - Поиск поездок с фильтрами:', filters);
     
+    // Нормализуем названия городов для поиска
+    const normalizedFromCity = standardizeCityName(filters.from_city);
+    const normalizedToCity = standardizeCityName(filters.to_city);
+    
+    console.log('useRides - Нормализованные города для поиска:', {
+      original: { from: filters.from_city, to: filters.to_city },
+      normalized: { from: normalizedFromCity, to: normalizedToCity }
+    });
+    
     let query = supabase
       .from('rides')
       .select(`
@@ -303,8 +317,8 @@ export const useRides = () => {
         )
       `)
       .in('status', ['active', 'full'])
-      .eq('from_city', filters.from_city)
-      .eq('to_city', filters.to_city);
+      .eq('from_city', normalizedFromCity)
+      .eq('to_city', normalizedToCity);
 
     if (filters.departure_date) {
       query = query.eq('departure_date', filters.departure_date);
