@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Star, User, Users, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -87,6 +87,12 @@ const SearchRides = () => {
     }
   };
 
+  // Функция для конвертации цены в сумы (примерный курс: 1 USD = 12,000 сум)
+  const formatPriceInSums = (price: number) => {
+    const priceInSums = Math.round(price * 12000); // Конвертируем в сумы
+    return priceInSums.toLocaleString('uz-UZ');
+  };
+
   const getTabCounts = () => {
     const all = searchResults.length;
     const carpool = searchResults.filter(ride => ride.available_seats <= 4).length;
@@ -112,7 +118,7 @@ const SearchRides = () => {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
@@ -122,12 +128,12 @@ const SearchRides = () => {
             </Button>
           </div>
           
-          {/* Search Summary */}
-          <div className="mt-4">
+          {/* Search Summary Card */}
+          <div className="bg-gray-100 rounded-2xl p-4">
             <h1 className="font-bold text-gray-900 text-lg">
               {searchCriteria.from} → {searchCriteria.to}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-600 mt-1">
               {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
             </p>
           </div>
@@ -250,14 +256,12 @@ const SearchRides = () => {
                       </div>
                     </div>
                     
-                    <div className="text-right ml-4">
-                      <div className="text-lg font-bold text-gray-900">
-                        £{Math.floor(ride.price_per_seat)}
-                        <span className="text-sm font-normal text-gray-500">
-                          .{String((ride.price_per_seat % 1) * 100).padStart(2, '0')}
-                        </span>
-                      </div>
-                    </div>
+                     <div className="text-right ml-4">
+                       <div className="text-lg font-bold text-gray-900">
+                         {formatPriceInSums(ride.price_per_seat)}
+                         <span className="text-sm font-normal text-gray-500"> сум</span>
+                       </div>
+                     </div>
                   </div>
                   
                   {/* Driver Info */}
@@ -284,12 +288,21 @@ const SearchRides = () => {
                           </div>
                         )}
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{ride.available_seats}</span>
-                    </div>
+                     </div>
+                     
+                     <div className="flex items-center space-x-3">
+                       {/* Amenities icons */}
+                       <div className="flex space-x-1">
+                         <Zap className="h-4 w-4 text-gray-400" />
+                         <Wifi className="h-4 w-4 text-gray-400" />
+                       </div>
+                       
+                       {/* Available seats */}
+                       <div className="flex items-center space-x-1">
+                         <Users className="h-4 w-4 text-gray-400" />
+                         <span className="text-sm text-gray-600">{ride.available_seats}</span>
+                       </div>
+                     </div>
                   </div>
                 </CardContent>
               </Card>
