@@ -42,7 +42,7 @@ const PassengerCountPage = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-4">
+      <div className="sticky top-0 z-10 bg-white px-4 py-4">
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
@@ -102,7 +102,7 @@ const PassengerCountPage = () => {
             onClick={handleConfirm}
             className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium"
           >
-            Подтвердить количество
+            Подтвердить
           </Button>
         </div>
       </div>
