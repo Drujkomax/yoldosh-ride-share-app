@@ -67,6 +67,8 @@ const SearchRides = () => {
       
       navigate(`/search-rides?${newParams.toString()}`, { replace: true });
       setIsInitialLoad(false);
+      // Open edit modal to show updated criteria
+      setIsEditModalOpen(true);
       return;
     }
     
@@ -86,6 +88,8 @@ const SearchRides = () => {
       
       navigate(`/search-rides?${newParams.toString()}`, { replace: true });
       setIsInitialLoad(false);
+      // Open edit modal to show updated criteria
+      setIsEditModalOpen(true);
       return;
     }
     
