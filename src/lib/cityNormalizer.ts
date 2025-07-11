@@ -51,6 +51,7 @@ const CITY_ALIASES: Record<string, string> = {
   'termiz': 'Термез',
   'джизак': 'Джизак',
   'jizzakh': 'Джизак',
+  'jizzax': 'Джизак',
   'jizak': 'Джизак',
   'гулистан': 'Гулистан',
   'gulistan': 'Гулистан',
