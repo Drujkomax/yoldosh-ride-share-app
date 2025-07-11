@@ -63,7 +63,7 @@ const FullScreenCalendar = () => {
     
     setSelectedDate(date);
     
-    // Return to previous page with selected date
+    // Return to previous page with selected date and preserve other params
     const params = new URLSearchParams(searchParams);
     params.set('selectedDate', format(date, 'yyyy-MM-dd'));
     params.delete('returnTo');

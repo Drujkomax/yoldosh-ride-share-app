@@ -34,6 +34,22 @@ const PassengerSearchPage = () => {
   
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
 
+  // Restore state from URL parameters when returning from other pages
+  useEffect(() => {
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+    const passengersParam = searchParams.get('passengers');
+    
+    if (fromParam) setFromCity(fromParam);
+    if (toParam) setToCity(toParam);
+    if (passengersParam) {
+      const count = parseInt(passengersParam);
+      if (!isNaN(count) && count >= 1 && count <= 8) {
+        setPassengers(count);
+      }
+    }
+  }, []);
+
   // Handle passenger count selection
   useEffect(() => {
     const passengerCountParam = searchParams.get('passengerCount');
@@ -257,7 +273,14 @@ const PassengerSearchPage = () => {
               {/* Date */}
               <div className="p-4 border-b border-gray-100">
                 <Button
-                  onClick={() => navigate('/full-screen-calendar?returnTo=/passenger-search')}
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (fromCity) params.set('from', fromCity);
+                    if (toCity) params.set('to', toCity);
+                    if (passengers) params.set('passengers', passengers.toString());
+                    params.set('returnTo', '/passenger-search');
+                    navigate(`/full-screen-calendar?${params.toString()}`);
+                  }}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
@@ -274,7 +297,14 @@ const PassengerSearchPage = () => {
 
               <div className="p-4">
                 <Button
-                  onClick={() => navigate(`/passenger-count?returnTo=/passenger-search&currentCount=${passengers}`)}
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (fromCity) params.set('from', fromCity);
+                    if (toCity) params.set('to', toCity);
+                    params.set('returnTo', '/passenger-search');
+                    params.set('currentCount', passengers.toString());
+                    navigate(`/passenger-count?${params.toString()}`);
+                  }}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
