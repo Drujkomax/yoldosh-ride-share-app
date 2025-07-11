@@ -188,7 +188,10 @@ const SearchRides = () => {
           </div>
           
           {/* Search Summary Card */}
-          <div className="bg-gray-100 rounded-2xl p-4">
+          <div 
+            className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors"
+            onClick={() => navigate('/passenger-search')}
+          >
             <h1 className="font-bold text-gray-900 text-lg">
               {searchCriteria.from} → {searchCriteria.to}
             </h1>
