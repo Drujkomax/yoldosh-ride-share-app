@@ -358,17 +358,24 @@ const SearchRides = () => {
                     </div>
 
                     {/* Passengers */}
-                    <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                    <div 
+                      className="flex items-center space-x-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        if (editFilters.from) params.set('from', editFilters.from);
+                        if (editFilters.to) params.set('to', editFilters.to);
+                        if (editFilters.date) params.set('date', editFilters.date);
+                        params.set('returnTo', '/search-rides');
+                        params.set('currentCount', editFilters.seats || '1');
+                        navigate(`/passenger-count?${params.toString()}`);
+                      }}
+                    >
                       <User className="h-6 w-6 text-gray-400" />
-                      <Input
-                        type="number"
-                        min="1"
-                        max="8"
-                        value={editFilters.seats}
-                        onChange={(e) => setEditFilters(prev => ({ ...prev, seats: e.target.value }))}
-                        placeholder="1"
-                        className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
-                      />
+                      <div className="flex-1">
+                        <div className="text-lg font-medium text-gray-900">
+                          {editFilters.seats || '1'} пассажир{editFilters.seats === '1' ? '' : editFilters.seats && parseInt(editFilters.seats) > 4 ? 'ов' : 'а'}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
