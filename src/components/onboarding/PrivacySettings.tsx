@@ -36,16 +36,20 @@ const PrivacySettings = ({
             <CardTitle className="text-lg">Управление данными</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
+            <div 
+              className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              onClick={() => onPrivacyChange(!privacyConsent)}
+            >
               <Checkbox
                 id="privacy"
                 checked={privacyConsent}
                 onCheckedChange={onPrivacyChange}
+                className="pointer-events-none"
               />
               <div className="flex-1">
-                <label htmlFor="privacy" className="text-sm font-medium text-gray-900 cursor-pointer">
+                <div className="text-sm font-medium text-gray-900">
                   Согласие на обработку персональных данных
-                </label>
+                </div>
                 <p className="text-xs text-gray-600 mt-1">
                   Обязательно для использования сервиса
                 </p>
@@ -53,21 +57,25 @@ const PrivacySettings = ({
               <Eye className="h-5 w-5 text-blue-600" />
             </div>
 
-            <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+            <div 
+              className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+              onClick={() => onMarketingChange(!marketingConsent)}
+            >
               <Checkbox
                 id="marketing"
                 checked={marketingConsent}
                 onCheckedChange={onMarketingChange}
+                className="pointer-events-none"
               />
               <div className="flex-1">
-                <label htmlFor="marketing" className="text-sm font-medium text-gray-900 cursor-pointer">
+                <div className="text-sm font-medium text-gray-900">
                   Согласие на маркетинговые уведомления
-                </label>
+                </div>
                 <p className="text-xs text-gray-600 mt-1">
                   Получать уведомления о скидках и новостях
                 </p>
               </div>
-              <Bell className="h-5 w-5 text-gray-400" />
+              <Bell className={`h-5 w-5 ${marketingConsent ? 'text-blue-600' : 'text-gray-400'}`} />
             </div>
 
             <Button 

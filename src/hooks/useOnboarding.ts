@@ -21,7 +21,7 @@ export const useOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     privacyConsent: false,
-    marketingConsent: false,
+    marketingConsent: true,
     registrationMethod: 'email',
     firstName: '',
     lastName: '',
