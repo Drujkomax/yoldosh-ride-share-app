@@ -270,7 +270,7 @@ const SearchRides = () => {
           <div className="flex items-center justify-between mb-4">
             <Button
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/search-rides')}
               className="p-2 hover:bg-gray-100"
             >
               <ChevronLeft className="h-6 w-6 text-gray-600" />
