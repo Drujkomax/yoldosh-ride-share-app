@@ -146,12 +146,9 @@ const FullScreenCalendar = () => {
             <ChevronLeft className="h-6 w-6 text-gray-600" />
           </Button>
           
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-gray-600" />
-            <h1 className="text-lg font-semibold text-gray-900">
-              Выберите дату
-            </h1>
-          </div>
+          <h1 className="text-lg font-semibold text-gray-900">
+            Когда вы едете?
+          </h1>
           
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
