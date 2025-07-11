@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import OnboardingPage from "./pages/OnboardingPage";
 import PassengerSearchPage from "./pages/PassengerSearchPage";
+import FullScreenCalendar from "./pages/FullScreenCalendar";
 import SearchRides from "./pages/SearchRides";
 import RideDetails from "./pages/RideDetails";
 import RideDetailsPage from "./pages/RideDetailsPage";
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/passenger-search" element={<PassengerSearchPage />} />
+                <Route path="/full-screen-calendar" element={<FullScreenCalendar />} />
                 <Route path="/search-rides" element={<SearchRides />} />
                 <Route path="/passenger" element={<Navigate to="/passenger-search" replace />} />
                 <Route path="/ride/:id" element={<RideDetails />} />

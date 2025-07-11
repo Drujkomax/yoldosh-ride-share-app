@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, Calendar, Users, ArrowRight, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { standardizeCityName } from '@/lib/cityNormalizer';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
-import DatePickerModal from '@/components/DatePickerModal';
+
 import PassengerCountModal from '@/components/PassengerCountModal';
 import BottomNavigation from '@/components/BottomNavigation';
 import { format, startOfToday } from 'date-fns';
@@ -17,6 +17,7 @@ import { ru } from 'date-fns/locale';
 
 const PassengerSearchPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useUser();
   const { searchRides } = useRides();
   const { searchHistory, addToHistory } = useSearchHistory();
@@ -30,12 +31,27 @@ const PassengerSearchPage = () => {
   // Modal states
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  
   const [showPassengerSelector, setShowPassengerSelector] = useState(false);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
 
+  // Handle date selection from calendar
+  useEffect(() => {
+    const selectedDateParam = searchParams.get('selectedDate');
+    if (selectedDateParam) {
+      try {
+        const parsedDate = new Date(selectedDateParam);
+        if (!isNaN(parsedDate.getTime())) {
+          setDate(parsedDate);
+        }
+      } catch (error) {
+        console.log('Could not parse date from URL:', error);
+      }
+    }
+  }, [searchParams]);
+
   // Request notification permission on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       setShowNotificationPermission(true);
     }
@@ -221,7 +237,7 @@ const PassengerSearchPage = () => {
               {/* Date */}
               <div className="p-4 border-b border-gray-100">
                 <Button
-                  onClick={() => setShowDatePicker(true)}
+                  onClick={() => navigate('/full-screen-calendar?returnTo=/passenger-search')}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
@@ -316,13 +332,6 @@ const PassengerSearchPage = () => {
         placeholder="Куда вы едете?"
       />
 
-      <DatePickerModal
-        isOpen={showDatePicker}
-        onClose={() => setShowDatePicker(false)}
-        onSelect={setDate}
-        selectedDate={date}
-        title="Когда вы едете?"
-      />
 
       <PassengerCountModal
         isOpen={showPassengerSelector}
