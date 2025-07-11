@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import AddressSearchPage from '@/components/AddressSearchPage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,8 @@ const SearchRides = () => {
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const [alertCreated, setAlertCreated] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showAddressSearch, setShowAddressSearch] = useState(false);
+  const [addressSearchType, setAddressSearchType] = useState<'from' | 'to'>('from');
   const [editFilters, setEditFilters] = useState({
     from: '',
     to: '',
@@ -161,6 +164,20 @@ const SearchRides = () => {
     }
   };
 
+  const handleAddressSelect = (address: string, coordinates: [number, number]) => {
+    if (addressSearchType === 'from') {
+      setEditFilters(prev => ({ ...prev, from: address }));
+    } else {
+      setEditFilters(prev => ({ ...prev, to: address }));
+    }
+    setShowAddressSearch(false);
+  };
+
+  const openAddressSearch = (type: 'from' | 'to') => {
+    setAddressSearchType(type);
+    setShowAddressSearch(true);
+  };
+
   const handleEditSearch = () => {
     const newParams = new URLSearchParams();
     if (editFilters.from) newParams.set('from', editFilters.from);
@@ -252,14 +269,16 @@ const SearchRides = () => {
                   <div className="space-y-4">
                     {/* From City */}
                     <div className="relative">
-                      <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                      <div 
+                        className="flex items-center space-x-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => openAddressSearch('from')}
+                      >
                         <div className="w-3 h-3 border-2 border-blue-500 rounded-full flex-shrink-0" />
-                        <Input
-                          value={editFilters.from}
-                          onChange={(e) => setEditFilters(prev => ({ ...prev, from: e.target.value }))}
-                          placeholder="Откуда"
-                          className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
-                        />
+                        <div className="flex-1">
+                          <div className="text-lg font-medium text-gray-900">
+                            {editFilters.from || 'Откуда'}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -279,14 +298,16 @@ const SearchRides = () => {
 
                     {/* To City */}
                     <div className="relative">
-                      <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                      <div 
+                        className="flex items-center space-x-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => openAddressSearch('to')}
+                      >
                         <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0" />
-                        <Input
-                          value={editFilters.to}
-                          onChange={(e) => setEditFilters(prev => ({ ...prev, to: e.target.value }))}
-                          placeholder="Куда"
-                          className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
-                        />
+                        <div className="flex-1">
+                          <div className="text-lg font-medium text-gray-900">
+                            {editFilters.to || 'Куда'}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -335,6 +356,18 @@ const SearchRides = () => {
               </div>
             </div>
           )}
+
+      {/* Address Search Modal */}
+      {showAddressSearch && (
+        <div className="fixed inset-0 z-50 bg-white">
+          <AddressSearchPage
+            title={addressSearchType === 'from' ? 'Откуда' : 'Куда'}
+            onAddressSelect={handleAddressSelect}
+            onBack={() => setShowAddressSearch(false)}
+            placeholder={addressSearchType === 'from' ? 'Введите город отправления' : 'Введите город назначения'}
+          />
+        </div>
+      )}
         </div>
       </div>
 
