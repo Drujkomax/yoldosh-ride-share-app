@@ -5,7 +5,6 @@ import AddressSearchPage from '@/components/AddressSearchPage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { DatePicker } from '@/components/ui/datepicker';
 import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check, Edit3 } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
@@ -50,6 +49,24 @@ const SearchRides = () => {
     };
     setSearchCriteria(criteria);
     setEditFilters(criteria);
+    
+    // Handle date selection from calendar
+    const selectedDateParam = searchParams.get('selectedDate');
+    if (selectedDateParam && selectedDateParam !== criteria.date) {
+      const updatedCriteria = { ...criteria, date: selectedDateParam };
+      setSearchCriteria(updatedCriteria);
+      setEditFilters(updatedCriteria);
+      
+      // Update URL without selectedDate param
+      const newParams = new URLSearchParams();
+      if (updatedCriteria.from) newParams.set('from', updatedCriteria.from);
+      if (updatedCriteria.to) newParams.set('to', updatedCriteria.to);
+      if (updatedCriteria.date) newParams.set('date', updatedCriteria.date);
+      if (updatedCriteria.seats) newParams.set('seats', updatedCriteria.seats);
+      
+      navigate(`/search-rides?${newParams.toString()}`, { replace: true });
+      return;
+    }
     
     // Auto search if we have from, to, and date
     if (criteria.from && criteria.to && criteria.date) {
@@ -313,7 +330,10 @@ const SearchRides = () => {
                     </div>
 
                     {/* Date */}
-                    <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                    <div 
+                      className="flex items-center space-x-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate(`/full-screen-calendar?returnTo=/search-rides&selectedDate=${editFilters.date}`)}
+                    >
                       <div className="w-6 h-6 flex items-center justify-center">
                         <div className="w-4 h-4 border border-gray-400 rounded grid grid-cols-2 gap-px">
                           <div className="bg-gray-300 rounded-tl"></div>
@@ -323,15 +343,9 @@ const SearchRides = () => {
                         </div>
                       </div>
                       <div className="flex-1">
-                        <DatePicker
-                          value={editFilters.date ? new Date(editFilters.date) : undefined}
-                          onChange={(date) => setEditFilters(prev => ({ 
-                            ...prev, 
-                            date: date ? date.toISOString().split('T')[0] : '' 
-                          }))}
-                          placeholder="Выберите дату"
-                          className="border-0 bg-transparent text-lg font-medium h-auto p-0 justify-start hover:border-0 focus:border-0 focus:ring-0"
-                        />
+                        <div className="text-lg font-medium text-gray-900">
+                          {editFilters.date ? format(new Date(editFilters.date), 'EEE dd MMM', { locale: ru }) : 'Выберите дату'}
+                        </div>
                       </div>
                     </div>
 
