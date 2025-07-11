@@ -21,17 +21,27 @@ const FullScreenCalendar = () => {
   useEffect(() => {
     const initialMonths = [];
     for (let i = 0; i < 12; i++) {
-      initialMonths.push(addMonths(today, i));
+      const newMonth = addMonths(today, i);
+      // Ensure the date is valid before adding
+      if (!isNaN(newMonth.getTime())) {
+        initialMonths.push(newMonth);
+      }
     }
     setMonths(initialMonths);
-  }, []);
+  }, [today]);
 
   // Load more months when user scrolls to bottom
   const loadMoreMonths = () => {
+    if (months.length === 0) return;
+    
     const lastMonth = months[months.length - 1];
     const newMonths = [];
     for (let i = 1; i <= 6; i++) {
-      newMonths.push(addMonths(lastMonth, i));
+      const newMonth = addMonths(lastMonth, i);
+      // Ensure the date is valid before adding
+      if (!isNaN(newMonth.getTime())) {
+        newMonths.push(newMonth);
+      }
     }
     setMonths(prev => [...prev, ...newMonths]);
   };
@@ -62,6 +72,12 @@ const FullScreenCalendar = () => {
   };
 
   const renderMonth = (monthDate: Date) => {
+    // Safety check: ensure monthDate is valid
+    if (!monthDate || isNaN(monthDate.getTime())) {
+      console.error('Invalid monthDate passed to renderMonth:', monthDate);
+      return null;
+    }
+
     const monthStart = startOfMonth(monthDate);
     const monthEnd = endOfMonth(monthDate);
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -69,6 +85,12 @@ const FullScreenCalendar = () => {
     // Get first day of week (Monday = 1, Sunday = 0)
     const firstDayOfWeek = monthStart.getDay();
     const startDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1; // Convert to Monday = 0
+    
+    // Safety check: ensure startDay is a valid number
+    if (isNaN(startDay) || startDay < 0) {
+      console.error('Invalid startDay calculated:', startDay, 'from firstDayOfWeek:', firstDayOfWeek);
+      return null;
+    }
     
     const emptyDays = Array(startDay).fill(null);
 
