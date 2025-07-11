@@ -301,9 +301,35 @@ export const useRides = () => {
     const normalizedFromCity = standardizeCityName(filters.from_city);
     const normalizedToCity = standardizeCityName(filters.to_city);
     
-    console.log('useRides - Нормализованные города для поиска:', {
+    // Создаем массивы возможных вариантов названий городов
+    const getSearchVariants = (city: string) => {
+      const normalized = standardizeCityName(city);
+      const variants = [normalized];
+      
+      // Добавляем английские варианты
+      if (normalized === 'Джизак') {
+        variants.push('Jizzax', 'Jizzakh', 'Jizak');
+      }
+      if (normalized === 'Ташкент') {
+        variants.push('Tashkent', 'Toshkent');
+      }
+      if (normalized === 'Самарканд') {
+        variants.push('Samarkand', 'Samarqand');
+      }
+      if (normalized === 'Бухара') {
+        variants.push('Bukhara', 'Buxoro');
+      }
+      
+      return variants;
+    };
+    
+    const fromCityVariants = getSearchVariants(filters.from_city);
+    const toCityVariants = getSearchVariants(filters.to_city);
+    
+    console.log('useRides - Варианты для поиска:', {
       original: { from: filters.from_city, to: filters.to_city },
-      normalized: { from: normalizedFromCity, to: normalizedToCity }
+      normalized: { from: normalizedFromCity, to: normalizedToCity },
+      variants: { from: fromCityVariants, to: toCityVariants }
     });
     
     let query = supabase
@@ -317,8 +343,8 @@ export const useRides = () => {
         )
       `)
       .in('status', ['active', 'full'])
-      .eq('from_city', normalizedFromCity)
-      .eq('to_city', normalizedToCity);
+      .in('from_city', fromCityVariants)
+      .in('to_city', toCityVariants);
 
     if (filters.departure_date) {
       query = query.eq('departure_date', filters.departure_date);
