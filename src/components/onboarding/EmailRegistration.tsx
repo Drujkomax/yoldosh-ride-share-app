@@ -74,29 +74,12 @@ const EmailRegistration = ({
                 type="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="example@mail.com"
+                placeholder="example@gmail.com"
                 icon={<Mail className="h-4 w-4" />}
               />
               {emailError && (
                 <p className="text-red-500 text-sm mt-2">{emailError}</p>
               )}
-            </div>
-
-            <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
-              <Checkbox
-                id="marketing"
-                checked={marketingConsent}
-                onCheckedChange={onMarketingChange}
-              />
-              <div className="flex-1">
-                <label htmlFor="marketing" className="text-sm font-medium text-gray-900 cursor-pointer">
-                  Получать маркетинговые уведомления
-                </label>
-                <p className="text-xs text-gray-600 mt-1">
-                  Скидки, акции и новости сервиса
-                </p>
-              </div>
-              <Bell className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
             </div>
 
             <Button 

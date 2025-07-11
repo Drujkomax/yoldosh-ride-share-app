@@ -61,7 +61,7 @@ const AnimatedInput = ({
               setIsFocused(false);
               onBlur?.(e);
             }}
-            placeholder={isFocused ? placeholder : ""}
+            placeholder={placeholder || ""}
             maxLength={maxLength}
             className={cn(
               "h-12 rounded-xl border-2 transition-all duration-300 bg-white/80 backdrop-blur-sm",
