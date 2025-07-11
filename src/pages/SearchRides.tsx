@@ -332,7 +332,15 @@ const SearchRides = () => {
                     {/* Date */}
                     <div 
                       className="flex items-center space-x-3 p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => navigate(`/full-screen-calendar?returnTo=/search-rides&selectedDate=${editFilters.date}`)}
+                      onClick={() => {
+                        const params = new URLSearchParams();
+                        if (editFilters.from) params.set('from', editFilters.from);
+                        if (editFilters.to) params.set('to', editFilters.to);
+                        if (editFilters.seats) params.set('seats', editFilters.seats);
+                        if (editFilters.date) params.set('selectedDate', editFilters.date);
+                        params.set('returnTo', '/search-rides');
+                        navigate(`/full-screen-calendar?${params.toString()}`);
+                      }}
                     >
                       <div className="w-6 h-6 flex items-center justify-center">
                         <div className="w-4 h-4 border border-gray-400 rounded grid grid-cols-2 gap-px">
