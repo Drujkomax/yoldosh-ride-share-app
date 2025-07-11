@@ -68,6 +68,24 @@ const SearchRides = () => {
       return;
     }
     
+    // Handle passenger count selection
+    const passengerCountParam = searchParams.get('passengerCount');
+    if (passengerCountParam && passengerCountParam !== criteria.seats) {
+      const updatedCriteria = { ...criteria, seats: passengerCountParam };
+      setSearchCriteria(updatedCriteria);
+      setEditFilters(updatedCriteria);
+      
+      // Update URL without passengerCount param
+      const newParams = new URLSearchParams();
+      if (updatedCriteria.from) newParams.set('from', updatedCriteria.from);
+      if (updatedCriteria.to) newParams.set('to', updatedCriteria.to);
+      if (updatedCriteria.date) newParams.set('date', updatedCriteria.date);
+      if (updatedCriteria.seats) newParams.set('seats', updatedCriteria.seats);
+      
+      navigate(`/search-rides?${newParams.toString()}`, { replace: true });
+      return;
+    }
+    
     // Auto search if we have from, to, and date
     if (criteria.from && criteria.to && criteria.date) {
       performSearch(criteria);
