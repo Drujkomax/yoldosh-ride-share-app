@@ -61,39 +61,37 @@ const PassengerCountPage = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-6">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleCountChange(passengerCount - 1)}
-              disabled={passengerCount <= 1}
-              className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
-            >
-              <Minus className="h-5 w-5" />
-            </Button>
-            
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-900 mb-2">
-                {passengerCount}
-              </div>
-              <div className="text-gray-500 text-sm">
-                {passengerCount === 1 ? 'пассажир' : 
-                 passengerCount <= 4 ? 'пассажира' : 'пассажиров'}
-              </div>
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="flex items-center justify-center space-x-8">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleCountChange(passengerCount - 1)}
+            disabled={passengerCount <= 1}
+            className="h-14 w-14 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
+          >
+            <Minus className="h-6 w-6" />
+          </Button>
+          
+          <div className="text-center">
+            <div className="text-5xl font-bold text-gray-900 mb-2">
+              {passengerCount}
             </div>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handleCountChange(passengerCount + 1)}
-              disabled={passengerCount >= 8}
-              className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
+            <div className="text-gray-500 text-base">
+              {passengerCount === 1 ? 'пассажир' : 
+               passengerCount <= 4 ? 'пассажира' : 'пассажиров'}
+            </div>
           </div>
+          
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleCountChange(passengerCount + 1)}
+            disabled={passengerCount >= 8}
+            className="h-14 w-14 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
         </div>
       </div>
 
