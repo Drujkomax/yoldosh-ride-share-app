@@ -53,12 +53,16 @@ const PassengerSearchPage = () => {
         const parsedDate = new Date(selectedDateParam);
         if (!isNaN(parsedDate.getTime())) {
           setDate(parsedDate);
+          
+          // Clear the selectedDate param from URL without affecting other data
+          const newParams = new URLSearchParams();
+          navigate('/passenger-search', { replace: true });
         }
       } catch (error) {
         console.log('Could not parse date from URL:', error);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   // Request notification permission on component mount
   useEffect(() => {
