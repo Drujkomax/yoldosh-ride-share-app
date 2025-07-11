@@ -94,7 +94,10 @@ const SearchRides = () => {
   };
 
   const createRideAlert = async () => {
+    console.log('createRideAlert called, user:', user);
+    
     if (!user?.id) {
+      console.log('No user ID found');
       toast.error('Необходимо войти в систему для создания уведомлений');
       return;
     }
@@ -102,13 +105,24 @@ const SearchRides = () => {
     setIsCreatingAlert(true);
     try {
       // Get current user session to ensure auth context
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('Session check:', { session: !!session, error: sessionError });
       
       if (!session) {
+        console.log('No session found');
         toast.error('Необходимо войти в систему');
         setIsCreatingAlert(false);
         return;
       }
+
+      console.log('Creating ride alert with data:', {
+        user_id: session.user.id,
+        from_city: searchCriteria.from,
+        to_city: searchCriteria.to,
+        departure_date: searchCriteria.date || null,
+        min_seats: searchCriteria.seats ? parseInt(searchCriteria.seats) : 1
+      });
 
       const { error } = await supabase
         .from('ride_alerts')
@@ -120,8 +134,13 @@ const SearchRides = () => {
           min_seats: searchCriteria.seats ? parseInt(searchCriteria.seats) : 1
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Ride alert created successfully');
+      
       setTimeout(() => {
         setAlertCreated(true);
         toast.success('Уведомление создано! Мы сообщим вам о новых поездках');
