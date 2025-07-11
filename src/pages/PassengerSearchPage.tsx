@@ -10,7 +10,7 @@ import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { standardizeCityName } from '@/lib/cityNormalizer';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 
-import PassengerCountModal from '@/components/PassengerCountModal';
+
 import BottomNavigation from '@/components/BottomNavigation';
 import { format, startOfToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -32,8 +32,18 @@ const PassengerSearchPage = () => {
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
   
-  const [showPassengerSelector, setShowPassengerSelector] = useState(false);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
+
+  // Handle passenger count selection
+  useEffect(() => {
+    const passengerCountParam = searchParams.get('passengerCount');
+    if (passengerCountParam) {
+      const count = parseInt(passengerCountParam);
+      if (!isNaN(count) && count >= 1 && count <= 8) {
+        setPassengers(count);
+      }
+    }
+  }, [searchParams]);
 
   // Handle date selection from calendar
   useEffect(() => {
@@ -252,10 +262,9 @@ const PassengerSearchPage = () => {
                 </Button>
               </div>
 
-              {/* Passengers */}
               <div className="p-4">
                 <Button
-                  onClick={() => setShowPassengerSelector(true)}
+                  onClick={() => navigate(`/passenger-count?returnTo=/passenger-search&currentCount=${passengers}`)}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
@@ -333,12 +342,6 @@ const PassengerSearchPage = () => {
       />
 
 
-      <PassengerCountModal
-        isOpen={showPassengerSelector}
-        onClose={() => setShowPassengerSelector(false)}
-        onSelect={setPassengers}
-        currentCount={passengers}
-      />
 
       {/* Bottom Navigation */}
       <BottomNavigation />
