@@ -28,7 +28,7 @@ const FullScreenCalendar = () => {
       }
     }
     setMonths(initialMonths);
-  }, [today]);
+  }, []); // Remove today dependency to prevent infinite loop
 
   // Load more months when user scrolls to bottom
   const loadMoreMonths = () => {
