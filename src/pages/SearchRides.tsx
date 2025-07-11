@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check, Edit3 } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -28,6 +31,13 @@ const SearchRides = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const [alertCreated, setAlertCreated] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFilters, setEditFilters] = useState({
+    from: '',
+    to: '',
+    date: '',
+    seats: ''
+  });
 
   useEffect(() => {
     const criteria = {
@@ -37,6 +47,7 @@ const SearchRides = () => {
       seats: searchParams.get('seats') || ''
     };
     setSearchCriteria(criteria);
+    setEditFilters(criteria);
     
     // Auto search if we have from, to, and date
     if (criteria.from && criteria.to && criteria.date) {
@@ -152,6 +163,17 @@ const SearchRides = () => {
     }
   };
 
+  const handleEditSearch = () => {
+    const newParams = new URLSearchParams();
+    if (editFilters.from) newParams.set('from', editFilters.from);
+    if (editFilters.to) newParams.set('to', editFilters.to);
+    if (editFilters.date) newParams.set('date', editFilters.date);
+    if (editFilters.seats) newParams.set('seats', editFilters.seats);
+    
+    navigate(`/search-rides?${newParams.toString()}`);
+    setIsEditModalOpen(false);
+  };
+
   const getTabCounts = () => {
     const all = searchResults.length;
     const carpool = searchResults.filter(ride => ride.available_seats <= 4).length;
@@ -188,17 +210,76 @@ const SearchRides = () => {
           </div>
           
           {/* Search Summary Card */}
-          <div 
-            className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors"
-            onClick={() => navigate('/passenger-search')}
-          >
-            <h1 className="font-bold text-gray-900 text-lg">
-              {searchCriteria.from} → {searchCriteria.to}
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
-            </p>
-          </div>
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogTrigger asChild>
+              <div 
+                className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors relative group"
+              >
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Edit3 className="h-4 w-4 text-gray-500" />
+                </div>
+                <h1 className="font-bold text-gray-900 text-lg">
+                  {searchCriteria.from} → {searchCriteria.to}
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
+                </p>
+              </div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Изменить параметры поиска</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="from">Откуда</Label>
+                  <Input
+                    id="from"
+                    value={editFilters.from}
+                    onChange={(e) => setEditFilters(prev => ({ ...prev, from: e.target.value }))}
+                    placeholder="Город отправления"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="to">Куда</Label>
+                  <Input
+                    id="to"
+                    value={editFilters.to}
+                    onChange={(e) => setEditFilters(prev => ({ ...prev, to: e.target.value }))}
+                    placeholder="Город назначения"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="date">Дата</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={editFilters.date}
+                    onChange={(e) => setEditFilters(prev => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="seats">Количество пассажиров</Label>
+                  <Input
+                    id="seats"
+                    type="number"
+                    min="1"
+                    max="8"
+                    value={editFilters.seats}
+                    onChange={(e) => setEditFilters(prev => ({ ...prev, seats: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+                <Button 
+                  onClick={handleEditSearch}
+                  className="w-full"
+                  disabled={!editFilters.from || !editFilters.to}
+                >
+                  Найти поездки
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
