@@ -55,8 +55,9 @@ const PassengerSearchPage = () => {
           setDate(parsedDate);
           
           // Clear the selectedDate param from URL without affecting other data
-          const newParams = new URLSearchParams();
-          navigate('/passenger-search', { replace: true });
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete('selectedDate');
+          navigate(`/passenger-search?${newParams.toString()}`, { replace: true });
         }
       } catch (error) {
         console.log('Could not parse date from URL:', error);
