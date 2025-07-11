@@ -3,9 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check, Edit3 } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
@@ -210,76 +208,133 @@ const SearchRides = () => {
           </div>
           
           {/* Search Summary Card */}
-          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogTrigger asChild>
+          <div 
+            className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors relative group"
+            onClick={() => setIsEditModalOpen(true)}
+          >
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Edit3 className="h-4 w-4 text-gray-500" />
+            </div>
+            <h1 className="font-bold text-gray-900 text-lg">
+              {searchCriteria.from} → {searchCriteria.to}
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
+            </p>
+          </div>
+
+          {/* Filter Drawer */}
+          {isEditModalOpen && (
+            <div className="fixed inset-0 z-50">
+              {/* Backdrop */}
               <div 
-                className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors relative group"
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Edit3 className="h-4 w-4 text-gray-500" />
+                className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
+                onClick={() => setIsEditModalOpen(false)}
+              />
+              
+              {/* Drawer */}
+              <div className={`absolute top-0 left-0 right-0 bg-white shadow-lg transition-transform duration-300 ease-out ${
+                isEditModalOpen ? 'translate-y-0' : '-translate-y-full'
+              }`}>
+                <div className="p-6 pb-8">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900">Уточните поисковый запрос</h2>
+                    <button
+                      onClick={() => setIsEditModalOpen(false)}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ChevronLeft className="h-6 w-6 text-gray-600 rotate-90" />
+                    </button>
+                  </div>
+
+                  {/* Search Form */}
+                  <div className="space-y-4">
+                    {/* From City */}
+                    <div className="relative">
+                      <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                        <div className="w-3 h-3 border-2 border-blue-500 rounded-full flex-shrink-0" />
+                        <Input
+                          value={editFilters.from}
+                          onChange={(e) => setEditFilters(prev => ({ ...prev, from: e.target.value }))}
+                          placeholder="Откуда"
+                          className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Swap Button */}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setEditFilters(prev => ({ 
+                          ...prev, 
+                          from: prev.to, 
+                          to: prev.from 
+                        }))}
+                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                      >
+                        <ArrowLeft className="h-5 w-5 rotate-90" />
+                      </button>
+                    </div>
+
+                    {/* To City */}
+                    <div className="relative">
+                      <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0" />
+                        <Input
+                          value={editFilters.to}
+                          onChange={(e) => setEditFilters(prev => ({ ...prev, to: e.target.value }))}
+                          placeholder="Куда"
+                          className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Date */}
+                    <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                      <div className="w-6 h-6 flex items-center justify-center">
+                        <div className="w-4 h-4 border border-gray-400 rounded grid grid-cols-2 gap-px">
+                          <div className="bg-gray-300 rounded-tl"></div>
+                          <div className="bg-gray-300 rounded-tr"></div>
+                          <div className="bg-gray-300"></div>
+                          <div className="bg-gray-300 rounded-br"></div>
+                        </div>
+                      </div>
+                      <Input
+                        type="date"
+                        value={editFilters.date}
+                        onChange={(e) => setEditFilters(prev => ({ ...prev, date: e.target.value }))}
+                        className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
+                      />
+                    </div>
+
+                    {/* Passengers */}
+                    <div className="flex items-center space-x-3 p-4 border-b border-gray-200">
+                      <User className="h-6 w-6 text-gray-400" />
+                      <Input
+                        type="number"
+                        min="1"
+                        max="8"
+                        value={editFilters.seats}
+                        onChange={(e) => setEditFilters(prev => ({ ...prev, seats: e.target.value }))}
+                        placeholder="1"
+                        className="border-0 text-lg font-medium p-0 focus:ring-0 bg-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Search Button */}
+                  <Button 
+                    onClick={handleEditSearch}
+                    className="w-full mt-6 h-12 text-lg font-medium bg-blue-500 hover:bg-blue-600 rounded-2xl"
+                    disabled={!editFilters.from || !editFilters.to}
+                  >
+                    Поиск
+                  </Button>
                 </div>
-                <h1 className="font-bold text-gray-900 text-lg">
-                  {searchCriteria.from} → {searchCriteria.to}
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
-                </p>
               </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Изменить параметры поиска</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="from">Откуда</Label>
-                  <Input
-                    id="from"
-                    value={editFilters.from}
-                    onChange={(e) => setEditFilters(prev => ({ ...prev, from: e.target.value }))}
-                    placeholder="Город отправления"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="to">Куда</Label>
-                  <Input
-                    id="to"
-                    value={editFilters.to}
-                    onChange={(e) => setEditFilters(prev => ({ ...prev, to: e.target.value }))}
-                    placeholder="Город назначения"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="date">Дата</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={editFilters.date}
-                    onChange={(e) => setEditFilters(prev => ({ ...prev, date: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="seats">Количество пассажиров</Label>
-                  <Input
-                    id="seats"
-                    type="number"
-                    min="1"
-                    max="8"
-                    value={editFilters.seats}
-                    onChange={(e) => setEditFilters(prev => ({ ...prev, seats: e.target.value }))}
-                    placeholder="1"
-                  />
-                </div>
-                <Button 
-                  onClick={handleEditSearch}
-                  className="w-full"
-                  disabled={!editFilters.from || !editFilters.to}
-                >
-                  Найти поездки
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            </div>
+          )}
         </div>
       </div>
 
