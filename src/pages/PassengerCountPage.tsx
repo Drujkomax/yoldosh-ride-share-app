@@ -61,89 +61,52 @@ const PassengerCountPage = () => {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6">
-        <div className="max-w-sm mx-auto space-y-6">
-          {/* Counter Section */}
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-6 mb-8">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleCountChange(passengerCount - 1)}
-                disabled={passengerCount <= 1}
-                className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
-              >
-                <Minus className="h-5 w-5" />
-              </Button>
-              
-              <div className="text-center">
-                <div className="text-4xl font-bold text-gray-900 mb-2">
-                  {passengerCount}
-                </div>
-                <div className="text-gray-500 text-sm">
-                  {passengerCount === 1 ? 'пассажир' : 
-                   passengerCount <= 4 ? 'пассажира' : 'пассажиров'}
-                </div>
+      <div className="px-4 py-6 flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-6">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleCountChange(passengerCount - 1)}
+              disabled={passengerCount <= 1}
+              className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
+            >
+              <Minus className="h-5 w-5" />
+            </Button>
+            
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gray-900 mb-2">
+                {passengerCount}
               </div>
-              
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handleCountChange(passengerCount + 1)}
-                disabled={passengerCount >= 8}
-                className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Quick Selection Options */}
-          <div className="space-y-3">
-            <div className="text-sm text-gray-500 text-center mb-4">
-              Или выберите из списка:
+              <div className="text-gray-500 text-sm">
+                {passengerCount === 1 ? 'пассажир' : 
+                 passengerCount <= 4 ? 'пассажира' : 'пассажиров'}
+              </div>
             </div>
             
-            {passengerOptions.map((option) => (
-              <button
-                key={option.count}
-                onClick={() => setPassengerCount(option.count)}
-                className={`
-                  w-full p-4 rounded-xl border-2 transition-all duration-200 text-left
-                  ${passengerCount === option.count 
-                    ? 'border-blue-500 bg-blue-50 text-blue-600' 
-                    : 'border-gray-200 hover:border-gray-300 text-gray-900'
-                  }
-                `}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Users className={`h-5 w-5 ${
-                      passengerCount === option.count ? 'text-blue-500' : 'text-gray-400'
-                    }`} />
-                    <span className="font-medium">{option.label}</span>
-                  </div>
-                  
-                  {passengerCount === option.count && (
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </div>
-              </button>
-            ))}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleCountChange(passengerCount + 1)}
+              disabled={passengerCount >= 8}
+              className="h-12 w-12 rounded-full border-2 border-gray-300 hover:border-blue-500 disabled:opacity-50"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
 
       {/* Confirm Button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <Button
-          onClick={handleConfirm}
-          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium"
-        >
-          Подтвердить количество
-        </Button>
+        <div className="flex justify-center">
+          <Button
+            onClick={handleConfirm}
+            className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium"
+          >
+            Подтвердить количество
+          </Button>
+        </div>
       </div>
     </div>
   );
