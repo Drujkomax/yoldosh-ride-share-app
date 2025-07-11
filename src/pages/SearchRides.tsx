@@ -27,6 +27,7 @@ const SearchRides = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const [alertCreated, setAlertCreated] = useState(false);
@@ -65,6 +66,7 @@ const SearchRides = () => {
       if (updatedCriteria.seats) newParams.set('seats', updatedCriteria.seats);
       
       navigate(`/search-rides?${newParams.toString()}`, { replace: true });
+      setIsInitialLoad(false);
       return;
     }
     
@@ -83,13 +85,16 @@ const SearchRides = () => {
       if (updatedCriteria.seats) newParams.set('seats', updatedCriteria.seats);
       
       navigate(`/search-rides?${newParams.toString()}`, { replace: true });
+      setIsInitialLoad(false);
       return;
     }
     
-    // Auto search if we have from, to, and date
-    if (criteria.from && criteria.to && criteria.date) {
+    // Auto search only on initial load if we have from, to, and date
+    if (isInitialLoad && criteria.from && criteria.to && criteria.date) {
       performSearch(criteria);
     }
+    
+    setIsInitialLoad(false);
   }, [searchParams]);
 
   const performSearch = async (criteria = searchCriteria) => {
