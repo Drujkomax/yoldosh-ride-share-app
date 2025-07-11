@@ -232,6 +232,14 @@ const SearchRides = () => {
     
     navigate(`/search-rides?${newParams.toString()}`);
     setIsEditModalOpen(false);
+    
+    // Запускаем поиск с новыми параметрами
+    performSearch({
+      from: editFilters.from,
+      to: editFilters.to, 
+      date: editFilters.date,
+      seats: editFilters.seats
+    });
   };
 
   const getTabCounts = () => {
