@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, Phone, MessageCircle, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, MessageCircle, ChevronLeft } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -133,11 +133,6 @@ const RideDetailsPage = () => {
     }
   };
 
-  const handleCallDriver = () => {
-    if (ride?.profiles?.phone) {
-      window.location.href = `tel:${ride.profiles.phone}`;
-    }
-  };
 
   const handleChatWithDriver = () => {
     navigate(`/chat/${ride.profiles?.name}?type=driver&rideId=${id}&from=${ride.from_city}&to=${ride.to_city}&date=${ride.departure_date}&time=${ride.departure_time}`);
@@ -273,7 +268,10 @@ const RideDetailsPage = () => {
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
+                  <div 
+                    className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={() => navigate(`/driver-reviews/${ride.driver_id}`)}
+                  >
                     <Star className="h-4 w-4 text-yellow-400 fill-current" />
                     <span>{ride.profiles?.rating || 5.0}</span>
                   </div>
@@ -283,22 +281,14 @@ const RideDetailsPage = () => {
             </div>
 
             {!isOwnRide && (
-              <div className="flex space-x-3">
+              <div className="flex justify-center">
                 <Button 
                   variant="outline" 
-                  className="flex-1"
-                  onClick={handleCallDriver}
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  Позвонить
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
+                  className="w-full max-w-xs"
                   onClick={handleChatWithDriver}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
-                  Сообщение
+                  Написать сообщение
                 </Button>
               </div>
             )}

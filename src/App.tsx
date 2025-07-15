@@ -24,6 +24,7 @@ import CreateRideWizard from "./pages/CreateRideWizard";
 import RideCreationFlow from "./pages/RideCreationFlow";
 import RidePublishedPage from "./pages/RidePublishedPage";
 import DriverHomePage from "./pages/DriverHomePage";
+import DriverReviewsPage from "./pages/DriverReviewsPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ function App() {
                 <Route path="/ride-creation-flow" element={<RideCreationFlow />} />
                 <Route path="/ride-published" element={<RidePublishedPage />} />
                 <Route path="/driver-home" element={<DriverHomePage />} />
+                <Route path="/driver-reviews/:driverId" element={<DriverReviewsPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
