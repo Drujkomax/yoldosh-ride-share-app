@@ -201,9 +201,6 @@ const RideDetailsPage = () => {
                     <div className="text-lg font-bold text-gray-900">
                       {formatTime(ride.departure_time)}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {loadingRouteInfo ? 'Загрузка...' : routeInfo?.duration || `${ride.duration_hours}ч`}
-                    </div>
                   </div>
                   
                   <div className="flex-1 relative">
@@ -216,11 +213,36 @@ const RideDetailsPage = () => {
                       <span>{ride.from_city}</span>
                       <span>{ride.to_city}</span>
                     </div>
+                    <div className="text-center text-xs text-gray-500 mt-2">
+                      {loadingRouteInfo ? 'Загрузка...' : routeInfo?.duration || `${ride.duration_hours}ч`}
+                    </div>
                   </div>
                   
                   <div className="text-center">
                     <div className="text-lg font-bold text-gray-900">
-                      {formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00')}
+                      {(() => {
+                        if (loadingRouteInfo) return 'Загрузка...';
+                        if (routeInfo?.duration) {
+                          // Парсим время отправления
+                          const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                          // Парсим длительность из API (например, "2 ч 30 мин")
+                          const durationText = routeInfo.duration;
+                          const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                          const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                          
+                          const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                          const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                          
+                          // Рассчитываем время прибытия
+                          const arrivalTime = new Date();
+                          arrivalTime.setHours(hours + durationHours);
+                          arrivalTime.setMinutes(minutes + durationMinutes);
+                          
+                          return formatTime(arrivalTime.toTimeString());
+                        }
+                        // Fallback к stored arrival time
+                        return formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00');
+                      })()}
                     </div>
                   </div>
                 </div>
