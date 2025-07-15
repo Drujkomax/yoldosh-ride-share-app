@@ -381,10 +381,25 @@ const RideDetailsPage = () => {
                   </span>
                 </div>
                 
-                {/* Max passengers */}
+                {/* Seating arrangement */}
                 <div className="flex items-center space-x-2">
                   <Users className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">Максимум 2 сзади</span>
+                  <span className="text-sm">
+                    {(() => {
+                      const totalSeats = ride.available_seats;
+                      if (totalSeats === 1) {
+                        return "1 место сзади";
+                      } else if (totalSeats === 2) {
+                        return "2 места сзади";
+                      } else if (totalSeats === 3) {
+                        return "2 места сзади + 1 место впереди";
+                      } else if (totalSeats === 4) {
+                        return "2 места сзади + 2 места впереди";
+                      } else {
+                        return `${totalSeats} мест`;
+                      }
+                    })()}
+                  </span>
                 </div>
               </div>
             </div>
