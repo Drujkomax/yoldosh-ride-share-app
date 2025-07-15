@@ -14,7 +14,7 @@ const ChatPage = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
-  const { messages, sendMessage, isLoading } = useMessages(chatId || '');
+  const { messages, sendMessage, isLoading, isSending } = useMessages(chatId || '');
   const [newMessage, setNewMessage] = useState('');
   const [chat, setChat] = useState<any>(null);
   const [chatLoading, setChatLoading] = useState(true);
@@ -69,14 +69,38 @@ const ChatPage = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !chatId) return;
+    if (!newMessage.trim() || !chatId) {
+      console.log('handleSendMessage - Сообщение пустое или chatId отсутствует', { newMessage, chatId });
+      return;
+    }
+
+    if (!user?.id) {
+      console.log('handleSendMessage - Пользователь не авторизован');
+      toast.error('Необходимо войти в систему для отправки сообщений');
+      return;
+    }
+
+    // Проверяем, является ли пользователь участником чата
+    if (!chat || (chat.participant1_id !== user.id && chat.participant2_id !== user.id)) {
+      console.log('handleSendMessage - Пользователь не является участником чата');
+      toast.error('У вас нет прав для отправки сообщений в этот чат');
+      return;
+    }
+    
+    console.log('handleSendMessage - Отправка сообщения:', { 
+      content: newMessage, 
+      chatId, 
+      userId: user.id,
+      isParticipant: chat.participant1_id === user.id || chat.participant2_id === user.id
+    });
     
     try {
       await sendMessage({ content: newMessage });
       setNewMessage('');
+      console.log('handleSendMessage - Сообщение успешно отправлено');
     } catch (error) {
-      console.error('Ошибка отправки сообщения:', error);
-      toast.error('Не удалось отправить сообщение');
+      console.error('handleSendMessage - Ошибка отправки сообщения:', error);
+      toast.error(`Не удалось отправить сообщение: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     }
   };
 
@@ -221,8 +245,15 @@ const ChatPage = () => {
             placeholder="Напишите сообщение..."
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-            <Send className="h-4 w-4" />
+          <Button 
+            onClick={handleSendMessage} 
+            disabled={!newMessage.trim() || isSending}
+          >
+            {isSending ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

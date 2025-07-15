@@ -244,12 +244,34 @@ export const useMessages = (chatId: string) => {
       console.log('useMessages - Отправка сообщения:', { content, messageType, locationData, chatId, userId: user?.id });
       
       if (!user?.id) {
+        console.error('useMessages - Пользователь не авторизован');
         throw new Error('Пользователь не авторизован');
       }
 
       if (!chatId) {
+        console.error('useMessages - Chat ID не указан');
         throw new Error('Chat ID не указан');
       }
+
+      // Проверяем, что пользователь является участником чата
+      console.log('useMessages - Проверка прав доступа к чату');
+      const { data: chatData, error: chatError } = await supabase
+        .from('chats')
+        .select('participant1_id, participant2_id')
+        .eq('id', chatId)
+        .single();
+
+      if (chatError) {
+        console.error('useMessages - Ошибка при проверке чата:', chatError);
+        throw new Error('Ошибка при проверке чата');
+      }
+
+      if (!chatData || (chatData.participant1_id !== user.id && chatData.participant2_id !== user.id)) {
+        console.error('useMessages - Пользователь не является участником чата');
+        throw new Error('У вас нет прав для отправки сообщений в этот чат');
+      }
+
+      console.log('useMessages - Права доступа подтверждены, отправляем сообщение');
 
       // Отправляем сообщение
       const { data, error } = await supabase
@@ -266,16 +288,21 @@ export const useMessages = (chatId: string) => {
 
       if (error) {
         console.error('useMessages - Ошибка отправки сообщения:', error);
-        throw error;
+        throw new Error(`Ошибка отправки сообщения: ${error.message}`);
       }
 
       console.log('useMessages - Сообщение отправлено:', data);
 
       // Обновляем время последнего сообщения в чате
-      await supabase
+      const { error: updateError } = await supabase
         .from('chats')
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', chatId);
+
+      if (updateError) {
+        console.error('useMessages - Ошибка обновления времени чата:', updateError);
+        // Не блокируем отправку из-за этой ошибки
+      }
 
       return data;
     },
