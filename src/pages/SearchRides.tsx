@@ -477,6 +477,7 @@ const SearchRides = () => {
             onAddressSelect={handleAddressSelect}
             onBack={() => setShowAddressSearch(false)}
             placeholder={addressSearchType === 'from' ? 'Введите город отправления' : 'Введите город назначения'}
+            previousSelection={addressSearchType === 'to' ? searchCriteria.from : undefined}
           />
         </div>
       )}

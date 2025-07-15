@@ -277,6 +277,7 @@ const RideCreationFlow = () => {
             onAddressSelect={handleAddressSelect}
             onBack={goBack}
             placeholder="Выберите город назначения"
+            previousSelection={rideData.from_city}
           />
         );
       case 3:

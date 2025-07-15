@@ -7,17 +7,20 @@ interface AddressSearchPageProps {
   onAddressSelect: (address: string, coordinates: [number, number]) => void;
   onBack: () => void;
   placeholder?: string;
+  previousSelection?: string;
 }
 
 const AddressSearchPage = ({ 
   title, 
   onAddressSelect, 
   onBack,
-  placeholder = "Введите адрес" 
+  placeholder = "Введите адрес",
+  previousSelection
 }: AddressSearchPageProps) => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
   const geocoder = useRef<google.maps.Geocoder | null>(null);
 
@@ -72,6 +75,12 @@ const AddressSearchPage = ({
   const handleSuggestionSelect = async (suggestion: any) => {
     if (!geocoder.current) return;
 
+    // Check if the selected address is the same as the previous selection
+    if (previousSelection && suggestion.description === previousSelection) {
+      setError('Нельзя выбрать одинаковые города отправления и прибытия');
+      return;
+    }
+
     try {
       geocoder.current.geocode(
         { placeId: suggestion.place_id },
@@ -79,6 +88,8 @@ const AddressSearchPage = ({
           if (status === 'OK' && results?.[0]) {
             const location = results[0].geometry.location;
             const coordinates: [number, number] = [location.lat(), location.lng()];
+            setQuery(''); // Clear the input after successful selection
+            setError(''); // Clear any previous error
             onAddressSelect(suggestion.description, coordinates);
           }
         }
@@ -120,23 +131,41 @@ const AddressSearchPage = ({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setError(''); // Clear error when user starts typing
+            }}
             placeholder={placeholder}
             className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-2xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-lg"
             autoFocus
           />
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
         {/* Current Location Button */}
         <Button
           variant="ghost"
           className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50 mb-4"
           onClick={() => {
+            const currentLocationText = 'Текущее местоположение';
+            if (previousSelection && currentLocationText === previousSelection) {
+              setError('Нельзя выбрать одинаковые города отправления и прибытия');
+              return;
+            }
+            
             if ('geolocation' in navigator) {
               navigator.geolocation.getCurrentPosition(
                 (position) => {
                   const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
-                  onAddressSelect('Текущее местоположение', coords);
+                  setQuery(''); // Clear the input
+                  setError(''); // Clear any previous error
+                  onAddressSelect(currentLocationText, coords);
                 },
                 (error) => console.error('Error getting location:', error)
               );

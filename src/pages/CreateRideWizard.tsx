@@ -431,6 +431,7 @@ const CreateRideWizard = () => {
           onAddressSelect={handleAddressSelect}
           onBack={() => setShowAddressSearch(false)}
           placeholder={currentAddressType === 'from' ? "Город отправления" : "Город назначения"}
+          previousSelection={currentAddressType === 'to' ? rideData.from_city : undefined}
         />
         <div className="pb-20">
           <DriverBottomNavigation />
