@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, MessageCircle, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, MessageCircle, ChevronLeft, Wifi, Wind, Music, Heart } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -341,17 +341,51 @@ const RideDetailsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Rules */}
+        {/* Comfort Settings */}
         <Card>
           <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Максимум 2 сзади</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 flex items-center justify-center">🚭</div>
-                <span className="text-sm">Курение запрещено</span>
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-gray-700 mb-3">Условия поездки</div>
+              <div className="space-y-2">
+                {/* Air Conditioning */}
+                <div className="flex items-center space-x-2">
+                  <Wind className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm">
+                    Кондиционер: {ride.comfort_settings?.air_conditioning ? 'Есть' : 'Нет'}
+                  </span>
+                </div>
+                
+                {/* Smoking */}
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    {ride.comfort_settings?.smoking_allowed ? '🚬' : '🚭'}
+                  </div>
+                  <span className="text-sm">
+                    Курение {ride.comfort_settings?.smoking_allowed ? 'разрешено' : 'запрещено'}
+                  </span>
+                </div>
+                
+                {/* Music */}
+                <div className="flex items-center space-x-2">
+                  <Music className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm">
+                    Музыка: {ride.comfort_settings?.music_allowed ? 'Разрешена' : 'Запрещена'}
+                  </span>
+                </div>
+                
+                {/* Pets */}
+                <div className="flex items-center space-x-2">
+                  <Heart className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm">
+                    Животные: {ride.comfort_settings?.pets_allowed ? 'Разрешены' : 'Запрещены'}
+                  </span>
+                </div>
+                
+                {/* Max passengers */}
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-gray-400" />
+                  <span className="text-sm">Максимум 2 сзади</span>
+                </div>
               </div>
             </div>
           </CardContent>
