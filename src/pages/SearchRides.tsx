@@ -546,34 +546,46 @@ const SearchRides = () => {
                   {/* Time and Route */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-4">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatTime(ride.departure_time)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {Math.floor(ride.duration_hours || 2)}ч{((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}
-                          </div>
-                        </div>
-                        
-                        <div className="flex-1 relative">
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                            <div className="flex-1 h-px bg-gray-300 mx-2"></div>
-                            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                          </div>
-                          <div className="flex justify-between text-xs mt-1 text-gray-600">
-                            <span>{ride.from_city}</span>
-                            <span>{ride.to_city}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-gray-900">
-                            {formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00')}
-                          </div>
-                        </div>
-                      </div>
+                       <div className="flex items-center space-x-4">
+                         <div className="text-center">
+                           <div className="text-lg font-bold text-gray-900">
+                             {formatTime(ride.departure_time)}
+                           </div>
+                         </div>
+                         
+                         <div className="flex-1 relative">
+                           <div className="flex items-center">
+                             <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                             <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+                             <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                           </div>
+                           <div className="flex justify-between text-xs mt-1 text-gray-600">
+                             <span>{ride.from_city}</span>
+                             <span>{ride.to_city}</span>
+                           </div>
+                           <div className="text-center text-xs text-gray-500 mt-2">
+                             {Math.floor(ride.duration_hours || 2)}ч{((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}
+                           </div>
+                         </div>
+                         
+                         <div className="text-center">
+                           <div className="text-lg font-bold text-gray-900">
+                             {(() => {
+                               // Парсим время отправления
+                               const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                               const durationHours = Math.floor(ride.duration_hours || 2);
+                               const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                               
+                               // Рассчитываем время прибытия
+                               const arrivalTime = new Date();
+                               arrivalTime.setHours(hours + durationHours);
+                               arrivalTime.setMinutes(minutes + durationMinutes);
+                               
+                               return formatTime(arrivalTime.toTimeString());
+                             })()}
+                           </div>
+                         </div>
+                       </div>
                     </div>
                     
                      <div className="text-right ml-4">
