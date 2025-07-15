@@ -111,6 +111,9 @@ const RideDetailsPage = () => {
 
     setBookingLoading(true);
     try {
+      // Определяем статус бронирования в зависимости от типа подтверждения
+      const bookingStatus = ride.instant_booking_enabled ? 'confirmed' : 'pending';
+      
       const { error } = await supabase
         .from('bookings')
         .insert({
@@ -118,12 +121,18 @@ const RideDetailsPage = () => {
           passenger_id: user.id,
           seats_booked: 1,
           total_price: ride.price_per_seat,
-          status: 'pending'
+          status: bookingStatus
         });
 
       if (error) throw error;
       
-      toast.success('Запрос на бронирование отправлен!');
+      // Разные сообщения для разных типов бронирования
+      if (ride.instant_booking_enabled) {
+        toast.success('Поездка забронирована! Вы можете связаться с водителем.');
+      } else {
+        toast.success('Запрос на бронирование отправлен водителю!');
+      }
+      
       navigate('/my-trips');
     } catch (error) {
       console.error('Error booking ride:', error);
@@ -325,7 +334,7 @@ const RideDetailsPage = () => {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Подтверждение</span>
                 <span className="text-sm text-gray-500">
-                  Бронирование подтверждается водителем
+                  {ride.instant_booking_enabled ? 'Мгновенное бронирование' : 'Бронирование подтверждается водителем'}
                 </span>
               </div>
             </div>
@@ -355,7 +364,8 @@ const RideDetailsPage = () => {
             disabled={bookingLoading || ride.available_seats === 0}
             className="w-full h-14 text-lg bg-blue-500 hover:bg-blue-600"
           >
-            {bookingLoading ? 'Бронирование...' : 'Забронировать поездку'}
+            {bookingLoading ? 'Бронирование...' : 
+              ride.instant_booking_enabled ? 'Забронировать сейчас' : 'Отправить запрос на бронирование'}
           </Button>
         )}
       </div>
