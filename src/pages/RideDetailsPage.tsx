@@ -143,8 +143,65 @@ const RideDetailsPage = () => {
   };
 
 
-  const handleChatWithDriver = () => {
-    navigate(`/chat/${ride.profiles?.name}?type=driver&rideId=${id}&from=${ride.from_city}&to=${ride.to_city}&date=${ride.departure_date}&time=${ride.departure_time}`);
+  const handleChatWithDriver = async () => {
+    if (!user?.id) {
+      toast.error('Необходимо войти в систему для отправки сообщения');
+      return;
+    }
+
+    if (user.id === ride.driver_id) {
+      toast.error('Нельзя создать чат с самим собой');
+      return;
+    }
+
+    try {
+      // Сначала проверяем, существует ли уже чат между пассажиром и водителем для этой поездки
+      const { data: existingChat, error: searchError } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('ride_id', ride.id)
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${ride.driver_id}),and(participant1_id.eq.${ride.driver_id},participant2_id.eq.${user.id})`)
+        .maybeSingle();
+
+      if (searchError) {
+        console.error('Error searching for existing chat:', searchError);
+        toast.error('Ошибка при поиске чата');
+        return;
+      }
+
+      let chatId;
+
+      if (existingChat) {
+        // Чат уже существует, используем его ID
+        chatId = existingChat.id;
+      } else {
+        // Создаем новый чат
+        const { data: newChat, error: createError } = await supabase
+          .from('chats')
+          .insert({
+            ride_id: ride.id,
+            participant1_id: user.id,
+            participant2_id: ride.driver_id,
+            last_message_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating chat:', createError);
+          toast.error('Ошибка при создании чата');
+          return;
+        }
+
+        chatId = newChat.id;
+      }
+
+      // Переходим в чат
+      navigate(`/chat/${chatId}`);
+    } catch (error) {
+      console.error('Error handling chat with driver:', error);
+      toast.error('Ошибка при создании чата');
+    }
   };
 
   if (loading) {
