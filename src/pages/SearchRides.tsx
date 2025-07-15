@@ -11,11 +11,13 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import { useGoogleGeocoding } from '@/hooks/useGoogleGeocoding';
 import { toast } from 'sonner';
 
 const SearchRides = () => {
   const navigate = useNavigate();
   const { searchRides } = useRides();
+  const { getRouteInfo } = useGoogleGeocoding();
   const { user } = useUser();
   const [searchParams] = useSearchParams();
   const [searchCriteria, setSearchCriteria] = useState({
@@ -28,6 +30,8 @@ const SearchRides = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [routeInfoCache, setRouteInfoCache] = useState<{[key: string]: any}>({});
+  const [loadingRoutes, setLoadingRoutes] = useState<{[key: string]: boolean}>({});
   const [activeTab, setActiveTab] = useState('all');
   const [isCreatingAlert, setIsCreatingAlert] = useState(false);
   const [alertCreated, setAlertCreated] = useState(false);
@@ -131,6 +135,44 @@ const SearchRides = () => {
       setIsLoading(false);
     }
   };
+
+  const fetchRouteInfo = async (ride: any) => {
+    // Проверяем кэш
+    const cacheKey = `${ride.from_city}-${ride.to_city}`;
+    if (routeInfoCache[cacheKey]) {
+      return routeInfoCache[cacheKey];
+    }
+
+    if (loadingRoutes[cacheKey]) {
+      return null;
+    }
+
+    setLoadingRoutes(prev => ({ ...prev, [cacheKey]: true }));
+
+    try {
+      const route = await getRouteInfo(ride.from_city, ride.to_city);
+      if (route) {
+        setRouteInfoCache(prev => ({ ...prev, [cacheKey]: route }));
+        return route;
+      }
+    } catch (error) {
+      console.error('Error fetching route info:', error);
+    } finally {
+      setLoadingRoutes(prev => ({ ...prev, [cacheKey]: false }));
+    }
+    return null;
+  };
+
+  // Загружаем маршрутную информацию для всех результатов поиска
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      searchResults.forEach(ride => {
+        if (ride.from_city && ride.to_city) {
+          fetchRouteInfo(ride);
+        }
+      });
+    }
+  }, [searchResults]);
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -563,28 +605,69 @@ const SearchRides = () => {
                              <span>{ride.from_city}</span>
                              <span>{ride.to_city}</span>
                            </div>
-                           <div className="text-center text-xs text-gray-500 mt-2">
-                             {Math.floor(ride.duration_hours || 2)}ч{((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}
-                           </div>
+                            <div className="text-center text-xs text-gray-500 mt-2">
+                              {(() => {
+                                const cacheKey = `${ride.from_city}-${ride.to_city}`;
+                                const routeInfo = routeInfoCache[cacheKey];
+                                const isLoading = loadingRoutes[cacheKey];
+                                
+                                if (isLoading) {
+                                  return 'Загрузка...';
+                                }
+                                
+                                if (routeInfo?.duration) {
+                                  return routeInfo.duration;
+                                }
+                                
+                                // Fallback к исходному значению
+                                return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
+                              })()}
+                            </div>
                          </div>
                          
-                         <div className="text-center">
-                           <div className="text-lg font-bold text-gray-900">
-                             {(() => {
-                               // Парсим время отправления
-                               const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                               const durationHours = Math.floor(ride.duration_hours || 2);
-                               const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
-                               
-                               // Рассчитываем время прибытия
-                               const arrivalTime = new Date();
-                               arrivalTime.setHours(hours + durationHours);
-                               arrivalTime.setMinutes(minutes + durationMinutes);
-                               
-                               return formatTime(arrivalTime.toTimeString());
-                             })()}
-                           </div>
-                         </div>
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-gray-900">
+                              {(() => {
+                                const cacheKey = `${ride.from_city}-${ride.to_city}`;
+                                const routeInfo = routeInfoCache[cacheKey];
+                                const isLoading = loadingRoutes[cacheKey];
+                                
+                                if (isLoading) {
+                                  return 'Загрузка...';
+                                }
+                                
+                                if (routeInfo?.duration) {
+                                  // Парсим время отправления
+                                  const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                  // Парсим длительность из API (например, "2 ч 30 мин")
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  
+                                  // Рассчитываем время прибытия
+                                  const arrivalTime = new Date();
+                                  arrivalTime.setHours(hours + durationHours);
+                                  arrivalTime.setMinutes(minutes + durationMinutes);
+                                  
+                                  return formatTime(arrivalTime.toTimeString());
+                                }
+                                
+                                // Fallback к исходному расчету
+                                const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                const durationHours = Math.floor(ride.duration_hours || 2);
+                                const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                                
+                                const arrivalTime = new Date();
+                                arrivalTime.setHours(hours + durationHours);
+                                arrivalTime.setMinutes(minutes + durationMinutes);
+                                
+                                return formatTime(arrivalTime.toTimeString());
+                              })()}
+                            </div>
+                          </div>
                        </div>
                     </div>
                     
