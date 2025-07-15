@@ -108,6 +108,41 @@ export const useGoogleGeocoding = () => {
     return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
   };
 
+  const getRouteInfo = async (origin: string, destination: string): Promise<RouteResult | null> => {
+    try {
+      console.log('Getting route info from:', origin, 'to:', destination);
+      
+      const { data, error } = await supabase.functions.invoke('google-geocoding', {
+        body: { 
+          type: 'directions',
+          origin,
+          destination
+        }
+      });
+      
+      if (!error && data?.routes?.[0]) {
+        const route = data.routes[0];
+        const leg = route.legs[0];
+        
+        console.log('Route info:', {
+          distance: leg.distance.text,
+          duration: leg.duration.text
+        });
+        
+        return {
+          distance: leg.distance.text,
+          duration: leg.duration.text,
+          coordinates: route.overview_polyline ? [] : [] // Можно добавить декодирование полилинии если нужно
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting route info:', error);
+      return null;
+    }
+  };
+
   const calculateRoute = async (startPoint: [number, number], endPoint: [number, number]): Promise<RouteResult | null> => {
     try {
       // Используем упрощенный расчет расстояния для демонстрации
@@ -175,6 +210,7 @@ export const useGoogleGeocoding = () => {
     geocodeAddress,
     reverseGeocode,
     calculateRoute,
+    getRouteInfo,
     isLoading
   };
 };

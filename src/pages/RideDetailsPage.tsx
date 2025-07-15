@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { useGoogleGeocoding } from '@/hooks/useGoogleGeocoding';
 
 const RideDetailsPage = () => {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ const RideDetailsPage = () => {
   const [ride, setRide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [routeInfo, setRouteInfo] = useState<any>(null);
+  const [loadingRouteInfo, setLoadingRouteInfo] = useState(false);
+  const { getRouteInfo } = useGoogleGeocoding();
 
   useEffect(() => {
     if (id) {
@@ -51,11 +55,30 @@ const RideDetailsPage = () => {
 
       if (error) throw error;
       setRide(data);
+      
+      // Загружаем реальную информацию о маршруте
+      if (data.pickup_address && data.dropoff_address) {
+        fetchRouteInfo(data.pickup_address, data.dropoff_address);
+      }
     } catch (error) {
       console.error('Error fetching ride details:', error);
       toast.error('Ошибка при загрузке деталей поездки');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRouteInfo = async (origin: string, destination: string) => {
+    setLoadingRouteInfo(true);
+    try {
+      const route = await getRouteInfo(origin, destination);
+      if (route) {
+        setRouteInfo(route);
+      }
+    } catch (error) {
+      console.error('Error fetching route info:', error);
+    } finally {
+      setLoadingRouteInfo(false);
     }
   };
 
@@ -179,7 +202,7 @@ const RideDetailsPage = () => {
                       {formatTime(ride.departure_time)}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {ride.duration_hours}ч
+                      {loadingRouteInfo ? 'Загрузка...' : routeInfo?.duration || `${ride.duration_hours}ч`}
                     </div>
                   </div>
                   

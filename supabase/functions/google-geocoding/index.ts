@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, type = 'autocomplete' } = await req.json()
+    const { query, type = 'autocomplete', origin, destination } = await req.json()
     const GOOGLE_API_KEY = 'AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68'
 
     let url = ''
@@ -24,6 +24,8 @@ serve(async (req) => {
       url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${query}&key=${GOOGLE_API_KEY}&fields=geometry,formatted_address,name,types&language=ru`
     } else if (type === 'reverse') {
       url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${query}&key=${GOOGLE_API_KEY}&language=ru`
+    } else if (type === 'directions') {
+      url = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&key=${GOOGLE_API_KEY}&language=ru&mode=driving`
     }
 
     console.log('Calling Google API:', url)
