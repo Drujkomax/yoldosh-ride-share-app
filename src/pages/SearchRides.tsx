@@ -701,128 +701,128 @@ const SearchRides = () => {
               return (
                 <Card 
                   key={ride.id} 
-                  className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                  className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer mb-4"
                   onClick={() => navigate(`/ride-details/${ride.id}`)}
                 >
                   <CardContent className="p-4">
-                    {/* Time and Route */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-start justify-between">
+                      {/* Left side - Time and Route */}
                       <div className="flex-1">
-                         <div className="flex items-center space-x-4">
-                           <div className="text-center">
-                             <div className="text-lg font-bold text-gray-900">
-                               {formatTime(ride.departure_time)}
-                             </div>
-                           </div>
-                           
-                           <div className="flex-1 relative">
-                             <div className="flex items-center">
-                               <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                               <div className="flex-1 h-px bg-gray-300 mx-2"></div>
-                               <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                             </div>
-                             <div className="flex justify-between text-xs mt-1 text-gray-600">
-                               <span>{ride.from_city}</span>
-                               <span>{ride.to_city}</span>
-                             </div>
-                              <div className="text-center text-xs text-gray-500 mt-2">
-                                {(() => {
-                                  if (routeInfo?.duration) {
-                                    return routeInfo.duration;
-                                  }
-                                  
-                                  // Fallback к исходному значению
-                                  return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
-                                })()}
-                              </div>
-                           </div>
-                           
-                            <div className="text-center">
-                              <div className="text-lg font-bold text-gray-900">
-                                {(() => {
-                                  if (routeInfo?.duration) {
-                                    // Парсим время отправления
-                                    const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                                    // Парсим длительность из API (например, "2 ч 30 мин")
-                                    const durationText = routeInfo.duration;
-                                    const hoursMatch = durationText.match(/(\d+)\s*ч/);
-                                    const minutesMatch = durationText.match(/(\d+)\s*мин/);
-                                    
-                                    const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-                                    const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
-                                    
-                                    // Рассчитываем время прибытия
-                                    const arrivalTime = new Date();
-                                    arrivalTime.setHours(hours + durationHours);
-                                    arrivalTime.setMinutes(minutes + durationMinutes);
-                                    
-                                    return formatTime(arrivalTime.toTimeString());
-                                  }
-                                  
-                                  // Fallback к исходному расчету
+                        <div className="flex items-center space-x-4">
+                          {/* Departure Time */}
+                          <div className="text-left">
+                            <div className="text-xl font-semibold text-gray-900">
+                              {formatTime(ride.departure_time)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {(() => {
+                                if (routeInfo?.duration) {
+                                  return routeInfo.duration;
+                                }
+                                return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
+                              })()}
+                            </div>
+                          </div>
+                          
+                          {/* Route line and cities */}
+                          <div className="flex-1 mx-4">
+                            <div className="flex items-center mb-1">
+                              <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                              <div className="flex-1 h-0.5 bg-teal-600 mx-2"></div>
+                              <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
+                              <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Arrival Time */}
+                          <div className="text-left">
+                            <div className="text-xl font-semibold text-gray-900">
+                              {(() => {
+                                if (routeInfo?.duration) {
                                   const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                                  const durationHours = Math.floor(ride.duration_hours || 2);
-                                  const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
                                   
                                   const arrivalTime = new Date();
                                   arrivalTime.setHours(hours + durationHours);
                                   arrivalTime.setMinutes(minutes + durationMinutes);
                                   
                                   return formatTime(arrivalTime.toTimeString());
-                                })()}
-                              </div>
+                                }
+                                
+                                const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                const durationHours = Math.floor(ride.duration_hours || 2);
+                                const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                                
+                                const arrivalTime = new Date();
+                                arrivalTime.setHours(hours + durationHours);
+                                arrivalTime.setMinutes(minutes + durationMinutes);
+                                
+                                return formatTime(arrivalTime.toTimeString());
+                              })()}
                             </div>
-                         </div>
+                            <div className="text-xs text-gray-500">+1</div>
+                          </div>
+                        </div>
                       </div>
                       
-                       <div className="text-right ml-4">
-                         <div className="text-lg font-bold text-gray-900">
-                           {Math.floor(ride.price_per_seat).toLocaleString('uz-UZ')}
-                           <span className="text-sm font-normal text-gray-500"> сум</span>
-                         </div>
-                       </div>
+                      {/* Right side - Price */}
+                      <div className="text-right ml-6">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')}
+                          <span className="text-lg font-normal">,00</span>
+                          <span className="text-lg font-normal"> ₽</span>
+                        </div>
+                        {ride.available_seats <= 2 && (
+                          <div className="text-sm text-orange-600 font-medium mt-1">
+                            {ride.available_seats === 1 ? '1 место по этой цене' : `${ride.available_seats} места по этой цене`}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Driver Info */}
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-white" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-700">
-                              {ride.driver?.name || 'Водитель'}
+                            <span className="text-sm font-medium text-gray-800">
+                              {ride.driver?.name || 'Андрей'}
                             </span>
                             <div className="flex items-center space-x-1">
-                              <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                              <span className="text-xs text-gray-600">
-                                {ride.driver?.rating || '5.0'}
+                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              <span className="text-sm font-medium text-gray-700">
+                                {ride.driver?.rating || '4.9'}
                               </span>
                             </div>
                           </div>
-                          {ride.car_model && (
-                            <div className="text-xs text-gray-500">
-                              {ride.car_model} {ride.car_color && `• ${ride.car_color}`}
-                            </div>
-                          )}
                         </div>
-                       </div>
-                       
-                       <div className="flex items-center space-x-3">
-                         {/* Amenities icons */}
-                         <div className="flex space-x-1">
-                           <Zap className="h-4 w-4 text-gray-400" />
-                           <Wifi className="h-4 w-4 text-gray-400" />
-                         </div>
-                         
-                         {/* Available seats */}
-                         <div className="flex items-center space-x-1">
-                           <Users className="h-4 w-4 text-gray-400" />
-                           <span className="text-sm text-gray-600">{ride.available_seats}</span>
-                         </div>
-                       </div>
+                      </div>
+                      
+                      {/* Right side icons */}
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
+                          <span className="text-xs text-gray-600">🚗</span>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* No seats indicator */}
+                    {ride.available_seats === 0 && (
+                      <div className="absolute top-3 right-3 bg-red-100 text-red-600 px-2 py-1 rounded text-sm font-medium">
+                        Мест нет
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
