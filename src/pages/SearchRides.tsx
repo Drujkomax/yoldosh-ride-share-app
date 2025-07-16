@@ -794,7 +794,7 @@ const SearchRides = () => {
                            <User className="h-5 w-5 text-white" />
                          </div>
                          <div>
-                           <div className="flex items-center space-x-2">
+                           <div className="flex flex-col">
                              <span className="text-sm font-medium text-gray-800">
                                {ride.driver?.name || 'Андрей'}
                              </span>
