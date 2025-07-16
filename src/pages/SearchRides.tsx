@@ -766,7 +766,7 @@ const SearchRides = () => {
                               })()}
                             </div>
                             <div className="relative">
-                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-teal-600"></div>
+                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 translate-x-px w-0.5 h-8 bg-teal-600"></div>
                               <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full relative z-10"></div>
                             </div>
                             <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
