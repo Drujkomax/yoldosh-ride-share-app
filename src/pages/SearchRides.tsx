@@ -706,69 +706,70 @@ const SearchRides = () => {
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
-                      {/* Left side - Time and Route */}
+                      {/* Left side - Route with times */}
                       <div className="flex items-center space-x-4">
-                        {/* Departure Time and City */}
-                        <div className="text-left">
-                          <div className="text-xl font-semibold text-gray-900">
-                            {formatTime(ride.departure_time)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {(() => {
-                              if (routeInfo?.duration) {
-                                return routeInfo.duration;
-                              }
-                              return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
-                            })()}
-                          </div>
-                        </div>
-                        
-                        {/* Vertical Route line and cities */}
-                        <div className="flex flex-col items-center mx-4">
-                          <div className="flex items-center">
+                        {/* Vertical Route line with times and cities */}
+                        <div className="flex flex-col space-y-4">
+                          {/* Departure */}
+                          <div className="flex items-center space-x-3">
+                            <div className="text-xl font-semibold text-gray-900">
+                              {formatTime(ride.departure_time)}
+                            </div>
                             <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                            <span className="text-sm font-medium text-gray-800 ml-2">{ride.from_city}</span>
+                            <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
-                          <div className="w-0.5 h-8 bg-teal-600 my-1"></div>
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                            <span className="text-sm font-medium text-gray-800 ml-2">{ride.to_city}</span>
+                          
+                          {/* Duration line */}
+                          <div className="flex items-center space-x-3">
+                            <div className="text-xs text-gray-500 w-16">
+                              {(() => {
+                                if (routeInfo?.duration) {
+                                  return routeInfo.duration;
+                                }
+                                return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
+                              })()}
+                            </div>
+                            <div className="w-0.5 h-8 bg-teal-600"></div>
                           </div>
-                        </div>
-                        
-                        {/* Arrival Time */}
-                        <div className="text-left">
-                          <div className="text-xl font-semibold text-gray-900">
-                            {(() => {
-                              if (routeInfo?.duration) {
-                                const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                                const durationText = routeInfo.duration;
-                                const hoursMatch = durationText.match(/(\d+)\s*ч/);
-                                const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                          
+                          {/* Arrival */}
+                          <div className="flex items-center space-x-3">
+                            <div className="text-xl font-semibold text-gray-900">
+                              {(() => {
+                                if (routeInfo?.duration) {
+                                  const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  
+                                  const arrivalTime = new Date();
+                                  arrivalTime.setHours(hours + durationHours);
+                                  arrivalTime.setMinutes(minutes + durationMinutes);
+                                  
+                                  return formatTime(arrivalTime.toTimeString());
+                                }
                                 
-                                const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-                                const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                const durationHours = Math.floor(ride.duration_hours || 2);
+                                const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
                                 
                                 const arrivalTime = new Date();
                                 arrivalTime.setHours(hours + durationHours);
                                 arrivalTime.setMinutes(minutes + durationMinutes);
                                 
                                 return formatTime(arrivalTime.toTimeString());
-                              }
-                              
-                              const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                              const durationHours = Math.floor(ride.duration_hours || 2);
-                              const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
-                              
-                              const arrivalTime = new Date();
-                              arrivalTime.setHours(hours + durationHours);
-                              arrivalTime.setMinutes(minutes + durationMinutes);
-                              
-                              return formatTime(arrivalTime.toTimeString());
-                            })()}
+                              })()}
+                            </div>
+                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                            <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
                           </div>
-                          <div className="text-xs text-gray-500">+1</div>
                         </div>
+                        
+                        {/* +1 indicator */}
+                        <div className="text-xs text-gray-500 self-end mb-2">+1</div>
                       </div>
                       
                       {/* Right side - Price */}
