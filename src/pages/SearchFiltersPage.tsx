@@ -1,15 +1,97 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { X, Clock, DollarSign, MapPin, Zap, Users, Cigarette, PawPrint, CreditCard, ShieldCheck } from 'lucide-react';
+import { useRides } from '@/hooks/useRides';
 
 const SearchFiltersPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { searchRides } = useRides();
   
   const [selectedSort, setSelectedSort] = useState('earliest');
   const [selectedTimeRanges, setSelectedTimeRanges] = useState<string[]>([]);
   const [selectedTrustOptions, setSelectedTrustOptions] = useState<string[]>(['verified']);
   const [selectedComforts, setSelectedComforts] = useState<string[]>([]);
+  const [ridesData, setRidesData] = useState<any[]>([]);
+
+  // Получаем данные поиска из URL параметров
+  useEffect(() => {
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const date = searchParams.get('date');
+    const seats = searchParams.get('seats');
+
+    if (from && to && date) {
+      const fetchRides = async () => {
+        try {
+          const results = await searchRides({
+            from_city: from,
+            to_city: to,
+            departure_date: date,
+          });
+          setRidesData(results || []);
+        } catch (error) {
+          console.error('Error fetching rides:', error);
+          setRidesData([]);
+        }
+      };
+
+      fetchRides();
+    }
+  }, [searchParams, searchRides]);
+
+  // Функция для подсчета рейсов по времени
+  const countRidesByTime = (timeRange: string) => {
+    if (!ridesData || ridesData.length === 0) return 0;
+    
+    return ridesData.filter(ride => {
+      const departureTime = ride.departure_time;
+      if (!departureTime) return false;
+      
+      const [hours] = departureTime.split(':').map(Number);
+      
+      switch (timeRange) {
+        case 'morning':
+          return hours >= 6 && hours < 12;
+        case 'afternoon':
+          return hours >= 12 && hours < 18;
+        case 'evening':
+          return hours >= 18;
+        default:
+          return false;
+      }
+    }).length;
+  };
+
+  // Функция для подсчета верифицированных водителей
+  const countVerifiedDrivers = () => {
+    if (!ridesData || ridesData.length === 0) return 0;
+    return ridesData.filter(ride => ride.driver_verified || ride.is_verified).length;
+  };
+
+  // Функция для подсчета рейсов с определенными удобствами
+  const countRidesByComfort = (comfortType: string) => {
+    if (!ridesData || ridesData.length === 0) return 0;
+    
+    return ridesData.filter(ride => {
+      const settings = ride.comfort_settings || {};
+      switch (comfortType) {
+        case 'max_two_back':
+          return ride.available_seats <= 2;
+        case 'instant_booking':
+          return ride.instant_booking_enabled;
+        case 'smoking':
+          return settings.smoking_allowed;
+        case 'pets':
+          return settings.pets_allowed;
+        case 'e_tickets':
+          return true; // Предполагаем, что все рейсы поддерживают электронные билеты
+        default:
+          return false;
+      }
+    }).length;
+  };
 
   const sortOptions = [
     { id: 'earliest', label: 'Самые ранние поездки', icon: Clock },
@@ -20,21 +102,21 @@ const SearchFiltersPage = () => {
   ];
 
   const timeRanges = [
-    { id: 'morning', label: '06:00-12:00', count: 2 },
-    { id: 'afternoon', label: '12:01-18:00', count: 1 },
-    { id: 'evening', label: 'После 18:00', count: 8 },
+    { id: 'morning', label: '06:00-12:00', count: countRidesByTime('morning') },
+    { id: 'afternoon', label: '12:01-18:00', count: countRidesByTime('afternoon') },
+    { id: 'evening', label: 'После 18:00', count: countRidesByTime('evening') },
   ];
 
   const trustOptions = [
-    { id: 'verified', label: 'Профиль подтвержден', count: 2 },
+    { id: 'verified', label: 'Профиль подтвержден', count: countVerifiedDrivers() },
   ];
 
   const comfortOptions = [
-    { id: 'max_two_back', label: 'Максимум двое сзади', count: 2, icon: Users },
-    { id: 'instant_booking', label: 'Мгновенное бронирование', count: 9, icon: Zap },
-    { id: 'smoking', label: 'Можно курить', count: 2, icon: Cigarette },
-    { id: 'pets', label: 'Можно с животными', count: 2, icon: PawPrint },
-    { id: 'e_tickets', label: 'Электронные билеты', count: 2, icon: CreditCard },
+    { id: 'max_two_back', label: 'Максимум двое сзади', count: countRidesByComfort('max_two_back'), icon: Users },
+    { id: 'instant_booking', label: 'Мгновенное бронирование', count: countRidesByComfort('instant_booking'), icon: Zap },
+    { id: 'smoking', label: 'Можно курить', count: countRidesByComfort('smoking'), icon: Cigarette },
+    { id: 'pets', label: 'Можно с животными', count: countRidesByComfort('pets'), icon: PawPrint },
+    { id: 'e_tickets', label: 'Электронные билеты', count: countRidesByComfort('e_tickets'), icon: CreditCard },
   ];
 
   const toggleTimeRange = (rangeId: string) => {
