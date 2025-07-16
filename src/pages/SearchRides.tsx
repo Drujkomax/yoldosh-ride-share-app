@@ -720,7 +720,7 @@ const SearchRides = () => {
                           </div>
                           
                           {/* Вертикальная линия от центра первого круга до центра второго */}
-                          <div className="absolute left-[3.5rem] top-[1.125rem] w-0.5 h-12 bg-teal-600 z-0"></div>
+                          <div className="absolute left-[3.25rem] top-[0.75rem] w-0.5 h-[5.25rem] bg-teal-600 z-0"></div>
                           
                           {/* Duration info */}
                           <div className="flex items-center space-x-3 mb-4">
