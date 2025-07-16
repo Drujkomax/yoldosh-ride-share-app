@@ -31,7 +31,6 @@ const SearchRides = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isPageLoading, setIsPageLoading] = useState(true);
   const [routeInfoCache, setRouteInfoCache] = useState<{[key: string]: any}>({});
   const [loadingRoutes, setLoadingRoutes] = useState<{[key: string]: boolean}>({});
   const [activeTab, setActiveTab] = useState('all');
@@ -102,20 +101,11 @@ const SearchRides = () => {
     // Auto search only on initial load if we have from, to, and date
     if (isInitialLoad && criteria.from && criteria.to && criteria.date) {
       performSearch(criteria);
-    } else if (isInitialLoad) {
-      // Если нет достаточных данных для поиска, всё равно убираем loading
-      setIsPageLoading(false);
-    }
+    } 
     
     setIsInitialLoad(false);
   }, [searchParams]);
 
-  // Убираем индикатор загрузки страницы после завершения поиска
-  useEffect(() => {
-    if (!isLoading && hasSearched) {
-      setIsPageLoading(false);
-    }
-  }, [isLoading, hasSearched]);
 
   const performSearch = async (criteria = searchCriteria) => {
     if (!criteria.from || !criteria.to) return;
@@ -148,7 +138,6 @@ const SearchRides = () => {
       setSearchResults([]);
     } finally {
       setIsLoading(false);
-      setIsPageLoading(false); // Убираем экран загрузки страницы
     }
   };
 
@@ -401,19 +390,6 @@ const SearchRides = () => {
 
   const { all, carpool, bus } = getTabCounts();
   const filteredResults = getFilteredResults();
-
-  // Показываем экран загрузки пока страница инициализируется
-  if (isPageLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-500" />
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Поиск поездок</h2>
-          <p className="text-gray-600">Загружаем актуальную информацию...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
