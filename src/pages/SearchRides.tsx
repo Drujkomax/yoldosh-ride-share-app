@@ -309,16 +309,6 @@ const SearchRides = () => {
       {/* Header */}
       <div className="bg-white border-b">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/passenger-search')}
-              className="p-2 hover:bg-gray-100"
-            >
-              <ChevronLeft className="h-6 w-6 text-gray-600" />
-            </Button>
-          </div>
-          
           {/* Search Summary Card */}
           <div 
             className="bg-gray-100 rounded-2xl p-4 cursor-pointer hover:bg-gray-200 transition-colors relative group"
@@ -327,9 +317,21 @@ const SearchRides = () => {
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <Edit3 className="h-4 w-4 text-gray-500" />
             </div>
-            <h1 className="font-bold text-gray-900 text-lg">
-              {searchCriteria.from} → {searchCriteria.to}
-            </h1>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/passenger-search');
+                }}
+                className="p-2 hover:bg-gray-200 rounded-lg"
+              >
+                <ChevronLeft className="h-6 w-6 text-gray-600" />
+              </Button>
+              <h1 className="font-bold text-gray-900 text-lg">
+                {searchCriteria.from} → {searchCriteria.to}
+              </h1>
+            </div>
             <p className="text-sm text-gray-600 mt-1">
               {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
             </p>
