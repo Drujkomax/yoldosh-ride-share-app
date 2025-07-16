@@ -317,25 +317,37 @@ const SearchRides = () => {
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <Edit3 className="h-4 w-4 text-gray-500" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/passenger-search');
+                  }}
+                  className="p-2 hover:bg-gray-200 rounded-lg"
+                >
+                  <ChevronLeft className="h-6 w-6 text-gray-600" />
+                </Button>
+                <div>
+                  <h1 className="font-bold text-gray-900 text-lg">
+                    {searchCriteria.from} → {searchCriteria.to}
+                  </h1>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
+                  </p>
+                </div>
+              </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/passenger-search');
+                  navigate('/search-filters');
                 }}
-                className="p-2 hover:bg-gray-200 rounded-lg"
+                className="px-4 py-2 text-sm font-medium"
               >
-                <ChevronLeft className="h-6 w-6 text-gray-600" />
+                Фильтровать
               </Button>
-              <div>
-                <h1 className="font-bold text-gray-900 text-lg">
-                  {searchCriteria.from} → {searchCriteria.to}
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
-                </p>
-              </div>
             </div>
           </div>
 
