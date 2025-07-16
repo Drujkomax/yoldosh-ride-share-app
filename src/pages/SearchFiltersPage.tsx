@@ -22,6 +22,17 @@ const SearchFiltersPage = () => {
     const date = searchParams.get('date');
     const seats = searchParams.get('seats');
 
+    // Инициализируем фильтры из URL параметров при первой загрузке
+    const sort = searchParams.get('sort');
+    const timeRanges = searchParams.get('timeRanges')?.split(',') || [];
+    const trust = searchParams.get('trust')?.split(',') || [];
+    const comforts = searchParams.get('comforts')?.split(',') || [];
+
+    if (sort) setSelectedSort(sort);
+    if (timeRanges.length > 0) setSelectedTimeRanges(timeRanges);
+    if (trust.length > 0) setSelectedTrustOptions(trust);
+    if (comforts.length > 0) setSelectedComforts(comforts);
+
     if (from && to && date) {
       const fetchRides = async () => {
         try {

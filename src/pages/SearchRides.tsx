@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import AddressSearchPage from '@/components/AddressSearchPage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 const SearchRides = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { searchRides } = useRides();
   const { getRouteInfo } = useGoogleGeocoding();
   const { user } = useUser();
@@ -127,6 +128,9 @@ const SearchRides = () => {
         filteredResults = results.filter(ride => ride.available_seats >= requiredSeats);
       }
       
+      // Apply filters from URL parameters
+      filteredResults = applyFilters(filteredResults);
+      
       setSearchResults(filteredResults);
     } catch (error) {
       console.error('Search error:', error);
@@ -134,6 +138,88 @@ const SearchRides = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const applyFilters = (rides: any[]) => {
+    let filtered = [...rides];
+    
+    // Get filter parameters from URL
+    const sort = searchParams.get('sort');
+    const timeRanges = searchParams.get('timeRanges')?.split(',') || [];
+    const trust = searchParams.get('trust')?.split(',') || [];
+    const comforts = searchParams.get('comforts')?.split(',') || [];
+    
+    // Apply time range filters
+    if (timeRanges.length > 0) {
+      filtered = filtered.filter(ride => {
+        const departureTime = ride.departure_time;
+        if (!departureTime) return false;
+        
+        const [hours] = departureTime.split(':').map(Number);
+        
+        return timeRanges.some(range => {
+          switch (range) {
+            case 'morning':
+              return hours >= 6 && hours < 12;
+            case 'afternoon':
+              return hours >= 12 && hours < 18;
+            case 'evening':
+              return hours >= 18;
+            default:
+              return false;
+          }
+        });
+      });
+    }
+    
+    // Apply trust filters
+    if (trust.includes('verified')) {
+      filtered = filtered.filter(ride => ride.driver_verified || ride.is_verified);
+    }
+    
+    // Apply comfort filters
+    if (comforts.length > 0) {
+      filtered = filtered.filter(ride => {
+        const settings = ride.comfort_settings || {};
+        return comforts.some(comfort => {
+          switch (comfort) {
+            case 'max_two_back':
+              return ride.available_seats <= 2;
+            case 'instant_booking':
+              return ride.instant_booking_enabled;
+            case 'smoking':
+              return settings.smoking_allowed;
+            case 'pets':
+              return settings.pets_allowed;
+            case 'e_tickets':
+              return true; // Предполагаем, что все рейсы поддерживают электронные билеты
+            default:
+              return false;
+          }
+        });
+      });
+    }
+    
+    // Apply sorting
+    if (sort) {
+      switch (sort) {
+        case 'earliest':
+          filtered.sort((a, b) => a.departure_time.localeCompare(b.departure_time));
+          break;
+        case 'cheapest':
+          filtered.sort((a, b) => a.price_per_seat - b.price_per_seat);
+          break;
+        case 'departure_close':
+        case 'arrival_close':
+          // These would require location data to implement properly
+          break;
+        case 'shortest':
+          filtered.sort((a, b) => (a.duration_hours || 2) - (b.duration_hours || 2));
+          break;
+      }
+    }
+    
+    return filtered;
   };
 
   const fetchRouteInfo = async (ride: any) => {
@@ -342,7 +428,9 @@ const SearchRides = () => {
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/search-filters');
+                  // Передаем текущие параметры поиска на страницу фильтров
+                  const currentParams = new URLSearchParams(location.search);
+                  navigate(`/search-filters?${currentParams.toString()}`);
                 }}
                 className="px-4 py-2 text-sm font-medium"
               >
