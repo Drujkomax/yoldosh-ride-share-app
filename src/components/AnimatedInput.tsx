@@ -34,17 +34,6 @@ const AnimatedInput = ({
   return (
     <div className="relative">
       <div className="relative">
-        <Label 
-          htmlFor={id} 
-          className={cn(
-            "absolute left-3 transition-all duration-300 pointer-events-none text-slate-500 z-10",
-            isFocused || value ? 
-              "-top-2.5 left-2 text-xs bg-white px-2 text-yoldosh-primary font-medium" : 
-              "top-3.5 text-sm"
-          )}
-        >
-          {label}
-        </Label>
         <div className="relative">
           {icon && (
             <div className="absolute left-3 top-3.5 text-slate-400">
