@@ -775,7 +775,6 @@ const SearchRides = () => {
                       <div className="text-right ml-6">
                         <div className="text-2xl font-bold text-gray-900">
                           {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')}
-                          <span className="text-lg font-normal">,00</span>
                           <span className="text-lg font-normal"> сум</span>
                         </div>
                         {ride.available_seats <= 2 && (
