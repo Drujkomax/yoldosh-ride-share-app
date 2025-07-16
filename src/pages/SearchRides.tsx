@@ -735,7 +735,7 @@ const SearchRides = () => {
                           </div>
                           
                           {/* Arrival */}
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 relative">
                             <div className="text-xl font-semibold text-gray-900">
                               {(() => {
                                 if (routeInfo?.duration) {
@@ -765,7 +765,10 @@ const SearchRides = () => {
                                 return formatTime(arrivalTime.toTimeString());
                               })()}
                             </div>
-                            <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full"></div>
+                            <div className="relative">
+                              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-teal-600"></div>
+                              <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full relative z-10"></div>
+                            </div>
                             <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
                           </div>
                         </div>
