@@ -183,7 +183,10 @@ const ChatPage = () => {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex-1">
-              <div className="flex items-center space-x-3">
+              <div 
+                className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => navigate(`/profile/${otherParticipant?.id}`)}
+              >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />
                 </div>

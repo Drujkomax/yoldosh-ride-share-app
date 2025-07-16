@@ -18,6 +18,7 @@ import MyTripsPage from "./pages/MyTripsPage";
 import ChatsListPage from "./pages/ChatsListPage";
 import ChatPage from "./pages/ChatPage";
 import ProfilePage from "./pages/ProfilePage";
+import UserProfile from "./pages/UserProfile";
 import ManageCarsPage from "./components/ManageCarsPage";
 import NotFound from "./pages/NotFound";
 import CreateRideWizard from "./pages/CreateRideWizard";
@@ -53,6 +54,7 @@ function App() {
                 <Route path="/chats" element={<ChatsListPage />} />
                 <Route path="/chat/:chatId" element={<ChatPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/profile/:userId" element={<UserProfile />} />
                 <Route path="/manage-cars" element={<ManageCarsPage />} />
                 <Route path="/create-ride-wizard" element={<CreateRideWizard />} />
                 <Route path="/ride-creation-flow" element={<RideCreationFlow />} />
