@@ -769,9 +769,6 @@ const SearchRides = () => {
                             <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
                           </div>
                         </div>
-                        
-                        {/* +1 day indicator */}
-                        <div className="text-xs text-gray-500 mt-8">+1</div>
                       </div>
                       
                       {/* Right side - Price */}
