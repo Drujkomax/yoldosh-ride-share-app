@@ -13,9 +13,10 @@ interface DateOfBirthProps {
 }
 
 const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthProps) => {
-  const [day, setDay] = useState(dateOfBirth?.getDate() || 1);
-  const [month, setMonth] = useState(dateOfBirth ? dateOfBirth.getMonth() + 1 : 1);
-  const [year, setYear] = useState(dateOfBirth?.getFullYear() || new Date().getFullYear() - 18);
+  const today = new Date();
+  const [day, setDay] = useState(dateOfBirth?.getDate() || today.getDate());
+  const [month, setMonth] = useState(dateOfBirth ? dateOfBirth.getMonth() + 1 : today.getMonth() + 1);
+  const [year, setYear] = useState(dateOfBirth?.getFullYear() || today.getFullYear() - 18);
   const [error, setError] = useState('');
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
