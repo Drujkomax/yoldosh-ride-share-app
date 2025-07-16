@@ -682,9 +682,20 @@ const SearchRides = () => {
               const routeInfo = routeInfoCache[cacheKey];
               const isLoadingRoute = loadingRoutes[cacheKey];
               
-              // Не показываем поездку, пока загружается информация о маршруте
+              // Показываем индикатор загрузки, пока загружается информация о маршруте
               if (isLoadingRoute) {
-                return null;
+                return (
+                  <Card 
+                    key={ride.id} 
+                    className="bg-white shadow-sm border border-gray-200"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
               }
               
               return (
