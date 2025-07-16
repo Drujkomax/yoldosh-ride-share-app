@@ -772,25 +772,69 @@ const SearchRides = () => {
                                   const hoursMatch = durationText.match(/(\d+)\s*ч/);
                                   const minutesMatch = durationText.match(/(\d+)\s*мин/);
                                   
-                                  const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-                                  const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  let durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  let durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
                                   
-                                  const arrivalTime = new Date();
-                                  arrivalTime.setHours(hours + durationHours);
-                                  arrivalTime.setMinutes(minutes + durationMinutes);
+                                  // Округляем минуты длительности в большую сторону до 0 или 5
+                                  const remainder = durationMinutes % 5;
+                                  if (remainder !== 0) {
+                                    durationMinutes = durationMinutes + (5 - remainder);
+                                  }
                                   
-                                  return formatTime(arrivalTime.toTimeString());
+                                  // Если минуты >= 60, переводим в часы
+                                  if (durationMinutes >= 60) {
+                                    durationHours += Math.floor(durationMinutes / 60);
+                                    durationMinutes = durationMinutes % 60;
+                                  }
+                                  
+                                  // Вычисляем время прибытия
+                                  let arrivalHours = hours + durationHours;
+                                  let arrivalMinutes = minutes + durationMinutes;
+                                  
+                                  // Округляем минуты прибытия в большую сторону до 0 или 5
+                                  const arrivalRemainder = arrivalMinutes % 5;
+                                  if (arrivalRemainder !== 0) {
+                                    arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
+                                  }
+                                  
+                                  // Если минуты >= 60, переводим в часы
+                                  if (arrivalMinutes >= 60) {
+                                    arrivalHours += Math.floor(arrivalMinutes / 60);
+                                    arrivalMinutes = arrivalMinutes % 60;
+                                  }
+                                  
+                                  // Если часы >= 24, корректируем
+                                  arrivalHours = arrivalHours % 24;
+                                  
+                                  return `${arrivalHours.toString().padStart(2, '0')}:${arrivalMinutes.toString().padStart(2, '0')}`;
                                 }
                                 
+                                // Fallback для данных из базы
                                 const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                                const durationHours = Math.floor(ride.duration_hours || 2);
-                                const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                                const totalDurationMinutes = Math.ceil((ride.duration_hours || 2) * 60);
+                                const remainder = totalDurationMinutes % 5;
+                                const roundedDurationMinutes = remainder === 0 ? totalDurationMinutes : totalDurationMinutes + (5 - remainder);
                                 
-                                const arrivalTime = new Date();
-                                arrivalTime.setHours(hours + durationHours);
-                                arrivalTime.setMinutes(minutes + durationMinutes);
+                                const durationHours = Math.floor(roundedDurationMinutes / 60);
+                                const durationMinutes = roundedDurationMinutes % 60;
                                 
-                                return formatTime(arrivalTime.toTimeString());
+                                let arrivalHours = hours + durationHours;
+                                let arrivalMinutes = minutes + durationMinutes;
+                                
+                                // Округляем минуты прибытия в большую сторону до 0 или 5
+                                const arrivalRemainder = arrivalMinutes % 5;
+                                if (arrivalRemainder !== 0) {
+                                  arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
+                                }
+                                
+                                if (arrivalMinutes >= 60) {
+                                  arrivalHours += Math.floor(arrivalMinutes / 60);
+                                  arrivalMinutes = arrivalMinutes % 60;
+                                }
+                                
+                                arrivalHours = arrivalHours % 24;
+                                
+                                return `${arrivalHours.toString().padStart(2, '0')}:${arrivalMinutes.toString().padStart(2, '0')}`;
                               })()}
                             </div>
                             <div className="w-2 h-2 bg-teal-600 rounded-full border border-teal-600 relative z-10"></div>
