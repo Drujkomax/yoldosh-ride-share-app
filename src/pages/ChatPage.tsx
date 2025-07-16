@@ -180,8 +180,7 @@ const ChatPage = () => {
               variant="ghost"
               onClick={handleBackClick}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
+              <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex-1">
               <div className="flex items-center space-x-3">
