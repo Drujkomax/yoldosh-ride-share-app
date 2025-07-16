@@ -710,6 +710,8 @@ const SearchRides = () => {
                       <div className="flex items-start space-x-4">
                         {/* Route timeline */}
                         <div className="relative">
+                          {/* Вертикальная линия соединяющая точки А и Б */}
+                          <div className="absolute left-14 top-2 w-px h-16 bg-teal-600 z-0"></div>
                           {/* Departure */}
                           <div className="flex items-center space-x-3 mb-2">
                             <div className="text-lg font-semibold text-gray-900 w-12">
