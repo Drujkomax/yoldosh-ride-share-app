@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, User } from 'lucide-react';
+import { ArrowLeft, Send, User, Check, CheckCheck } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useMessages } from '@/hooks/useChats';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +14,7 @@ const ChatPage = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
-  const { messages, sendMessage, isLoading, isSending } = useMessages(chatId || '');
+  const { messages, sendMessage, markAsRead, isLoading, isSending } = useMessages(chatId || '');
   const [newMessage, setNewMessage] = useState('');
   const [chat, setChat] = useState<any>(null);
   const [chatLoading, setChatLoading] = useState(true);
@@ -63,6 +63,20 @@ const ChatPage = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Отмечаем сообщения как прочитанные когда пользователь открывает чат
+  useEffect(() => {
+    if (messages.length > 0 && user?.id && chat) {
+      const unreadMessages = messages.filter(
+        (message) => !message.read_at && message.sender_id !== user.id
+      );
+      
+      if (unreadMessages.length > 0) {
+        const messageIds = unreadMessages.map((message) => message.id);
+        markAsRead(messageIds);
+      }
+    }
+  }, [messages, user?.id, chat, markAsRead]);
 
   useEffect(() => {
     scrollToBottom();
@@ -212,7 +226,7 @@ const ChatPage = () => {
                 key={message.id}
                 className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
               >
-                <div
+                 <div
                   className={`max-w-[70%] p-3 rounded-lg ${
                     isMyMessage
                       ? 'bg-blue-500 text-white'
@@ -220,13 +234,25 @@ const ChatPage = () => {
                   }`}
                 >
                   <p className="text-sm">{message.content}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isMyMessage ? 'text-blue-100' : 'text-gray-500'
-                    }`}
-                  >
-                    {formatTime(message.created_at)}
-                  </p>
+                  <div className={`flex items-center justify-between mt-1`}>
+                    <p
+                      className={`text-xs ${
+                        isMyMessage ? 'text-blue-100' : 'text-gray-500'
+                      }`}
+                    >
+                      {formatTime(message.created_at)}
+                    </p>
+                    {/* Галочки только для моих сообщений */}
+                    {isMyMessage && (
+                      <div className="ml-2">
+                        {message.read_at ? (
+                          <CheckCheck className="h-3 w-3 text-blue-200" />
+                        ) : (
+                          <Check className="h-3 w-3 text-blue-200" />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
