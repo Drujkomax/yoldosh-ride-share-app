@@ -7,6 +7,8 @@ export interface UserProfile {
   id: string;
   name: string;
   phone: string;
+  email?: string;
+  date_of_birth?: string;
   role?: 'driver' | 'passenger';
   is_verified: boolean;
   total_rides: number;
