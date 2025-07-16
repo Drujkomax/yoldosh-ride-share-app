@@ -627,11 +627,7 @@ const SearchRides = () => {
 
       {/* Content */}
       <div className="p-4">
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-gray-500">Поиск поездок...</div>
-          </div>
-        ) : hasSearched && filteredResults.length === 0 ? (
+        {hasSearched && filteredResults.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400 text-lg mb-2">
               Поездки не найдены
