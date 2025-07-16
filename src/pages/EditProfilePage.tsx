@@ -33,6 +33,7 @@ const EditProfilePage = () => {
       await updateProfile({
         name: fullName,
         date_of_birth: formData.dateOfBirth,
+        email: formData.email,
         phone: formData.phone
       });
       toast.success('Профиль обновлен');
