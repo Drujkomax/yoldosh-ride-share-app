@@ -711,35 +711,109 @@ const SearchRides = () => {
                         {/* Route timeline */}
                         <div className="relative">
                           {/* Departure */}
-                          <div className="flex items-center space-x-3">
-                            <span className="text-lg font-semibold w-12">{formatTime(ride.departure_time)}</span>
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                            <span className="text-sm font-medium">{ride.from_city}</span>
+                          <div className="flex items-center space-x-3 mb-4">
+                            <div className="text-lg font-semibold text-gray-900 w-12">
+                              {formatTime(ride.departure_time)}
+                            </div>
+                            <div className="w-2 h-2 bg-teal-600 rounded-full border border-teal-600 relative z-10"></div>
+                            <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
                           
-                          {/* Duration (centered on the line) */}
-                          <div className="flex items-center space-x-3 py-2">
-                            <span className="text-xs text-gray-500 w-12">
+                          {/* Вертикальная линия от центра первого круга до центра второго */}
+                          <div className="absolute left-[3.5rem] top-[0.75rem] w-0.5 h-[5.25rem] bg-teal-600 z-0"></div>
+                          
+                          {/* Duration info */}
+                          <div className="flex items-center space-x-3 mb-4">
+                            <div className="text-xs text-gray-500 w-12">
                               {(() => {
+                                if (routeInfo?.duration) {
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  let hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  let minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  
+                                  const remainder = minutes % 5;
+                                  if (remainder !== 0) {
+                                    minutes = minutes + (5 - remainder);
+                                  }
+                                  
+                                  if (minutes >= 60) {
+                                    hours += Math.floor(minutes / 60);
+                                    minutes = minutes % 60;
+                                  }
+                                  
+                                  return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes.toString().padStart(2, '0')}`;
+                                }
+                                
                                 const totalMinutes = Math.ceil((ride.duration_hours || 2) * 60);
-                                const hours = Math.floor(totalMinutes / 60);
-                                const minutes = totalMinutes % 60;
-                                return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes}`;
+                                const remainder = totalMinutes % 5;
+                                const roundedMinutes = remainder === 0 ? totalMinutes : totalMinutes + (5 - remainder);
+                                const hours = Math.floor(roundedMinutes / 60);
+                                const minutes = roundedMinutes % 60;
+                                
+                                return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes.toString().padStart(2, '0')}`;
                               })()}
-                            </span>
-                            <div className="w-0.5 h-8 bg-teal-600 ml-[7px]"></div>
+                            </div>
                           </div>
                           
                           {/* Arrival */}
                           <div className="flex items-center space-x-3">
-                            <span className="text-lg font-semibold w-12">
+                            <div className="text-lg font-semibold text-gray-900 w-12">
                               {(() => {
+                                if (routeInfo?.duration) {
+                                  const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  let durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  let durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  
+                                  const remainder = durationMinutes % 5;
+                                  if (remainder !== 0) {
+                                    durationMinutes = durationMinutes + (5 - remainder);
+                                  }
+                                  
+                                  if (durationMinutes >= 60) {
+                                    durationHours += Math.floor(durationMinutes / 60);
+                                    durationMinutes = durationMinutes % 60;
+                                  }
+                                  
+                                  let arrivalHours = hours + durationHours;
+                                  let arrivalMinutes = minutes + durationMinutes;
+                                  
+                                  const arrivalRemainder = arrivalMinutes % 5;
+                                  if (arrivalRemainder !== 0) {
+                                    arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
+                                  }
+                                  
+                                  if (arrivalMinutes >= 60) {
+                                    arrivalHours += Math.floor(arrivalMinutes / 60);
+                                    arrivalMinutes = arrivalMinutes % 60;
+                                  }
+                                  
+                                  arrivalHours = arrivalHours % 24;
+                                  
+                                  return `${arrivalHours.toString().padStart(2, '0')}:${arrivalMinutes.toString().padStart(2, '0')}`;
+                                }
+                                
                                 const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                                const durationHours = Math.floor((ride.duration_hours || 2));
-                                const durationMinutes = Math.round(((ride.duration_hours || 2) % 1) * 60);
+                                const totalDurationMinutes = Math.ceil((ride.duration_hours || 2) * 60);
+                                const remainder = totalDurationMinutes % 5;
+                                const roundedDurationMinutes = remainder === 0 ? totalDurationMinutes : totalDurationMinutes + (5 - remainder);
+                                
+                                const durationHours = Math.floor(roundedDurationMinutes / 60);
+                                const durationMinutes = roundedDurationMinutes % 60;
                                 
                                 let arrivalHours = hours + durationHours;
                                 let arrivalMinutes = minutes + durationMinutes;
+                                
+                                const arrivalRemainder = arrivalMinutes % 5;
+                                if (arrivalRemainder !== 0) {
+                                  arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
+                                }
                                 
                                 if (arrivalMinutes >= 60) {
                                   arrivalHours += Math.floor(arrivalMinutes / 60);
@@ -750,9 +824,9 @@ const SearchRides = () => {
                                 
                                 return `${arrivalHours.toString().padStart(2, '0')}:${arrivalMinutes.toString().padStart(2, '0')}`;
                               })()}
-                            </span>
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                            <span className="text-sm font-medium">{ride.to_city}</span>
+                            </div>
+                            <div className="w-2 h-2 bg-teal-600 rounded-full border border-teal-600 relative z-10"></div>
+                            <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
                           </div>
                         </div>
                       </div>
