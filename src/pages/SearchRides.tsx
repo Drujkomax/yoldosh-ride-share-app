@@ -328,13 +328,15 @@ const SearchRides = () => {
               >
                 <ChevronLeft className="h-6 w-6 text-gray-600" />
               </Button>
-              <h1 className="font-bold text-gray-900 text-lg">
-                {searchCriteria.from} → {searchCriteria.to}
-              </h1>
+              <div className="flex items-center justify-between flex-1">
+                <h1 className="font-bold text-gray-900 text-lg">
+                  {searchCriteria.from} → {searchCriteria.to}
+                </h1>
+                <p className="text-sm text-gray-600">
+                  {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              {searchCriteria.date && format(new Date(searchCriteria.date), 'EEE dd MMM', { locale: ru })}, {searchCriteria.seats || '1'} пассажир
-            </p>
           </div>
 
           {/* Filter Drawer */}
