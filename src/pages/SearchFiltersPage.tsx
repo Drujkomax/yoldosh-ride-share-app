@@ -1,45 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, Check } from 'lucide-react';
+import { X, Clock, DollarSign, MapPin, Zap, Users, Cigarette, PawPrint, CreditCard, ShieldCheck } from 'lucide-react';
 
 const SearchFiltersPage = () => {
   const navigate = useNavigate();
   
-  const [selectedSort, setSelectedSort] = useState('price_low');
+  const [selectedSort, setSelectedSort] = useState('earliest');
   const [selectedTimeRanges, setSelectedTimeRanges] = useState<string[]>([]);
-  const [selectedTrustLevel, setSelectedTrustLevel] = useState('');
+  const [selectedTrustOptions, setSelectedTrustOptions] = useState<string[]>(['verified']);
   const [selectedComforts, setSelectedComforts] = useState<string[]>([]);
 
   const sortOptions = [
-    { id: 'price_low', label: 'Цена: по возрастанию' },
-    { id: 'price_high', label: 'Цена: по убыванию' },
-    { id: 'time_early', label: 'Время: раньше' },
-    { id: 'time_late', label: 'Время: позже' },
-    { id: 'rating', label: 'Рейтинг водителя' },
+    { id: 'earliest', label: 'Самые ранние поездки', icon: Clock },
+    { id: 'cheapest', label: 'Самые дешевые поездки', icon: DollarSign },
+    { id: 'departure_close', label: 'Близко к месту отправления', icon: MapPin },
+    { id: 'arrival_close', label: 'Близко к месту прибытия', icon: MapPin },
+    { id: 'shortest', label: 'Самые короткие поездки', icon: Zap },
   ];
 
   const timeRanges = [
-    { id: 'morning', label: 'Утро (06:00 - 12:00)' },
-    { id: 'afternoon', label: 'День (12:00 - 18:00)' },
-    { id: 'evening', label: 'Вечер (18:00 - 00:00)' },
-    { id: 'night', label: 'Ночь (00:00 - 06:00)' },
+    { id: 'morning', label: '06:00-12:00', count: 2 },
+    { id: 'afternoon', label: '12:01-18:00', count: 1 },
+    { id: 'evening', label: 'После 18:00', count: 8 },
   ];
 
-  const trustLevels = [
-    { id: 'verified', label: 'Только верифицированные водители' },
-    { id: 'high_rating', label: 'Рейтинг 4.5+ звезд' },
-    { id: 'experienced', label: 'Опытные водители (50+ поездок)' },
+  const trustOptions = [
+    { id: 'verified', label: 'Профиль подтвержден', count: 2 },
   ];
 
   const comfortOptions = [
-    { id: 'air_conditioning', label: 'Кондиционер' },
-    { id: 'wifi', label: 'Wi-Fi' },
-    { id: 'charging', label: 'Зарядка для телефона' },
-    { id: 'music', label: 'Музыка' },
-    { id: 'no_smoking', label: 'Некурящий салон' },
-    { id: 'pets_allowed', label: 'Можно с животными' },
+    { id: 'max_two_back', label: 'Максимум двое сзади', count: 2, icon: Users },
+    { id: 'instant_booking', label: 'Мгновенное бронирование', count: 9, icon: Zap },
+    { id: 'smoking', label: 'Можно курить', count: 2, icon: Cigarette },
+    { id: 'pets', label: 'Можно с животными', count: 2, icon: PawPrint },
+    { id: 'e_tickets', label: 'Электронные билеты', count: 2, icon: CreditCard },
   ];
 
   const toggleTimeRange = (rangeId: string) => {
@@ -47,6 +42,14 @@ const SearchFiltersPage = () => {
       prev.includes(rangeId) 
         ? prev.filter(id => id !== rangeId)
         : [...prev, rangeId]
+    );
+  };
+
+  const toggleTrustOption = (optionId: string) => {
+    setSelectedTrustOptions(prev => 
+      prev.includes(optionId) 
+        ? prev.filter(id => id !== optionId)
+        : [...prev, optionId]
     );
   };
 
@@ -59,62 +62,62 @@ const SearchFiltersPage = () => {
   };
 
   const clearAllFilters = () => {
-    setSelectedSort('price_low');
+    setSelectedSort('earliest');
     setSelectedTimeRanges([]);
-    setSelectedTrustLevel('');
+    setSelectedTrustOptions([]);
     setSelectedComforts([]);
   };
 
   const applyFilters = () => {
-    // Here you would apply the filters and navigate back
-    // For now, just navigate back
     navigate(-1);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <ChevronLeft className="h-6 w-6 text-gray-600" />
-            </Button>
-            <h1 className="text-xl font-bold text-gray-900">Фильтры</h1>
-          </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            className="p-0 hover:bg-transparent"
+          >
+            <X className="h-6 w-6 text-blue-500" />
+          </Button>
+          <h1 className="text-xl font-bold text-gray-900">Фильтровать</h1>
           <Button
             variant="ghost"
             onClick={clearAllFilters}
-            className="text-blue-500 hover:bg-blue-50"
+            className="text-blue-500 hover:bg-transparent p-0"
           >
-            Очистить всё
+            Сбросить все
           </Button>
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* Сортировка */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Сортировка</h2>
-            <div className="space-y-3">
-              {sortOptions.map((option) => (
+      <div className="p-4 space-y-8">
+        {/* Сортировать */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Сортировать</h2>
+          <div className="space-y-4">
+            {sortOptions.map((option) => {
+              const IconComponent = option.icon;
+              return (
                 <label
                   key={option.id}
-                  className="flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between cursor-pointer py-2"
                 >
-                  <span className="text-gray-700">{option.label}</span>
-                  <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${
-                    selectedSort === option.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                  }`}>
-                    {selectedSort === option.id && (
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 border-2 rounded-full flex items-center justify-center ${
+                      selectedSort === option.id ? 'border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {selectedSort === option.id && (
+                        <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                      )}
+                    </div>
+                    <span className="text-gray-700 text-base">{option.label}</span>
                   </div>
+                  <IconComponent className="h-5 w-5 text-gray-400" />
                   <input
                     type="radio"
                     name="sort"
@@ -124,90 +127,106 @@ const SearchFiltersPage = () => {
                     className="hidden"
                   />
                 </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              );
+            })}
+          </div>
+        </div>
 
-        {/* Время поездки */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Время поездки</h2>
-            <div className="space-y-3">
-              {timeRanges.map((range) => (
-                <label
-                  key={range.id}
-                  className="flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <span className="text-gray-700">{range.label}</span>
-                  <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
+        {/* Время выезда */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Время выезда</h2>
+          <div className="space-y-4">
+            {timeRanges.map((range) => (
+              <label
+                key={range.id}
+                className="flex items-center justify-between cursor-pointer py-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-6 h-6 border-2 rounded flex items-center justify-center ${
                     selectedTimeRanges.includes(range.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                   }`}>
                     {selectedTimeRanges.includes(range.id) && (
-                      <Check className="h-3 w-3 text-white" />
+                      <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     )}
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedTimeRanges.includes(range.id)}
-                    onChange={() => toggleTimeRange(range.id)}
-                    className="hidden"
-                  />
-                </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  <span className="text-gray-700 text-base">{range.label}</span>
+                </div>
+                <span className="text-gray-400 text-base">{range.count}</span>
+                <input
+                  type="checkbox"
+                  checked={selectedTimeRanges.includes(range.id)}
+                  onChange={() => toggleTimeRange(range.id)}
+                  className="hidden"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Доверие и безопасность */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Доверие и безопасность</h2>
-            <div className="space-y-3">
-              {trustLevels.map((level) => (
-                <label
-                  key={level.id}
-                  className="flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <span className="text-gray-700">{level.label}</span>
-                  <div className={`w-5 h-5 border-2 rounded-full flex items-center justify-center ${
-                    selectedTrustLevel === level.id ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Доверие и безопасность</h2>
+          <div className="space-y-4">
+            {trustOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex items-center justify-between cursor-pointer py-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-6 h-6 border-2 rounded flex items-center justify-center ${
+                    selectedTrustOptions.includes(option.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
                   }`}>
-                    {selectedTrustLevel === level.id && (
-                      <div className="w-2 h-2 bg-white rounded-full" />
+                    {selectedTrustOptions.includes(option.id) && (
+                      <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     )}
                   </div>
-                  <input
-                    type="radio"
-                    name="trust"
-                    value={level.id}
-                    checked={selectedTrustLevel === level.id}
-                    onChange={(e) => setSelectedTrustLevel(e.target.value)}
-                    className="hidden"
-                  />
-                </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  <span className="text-gray-700 text-base">{option.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-base">{option.count}</span>
+                  <ShieldCheck className="h-5 w-5 text-blue-500" />
+                </div>
+                <input
+                  type="checkbox"
+                  checked={selectedTrustOptions.includes(option.id)}
+                  onChange={() => toggleTrustOption(option.id)}
+                  className="hidden"
+                />
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Удобства */}
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Удобства</h2>
-            <div className="space-y-3">
-              {comfortOptions.map((comfort) => (
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Удобства</h2>
+          <div className="space-y-4">
+            {comfortOptions.map((comfort) => {
+              const IconComponent = comfort.icon;
+              return (
                 <label
                   key={comfort.id}
-                  className="flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between cursor-pointer py-2"
                 >
-                  <span className="text-gray-700">{comfort.label}</span>
-                  <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
-                    selectedComforts.includes(comfort.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                  }`}>
-                    {selectedComforts.includes(comfort.id) && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 border-2 rounded flex items-center justify-center ${
+                      selectedComforts.includes(comfort.id) ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                    }`}>
+                      {selectedComforts.includes(comfort.id) && (
+                        <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-gray-700 text-base">{comfort.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 text-base">{comfort.count}</span>
+                    <IconComponent className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="checkbox"
@@ -216,20 +235,40 @@ const SearchFiltersPage = () => {
                     className="hidden"
                   />
                 </label>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
-        <Button
-          onClick={applyFilters}
-          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl"
-        >
-          Применить фильтры
-        </Button>
+      {/* Bottom Section */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div className="p-4">
+          <div className="flex items-center justify-center gap-8 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-6 bg-gray-600 rounded-sm flex items-center justify-center">
+                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold">2</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-6 bg-blue-500 rounded-sm flex items-center justify-center">
+                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold">9</span>
+            </div>
+          </div>
+          <Button
+            onClick={applyFilters}
+            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl"
+          >
+            Смотреть поездки
+          </Button>
+        </div>
       </div>
     </div>
   );
