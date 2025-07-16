@@ -39,6 +39,12 @@ export const WheelPicker = ({
     
     if (items[clampedIndex] !== selectedValue) {
       onValueChange(items[clampedIndex]);
+      // Точно центрируем выбранный элемент
+      setTimeout(() => {
+        setIsScrolling(true);
+        scrollToItem(clampedIndex);
+        setTimeout(() => setIsScrolling(false), 200);
+      }, 100);
     }
   };
 
@@ -74,7 +80,12 @@ export const WheelPicker = ({
           <div
             key={index}
             className="h-12 flex items-center justify-center text-lg font-medium cursor-pointer hover:bg-pink-50 transition-colors"
-            onClick={() => onValueChange(item)}
+            onClick={() => {
+              onValueChange(item);
+              setIsScrolling(true);
+              scrollToItem(index);
+              setTimeout(() => setIsScrolling(false), 200);
+            }}
           >
             {item}
           </div>
