@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, Clock, DollarSign, MapPin, Zap, Users, Cigarette, PawPrint, CreditCard, ShieldCheck } from 'lucide-react';
+import { X, Clock, DollarSign, MapPin, Zap, Users, Cigarette, PawPrint, CreditCard, ShieldCheck, Car, Bus } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 
 const SearchFiltersPage = () => {
@@ -90,6 +90,24 @@ const SearchFiltersPage = () => {
         default:
           return false;
       }
+    }).length;
+  };
+
+  // Функция для подсчета легковых машин
+  const countCarRides = () => {
+    if (!ridesData || ridesData.length === 0) return 0;
+    return ridesData.filter(ride => {
+      // Предполагаем, что легковые машины имеют до 4 мест
+      return ride.available_seats <= 4;
+    }).length;
+  };
+
+  // Функция для подсчета автобусов
+  const countBusRides = () => {
+    if (!ridesData || ridesData.length === 0) return 0;
+    return ridesData.filter(ride => {
+      // Предполагаем, что автобусы имеют больше 4 мест
+      return ride.available_seats > 4;
     }).length;
   };
 
@@ -329,19 +347,15 @@ const SearchFiltersPage = () => {
           <div className="flex items-center justify-center gap-8 mb-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-6 bg-gray-600 rounded-sm flex items-center justify-center">
-                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
+                <Car className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-bold">2</span>
+              <span className="text-xl font-bold">{countCarRides()}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-6 bg-blue-500 rounded-sm flex items-center justify-center">
-                <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
+                <Bus className="h-4 w-4 text-white" />
               </div>
-              <span className="text-xl font-bold">9</span>
+              <span className="text-xl font-bold">{countBusRides()}</span>
             </div>
           </div>
           <Button
