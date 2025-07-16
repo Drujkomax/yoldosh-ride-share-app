@@ -719,8 +719,8 @@ const SearchRides = () => {
                             <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
                           
-                          {/* Вертикальная линия соединяющая точки А и Б */}
-                          <div className="absolute left-14 top-2 w-px h-12 bg-teal-600 z-0"></div>
+                          {/* Вертикальная линия от центра первого круга до центра второго */}
+                          <div className="absolute left-[3.5rem] top-[1.125rem] w-px h-12 bg-teal-600 z-0"></div>
                           
                           {/* Duration info */}
                           <div className="flex items-center space-x-3 mb-4">
