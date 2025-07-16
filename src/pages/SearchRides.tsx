@@ -5,7 +5,7 @@ import AddressSearchPage from '@/components/AddressSearchPage';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check, Edit3 } from 'lucide-react';
+import { ArrowLeft, Star, User, Users, ChevronLeft, Zap, Wifi, Loader2, Check, Edit3, Car } from 'lucide-react';
 import { useRides } from '@/hooks/useRides';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -786,34 +786,28 @@ const SearchRides = () => {
                       </div>
                     </div>
                     
-                    {/* Driver Info */}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium text-gray-800">
-                              {ride.driver?.name || 'Андрей'}
-                            </span>
-                            <div className="flex items-center space-x-1">
-                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                              <span className="text-sm font-medium text-gray-700">
-                                {ride.driver?.rating || '4.9'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Right side icons */}
-                      <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center">
-                          <span className="text-xs text-gray-600">🚗</span>
-                        </div>
-                      </div>
-                    </div>
+                     {/* Driver Info */}
+                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                       <div className="flex items-center space-x-3">
+                         <Car className="h-4 w-4 text-gray-400" />
+                         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                           <User className="h-5 w-5 text-white" />
+                         </div>
+                         <div>
+                           <div className="flex items-center space-x-2">
+                             <span className="text-sm font-medium text-gray-800">
+                               {ride.driver?.name || 'Андрей'}
+                             </span>
+                             <div className="flex items-center space-x-1">
+                               <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                               <span className="text-sm font-medium text-gray-700">
+                                 {ride.driver?.rating || '4.9'}
+                               </span>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
                     
                     {/* No seats indicator */}
                     {ride.available_seats === 0 && (
