@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Gift } from 'lucide-react';
+import { WheelPicker } from '@/components/ui/wheel-picker';
 
 interface DateOfBirthProps {
   dateOfBirth?: Date;
@@ -12,23 +13,23 @@ interface DateOfBirthProps {
 }
 
 const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthProps) => {
-  const [day, setDay] = useState(dateOfBirth?.getDate().toString() || '');
-  const [month, setMonth] = useState(dateOfBirth ? (dateOfBirth.getMonth() + 1).toString() : '');
-  const [year, setYear] = useState(dateOfBirth?.getFullYear().toString() || '');
+  const [day, setDay] = useState(dateOfBirth?.getDate() || 1);
+  const [month, setMonth] = useState(dateOfBirth ? dateOfBirth.getMonth() + 1 : 1);
+  const [year, setYear] = useState(dateOfBirth?.getFullYear() || new Date().getFullYear() - 18);
   const [error, setError] = useState('');
 
-  const months = [
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+
+  const monthNames = [
     'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
     'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
   ];
 
   const validateDate = () => {
-    if (!day || !month || !year) {
-      setError('');
-      return false;
-    }
-
-    const selectedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const selectedDate = new Date(year, month - 1, day);
     const today = new Date();
     const age = today.getFullYear() - selectedDate.getFullYear();
     
@@ -48,18 +49,12 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
 
   const handleNext = () => {
     if (validateDate()) {
-      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      const date = new Date(year, month - 1, day);
       onDateChange(date);
       onNext();
     }
   };
 
-  const handleInputChange = (value: string, setter: (val: string) => void, max: number) => {
-    const numValue = value.replace(/\D/g, '');
-    if (parseInt(numValue) <= max || numValue === '') {
-      setter(numValue);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col justify-center p-6">
@@ -80,44 +75,34 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
+            <div className="grid grid-cols-3 gap-4 h-64">
+              <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">День</label>
-                <input
-                  type="text"
-                  value={day}
-                  onChange={(e) => handleInputChange(e.target.value, setDay, 31)}
-                  placeholder="ДД"
-                  maxLength={2}
-                  className="w-full h-12 text-center text-lg font-medium border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors"
+                <WheelPicker
+                  items={days}
+                  selectedValue={day}
+                  onValueChange={(value) => setDay(value as number)}
+                  className="border-2 border-gray-200 rounded-xl"
                 />
               </div>
               
-              <div>
+              <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Месяц</label>
-                <select
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  className="w-full h-12 text-center text-lg font-medium border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors bg-white"
-                >
-                  <option value="">ММ</option>
-                  {months.map((monthName, index) => (
-                    <option key={index} value={index + 1}>
-                      {String(index + 1).padStart(2, '0')}
-                    </option>
-                  ))}
-                </select>
+                <WheelPicker
+                  items={months}
+                  selectedValue={month}
+                  onValueChange={(value) => setMonth(value as number)}
+                  className="border-2 border-gray-200 rounded-xl"
+                />
               </div>
               
-              <div>
+              <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Год</label>
-                <input
-                  type="text"
-                  value={year}
-                  onChange={(e) => handleInputChange(e.target.value, setYear, new Date().getFullYear())}
-                  placeholder="ГГГГ"
-                  maxLength={4}
-                  className="w-full h-12 text-center text-lg font-medium border-2 border-gray-200 rounded-xl focus:border-pink-500 focus:outline-none transition-colors"
+                <WheelPicker
+                  items={years}
+                  selectedValue={year}
+                  onValueChange={(value) => setYear(value as number)}
+                  className="border-2 border-gray-200 rounded-xl"
                 />
               </div>
             </div>
@@ -137,9 +122,9 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
             <div className="space-y-3">
               <Button 
                 onClick={handleNext}
-                disabled={!day || !month || !year || !!error}
+                disabled={!!error}
                 className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
-                  day && month && year && !error
+                  !error
                     ? 'bg-pink-600 hover:bg-pink-700 text-white shadow-lg hover:shadow-xl' 
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
