@@ -149,7 +149,7 @@ const ProfilePage = () => {
                 {/* Phone Verified */}
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">+79777940868</span>
+                  <span className="text-gray-700">{profile?.phone}</span>
                 </div>
               </div>
             </div>
