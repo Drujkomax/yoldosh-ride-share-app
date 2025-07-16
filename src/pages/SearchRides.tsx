@@ -148,6 +148,7 @@ const SearchRides = () => {
       setSearchResults([]);
     } finally {
       setIsLoading(false);
+      setIsPageLoading(false); // Убираем экран загрузки страницы
     }
   };
 
