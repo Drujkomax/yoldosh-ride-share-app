@@ -52,7 +52,7 @@ const PersonalInfo = ({
             <User className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Как вас зовут?</h1>
-          <p className="text-gray-600">Введите ваше имя и фамилию</p>
+          <p className="text-gray-600">Имя и фамилию</p>
         </div>
 
         <Card className="shadow-xl border-0">
@@ -68,7 +68,7 @@ const PersonalInfo = ({
                 value={firstName}
                 onChange={(e) => onFirstNameChange(e.target.value)}
                 onBlur={() => validateName(firstName, 'firstName')}
-                placeholder="Введите ваше имя"
+                placeholder="Имя"
                 icon={<User className="h-4 w-4" />}
               />
               {errors.firstName && (
@@ -84,7 +84,7 @@ const PersonalInfo = ({
                 value={lastName}
                 onChange={(e) => onLastNameChange(e.target.value)}
                 onBlur={() => validateName(lastName, 'lastName')}
-                placeholder="Введите вашу фамилию"
+                placeholder="Фамилия"
                 icon={<User className="h-4 w-4" />}
               />
               {errors.lastName && (
