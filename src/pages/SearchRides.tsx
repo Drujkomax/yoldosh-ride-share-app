@@ -727,9 +727,37 @@ const SearchRides = () => {
                             <div className="text-xs text-gray-500 w-12">
                               {(() => {
                                 if (routeInfo?.duration) {
-                                  return routeInfo.duration;
+                                  // Парсим часы и минуты из API
+                                  const durationText = routeInfo.duration;
+                                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                                  
+                                  let hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                                  let minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                                  
+                                  // Округляем минуты в большую сторону до 0 или 5
+                                  const remainder = minutes % 5;
+                                  if (remainder !== 0) {
+                                    minutes = minutes + (5 - remainder);
+                                  }
+                                  
+                                  // Если минуты >= 60, переводим в часы
+                                  if (minutes >= 60) {
+                                    hours += Math.floor(minutes / 60);
+                                    minutes = minutes % 60;
+                                  }
+                                  
+                                  return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes.toString().padStart(2, '0')}`;
                                 }
-                                return `${Math.floor(ride.duration_hours || 2)} ч ${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
+                                
+                                // Fallback для данных из базы
+                                const totalMinutes = Math.ceil((ride.duration_hours || 2) * 60);
+                                const remainder = totalMinutes % 5;
+                                const roundedMinutes = remainder === 0 ? totalMinutes : totalMinutes + (5 - remainder);
+                                const hours = Math.floor(roundedMinutes / 60);
+                                const minutes = roundedMinutes % 60;
+                                
+                                return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes.toString().padStart(2, '0')}`;
                               })()}
                             </div>
                           </div>
