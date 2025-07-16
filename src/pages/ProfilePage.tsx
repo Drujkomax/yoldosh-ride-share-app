@@ -143,7 +143,7 @@ const ProfilePage = () => {
                 {/* Verify Email */}
                 <div className="flex items-center space-x-3">
                   <Plus className="h-5 w-5 text-teal-600" />
-                  <span className="text-teal-600 font-medium">Подтвердить почту {profile?.email || 'Не указана'}</span>
+                  <span className="text-teal-600 font-medium">Подтвердить почту khanapiyayev@icloud.com</span>
                 </div>
                 
                 {/* Phone Verified */}
