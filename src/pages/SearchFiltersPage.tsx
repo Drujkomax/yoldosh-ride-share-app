@@ -169,7 +169,40 @@ const SearchFiltersPage = () => {
   };
 
   const applyFilters = () => {
-    navigate(-1);
+    // Получаем оригинальные параметры поиска
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const date = searchParams.get('date');
+    const seats = searchParams.get('seats');
+
+    // Создаем новые URL параметры с фильтрами
+    const filterParams = new URLSearchParams();
+    
+    // Добавляем оригинальные параметры поиска
+    if (from) filterParams.set('from', from);
+    if (to) filterParams.set('to', to);
+    if (date) filterParams.set('date', date);
+    if (seats) filterParams.set('seats', seats);
+
+    // Добавляем параметры фильтров
+    if (selectedSort !== 'earliest') {
+      filterParams.set('sort', selectedSort);
+    }
+    
+    if (selectedTimeRanges.length > 0) {
+      filterParams.set('timeRanges', selectedTimeRanges.join(','));
+    }
+    
+    if (selectedTrustOptions.length > 0) {
+      filterParams.set('trust', selectedTrustOptions.join(','));
+    }
+    
+    if (selectedComforts.length > 0) {
+      filterParams.set('comforts', selectedComforts.join(','));
+    }
+
+    // Переходим на страницу поиска поездок с фильтрами
+    navigate(`/search-rides?${filterParams.toString()}`);
   };
 
   return (
