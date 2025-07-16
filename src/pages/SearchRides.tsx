@@ -709,13 +709,13 @@ const SearchRides = () => {
                       {/* Left side - Route with times */}
                       <div className="flex items-center space-x-4">
                         {/* Vertical Route line with times and cities */}
-                        <div className="flex flex-col space-y-4">
+                        <div className="flex flex-col space-y-2">
                           {/* Departure */}
                           <div className="flex items-center space-x-3">
                             <div className="text-xl font-semibold text-gray-900">
                               {formatTime(ride.departure_time)}
                             </div>
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                            <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full"></div>
                             <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
                           
@@ -729,7 +729,7 @@ const SearchRides = () => {
                                 return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
                               })()}
                             </div>
-                            <div className="w-0.5 h-8 bg-teal-600"></div>
+                            <div className="w-0.5 h-6 bg-teal-600 ml-1"></div>
                           </div>
                           
                           {/* Arrival */}
@@ -763,7 +763,7 @@ const SearchRides = () => {
                                 return formatTime(arrivalTime.toTimeString());
                               })()}
                             </div>
-                            <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
+                            <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full"></div>
                             <span className="text-sm font-medium text-gray-800">{ride.to_city}</span>
                           </div>
                         </div>
