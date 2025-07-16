@@ -192,7 +192,6 @@ const ChatPage = () => {
                 </div>
                 <div>
                   <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
-                  <p className="text-sm text-gray-600">{otherParticipant?.phone}</p>
                 </div>
               </div>
             </div>
