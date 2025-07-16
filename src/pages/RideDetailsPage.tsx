@@ -395,10 +395,13 @@ const RideDetailsPage = () => {
             <span className="text-gray-700">Иногда отменяет поездки</span>
           </div>
           
-          {/* Booking Confirmation */}
-          <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-5 w-5 text-gray-400" />
-            <span className="text-gray-700">Ваше бронирование будет подтверждено только после одобрения водителя</span>
+          {/* Separator */}
+          <div className="border-t border-gray-200 pt-4">
+            {/* Booking Confirmation */}
+            <div className="flex items-center space-x-3">
+              <CalendarIcon className="h-5 w-5 text-gray-400" />
+              <span className="text-gray-700">Ваше бронирование будет подтверждено только после одобрения водителя</span>
+            </div>
           </div>
           
           {/* No Smoking */}
