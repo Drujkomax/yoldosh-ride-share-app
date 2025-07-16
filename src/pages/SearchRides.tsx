@@ -711,16 +711,19 @@ const SearchRides = () => {
                         {/* Vertical Route line with times and cities */}
                         <div className="flex flex-col">
                           {/* Departure */}
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 relative">
                             <div className="text-xl font-semibold text-gray-900">
                               {formatTime(ride.departure_time)}
                             </div>
-                            <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full"></div>
+                            <div className="relative">
+                              <div className="w-3 h-3 bg-white border-2 border-teal-600 rounded-full relative z-10"></div>
+                              <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-teal-600"></div>
+                            </div>
                             <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
                           
-                          {/* Duration line - positioned to connect circles */}
-                          <div className="flex items-center space-x-3">
+                          {/* Duration info */}
+                          <div className="flex items-center space-x-3 py-2">
                             <div className="text-xs text-gray-500 w-16 text-center">
                               {(() => {
                                 if (routeInfo?.duration) {
@@ -729,7 +732,6 @@ const SearchRides = () => {
                                 return `${Math.floor(ride.duration_hours || 2)}ч${((ride.duration_hours || 2) % 1 * 60).toFixed(0).padStart(2, '0')}`;
                               })()}
                             </div>
-                            <div className="w-0.5 h-8 bg-teal-600"></div>
                           </div>
                           
                           {/* Arrival */}
