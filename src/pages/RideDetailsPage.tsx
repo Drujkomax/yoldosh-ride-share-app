@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, MessageCircle, ChevronLeft, Wifi, Wind, Music, Heart } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, MessageCircle, ChevronLeft, Wifi, Wind, Music, Heart, CheckCircle, Share, Flag, Calendar as CalendarIcon, Ban, Cigarette } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -20,6 +20,7 @@ const RideDetailsPage = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [routeInfo, setRouteInfo] = useState<any>(null);
   const [loadingRouteInfo, setLoadingRouteInfo] = useState(false);
+  const [passengers, setPassengers] = useState<any[]>([]);
   const { getRouteInfo } = useGoogleGeocoding();
 
   useEffect(() => {
@@ -60,6 +61,9 @@ const RideDetailsPage = () => {
       if (data.pickup_address && data.dropoff_address) {
         fetchRouteInfo(data.pickup_address, data.dropoff_address);
       }
+      
+      // Загружаем пассажиров
+      fetchPassengers(data.id);
     } catch (error) {
       console.error('Error fetching ride details:', error);
       toast.error('Ошибка при загрузке деталей поездки');
@@ -82,9 +86,39 @@ const RideDetailsPage = () => {
     }
   };
 
+  const fetchPassengers = async (rideId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          profiles:passenger_id (
+            id,
+            name,
+            avatar_url
+          )
+        `)
+        .eq('ride_id', rideId)
+        .eq('status', 'confirmed');
+
+      if (error) throw error;
+      setPassengers(data || []);
+    } catch (error) {
+      console.error('Error fetching passengers:', error);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     try {
-      return format(new Date(dateStr), 'dd MMMM yyyy', { locale: ru });
+      const date = new Date(dateStr);
+      const day = format(date, 'EEEE', { locale: ru });
+      const dayNumber = format(date, 'd', { locale: ru });
+      const month = format(date, 'MMMM', { locale: ru });
+      
+      // Делаем первую букву дня недели заглавной
+      const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
+      
+      return `${capitalizedDay}, ${dayNumber} ${month}`;
     } catch {
       return dateStr;
     }
@@ -236,232 +270,223 @@ const RideDetailsPage = () => {
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-gray-100"
             >
-              <ChevronLeft className="h-6 w-6 text-gray-600" />
+              <ChevronLeft className="h-6 w-6 text-teal-600" />
             </Button>
-            <h1 className="text-lg font-bold">Детали поездки</h1>
             <div className="w-10" />
           </div>
         </div>
       </div>
 
       <div className="p-4 space-y-4">
+        {/* No Available Seats Message */}
+        {ride.available_seats === 0 && (
+          <div className="flex items-center space-x-2 text-gray-500 text-sm bg-gray-100 p-3 rounded-lg">
+            <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center">
+              <span className="text-xs">!</span>
+            </div>
+            <span>Нет свободных мест</span>
+          </div>
+        )}
+
         {/* Date Header */}
-        <div className="text-center py-4">
-          <h2 className="text-2xl font-bold text-gray-800">
+        <div className="pt-4">
+          <h2 className="text-2xl font-bold text-teal-900">
             {formatDate(ride.departure_date)}
           </h2>
         </div>
 
-        {/* Route Info */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">
-                      {formatTime(ride.departure_time)}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 relative">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-teal-600 rounded-full"></div>
-                      <div className="flex-1 h-px bg-gray-300 mx-2"></div>
-                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    </div>
-                    <div className="flex justify-between text-xs mt-1 text-gray-600">
-                      <span>{ride.from_city}</span>
-                      <span>{ride.to_city}</span>
-                    </div>
-                    <div className="text-center text-xs text-gray-500 mt-2">
-                      {loadingRouteInfo ? 'Загрузка...' : routeInfo?.duration || `${ride.duration_hours}ч`}
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">
-                      {(() => {
-                        if (loadingRouteInfo) return 'Загрузка...';
-                        if (routeInfo?.duration) {
-                          // Парсим время отправления
-                          const [hours, minutes] = ride.departure_time.split(':').map(Number);
-                          // Парсим длительность из API (например, "2 ч 30 мин")
-                          const durationText = routeInfo.duration;
-                          const hoursMatch = durationText.match(/(\d+)\s*ч/);
-                          const minutesMatch = durationText.match(/(\d+)\s*мин/);
-                          
-                          const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
-                          const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
-                          
-                          // Рассчитываем время прибытия
-                          const arrivalTime = new Date();
-                          arrivalTime.setHours(hours + durationHours);
-                          arrivalTime.setMinutes(minutes + durationMinutes);
-                          
-                          return formatTime(arrivalTime.toTimeString());
-                        }
-                        // Fallback к stored arrival time
-                        return formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00');
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {/* Route Timeline */}
+        <div className="space-y-4">
+          {/* Departure */}
+          <div className="flex items-start space-x-3">
+            <div className="text-lg font-bold text-gray-900 w-12">
+              {formatTime(ride.departure_time)}
             </div>
-            
-            <div className="text-center py-4 border-t border-gray-100">
-              <div className="text-2xl font-bold text-gray-900">
-                {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')} сум
-              </div>
-              <div className="text-sm text-gray-500">на человека</div>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-2"></div>
+            <div>
+              <div className="text-base font-medium text-gray-900">{ride.from_city}</div>
+              {ride.pickup_address && (
+                <div className="text-sm text-gray-500">{ride.pickup_address}</div>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          
+          {/* Duration Line */}
+          <div className="flex items-center space-x-3">
+            <div className="text-xs text-gray-500 w-12">
+              {loadingRouteInfo ? '...' : routeInfo?.duration || `${ride.duration_hours}ч${ride.estimated_duration_minutes ? Math.round(ride.estimated_duration_minutes % 60) : ''}мин`}
+            </div>
+            <div className="w-0.5 h-8 bg-teal-600 ml-[7px]"></div>
+          </div>
+          
+          {/* Arrival */}
+          <div className="flex items-start space-x-3">
+            <div className="text-lg font-bold text-gray-900 w-12">
+              {(() => {
+                if (loadingRouteInfo) return '...';
+                if (routeInfo?.duration) {
+                  const [hours, minutes] = ride.departure_time.split(':').map(Number);
+                  const durationText = routeInfo.duration;
+                  const hoursMatch = durationText.match(/(\d+)\s*ч/);
+                  const minutesMatch = durationText.match(/(\d+)\s*мин/);
+                  
+                  const durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+                  const durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
+                  
+                  const totalMinutes = hours * 60 + minutes + durationHours * 60 + durationMinutes;
+                  const arrivalHours = Math.floor(totalMinutes / 60);
+                  const arrivalMins = totalMinutes % 60;
+                  
+                  return `${String(arrivalHours).padStart(2, '0')}:${String(arrivalMins).padStart(2, '0')}`;
+                }
+                return formatTime(ride.estimated_arrival_time?.split('T')[1] || '00:00');
+              })()}
+            </div>
+            <div className="w-2 h-2 bg-teal-600 rounded-full mt-2"></div>
+            <div>
+              <div className="text-base font-medium text-gray-900">{ride.to_city}</div>
+              {ride.dropoff_address && (
+                <div className="text-sm text-gray-500">{ride.dropoff_address}</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Price */}
+        <div className="flex items-center justify-between py-4 border-y border-gray-200">
+          <span className="text-gray-600">1 пассажир</span>
+          <span className="text-2xl font-bold text-teal-900">
+            {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')}<span className="text-sm">,00</span> ₽
+          </span>
+        </div>
 
         {/* Driver Info */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="font-bold text-lg">{ride.profiles?.name || 'Водитель'}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    ✓ Проверен
-                  </Badge>
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div 
-                    className="flex items-center space-x-1 cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={() => navigate(`/driver-reviews/${ride.driver_id}`)}
-                  >
-                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                    <span>{ride.profiles?.rating || 5.0}</span>
-                  </div>
-                  <span>{ride.profiles?.total_rides || 0} поездок</span>
-                </div>
-              </div>
+        <div className="flex items-center space-x-4 py-4 cursor-pointer" onClick={() => navigate(`/driver-reviews/${ride.driver_id}`)}>
+          <div className="relative">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center border-2 border-teal-400">
+              <User className="h-8 w-8 text-gray-400" />
             </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-400 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-white" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="text-lg font-bold text-gray-900">{ride.profiles?.name || 'Водитель'}</div>
+            <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span>{ride.profiles?.rating || 5.0}/5</span>
+              <span>-{ride.profiles?.total_rides || 0} отзывов</span>
+            </div>
+          </div>
+          <ChevronLeft className="h-5 w-5 text-gray-400 rotate-180" />
+        </div>
 
-            {!isOwnRide && (
-              <div className="flex justify-center">
-                <Button 
-                  variant="outline" 
-                  className="w-full max-w-xs"
-                  onClick={handleChatWithDriver}
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Написать сообщение
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Driver Features */}
+        <div className="space-y-4 pt-4">
+          {/* Verified Profile */}
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-teal-400" />
+            <span className="text-gray-700">Профиль подтвержден</span>
+          </div>
+          
+          {/* Sometimes Cancels */}
+          <div className="flex items-center space-x-3">
+            <CalendarIcon className="h-5 w-5 text-gray-400" />
+            <span className="text-gray-700">Иногда отменяет поездки</span>
+          </div>
+          
+          {/* Booking Confirmation */}
+          <div className="flex items-center space-x-3">
+            <CalendarIcon className="h-5 w-5 text-gray-400" />
+            <span className="text-gray-700">Ваше бронирование будет подтверждено только после одобрения водителя</span>
+          </div>
+          
+          {/* No Smoking */}
+          <div className="flex items-center space-x-3">
+            <Ban className="h-5 w-5 text-red-500" />
+            <span className="text-gray-700">В моей машине не курят</span>
+          </div>
+          
+          {/* No Pets */}
+          <div className="flex items-center space-x-3">
+            <Ban className="h-5 w-5 text-red-500" />
+            <span className="text-gray-700">Предпочитаю поездки без питомцев</span>
+          </div>
+          
+          {/* Max 2 in back */}
+          <div className="flex items-center space-x-3">
+            <Users className="h-5 w-5 text-gray-400" />
+            <span className="text-gray-700">Максимум двое сзади</span>
+          </div>
+          
+          {/* Car Info */}
+          {ride.user_cars && (
+            <div className="flex items-center space-x-3">
+              <Car className="h-5 w-5 text-gray-400" />
+              <span className="text-gray-700">
+                {ride.user_cars.make} {ride.user_cars.model} - {ride.user_cars.color || 'черный'}
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Car Info */}
-        {ride.user_cars && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Car className="h-5 w-5 mr-2" />
-                Автомобиль
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div>{ride.user_cars.make} {ride.user_cars.model}</div>
-                {ride.user_cars.year && <div>Год: {ride.user_cars.year}</div>}
-                {ride.user_cars.color && <div>Цвет: {ride.user_cars.color}</div>}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Passengers Section */}
+        {passengers.length > 0 && (
+          <div className="pt-8">
+            <h3 className="text-xl font-bold text-teal-900 mb-4">Пассажиры</h3>
+            <div className="space-y-4">
+              {passengers.map((passenger) => (
+                <div key={passenger.id} className="flex items-center space-x-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-teal-400 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{passenger.profiles?.name || 'Пассажир'}</div>
+                    <div className="text-sm text-gray-500">{ride.from_city} → {ride.to_city}</div>
+                  </div>
+                  <ChevronLeft className="h-5 w-5 text-gray-400 rotate-180" />
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        {/* Additional Info */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Доступно мест</span>
-                <span className="font-medium">{ride.available_seats}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Подтверждение</span>
-                <span className="text-sm text-gray-500">
-                  {ride.instant_booking_enabled ? 'Мгновенное бронирование' : 'Бронирование подтверждается водителем'}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Comfort Settings */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-3">
-              <div className="text-sm font-medium text-gray-700 mb-3">Условия поездки</div>
-              <div className="space-y-2">
-                {/* Air Conditioning */}
-                <div className="flex items-center space-x-2">
-                  <Wind className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    Кондиционер: {ride.comfort_settings?.air_conditioning ? 'Есть' : 'Нет'}
-                  </span>
-                </div>
-                
-                {/* Smoking */}
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 flex items-center justify-center">
-                    {ride.comfort_settings?.smoking_allowed ? '🚬' : '🚭'}
-                  </div>
-                  <span className="text-sm">
-                    Курение {ride.comfort_settings?.smoking_allowed ? 'разрешено' : 'запрещено'}
-                  </span>
-                </div>
-                
-                {/* Music */}
-                <div className="flex items-center space-x-2">
-                  <Music className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    Музыка: {ride.comfort_settings?.music_allowed ? 'Разрешена' : 'Запрещена'}
-                  </span>
-                </div>
-                
-                {/* Pets */}
-                <div className="flex items-center space-x-2">
-                  <Heart className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    Животные: {ride.comfort_settings?.pets_allowed ? 'Разрешены' : 'Запрещены'}
-                  </span>
-                </div>
-                
-                {/* Seating arrangement */}
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    {(() => {
-                      const totalSeats = ride.available_seats;
-                      if (totalSeats === 1) {
-                        return "1 место сзади";
-                      } else if (totalSeats === 2) {
-                        return "2 места сзади";
-                      } else if (totalSeats === 3) {
-                        return "2 места сзади + 1 место впереди";
-                      } else if (totalSeats === 4) {
-                        return "2 места сзади + 2 места впереди";
-                      } else {
-                        return `${totalSeats} мест`;
-                      }
-                    })()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Action Buttons */}
+        <div className="space-y-3 pt-8">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-blue-500 hover:bg-blue-50"
+            onClick={() => toast.info('Функция пожаловаться будет добавлена')}
+          >
+            <Flag className="h-5 w-5 mr-3" />
+            Пожаловаться на поездку
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-blue-500 hover:bg-blue-50"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Поездка',
+                  text: `Поездка ${ride.from_city} → ${ride.to_city}`,
+                  url: window.location.href,
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Ссылка скопирована');
+              }
+            }}
+          >
+            <Share className="h-5 w-5 mr-3" />
+            Поделиться поездкой
+          </Button>
+        </div>
 
         {/* Action Button */}
         {!isOwnRide && (
