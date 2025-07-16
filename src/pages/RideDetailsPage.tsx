@@ -356,7 +356,7 @@ const RideDetailsPage = () => {
         <div className="flex items-center justify-between py-4 border-y border-gray-200">
           <span className="text-gray-600">1 пассажир</span>
           <span className="text-2xl font-bold text-teal-900">
-            {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')}<span className="text-sm">,00</span> ₽
+            {Math.floor(ride.price_per_seat).toLocaleString('ru-RU')} сум
           </span>
         </div>
 
