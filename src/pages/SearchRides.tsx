@@ -710,10 +710,8 @@ const SearchRides = () => {
                       <div className="flex items-start space-x-4">
                         {/* Route timeline */}
                         <div className="relative">
-                          {/* Вертикальная линия соединяющая точки А и Б */}
-                          <div className="absolute left-14 top-2 w-px h-16 bg-teal-600 z-0"></div>
                           {/* Departure */}
-                          <div className="flex items-center space-x-3 mb-2">
+                          <div className="flex items-center space-x-3 mb-4">
                             <div className="text-lg font-semibold text-gray-900 w-12">
                               {formatTime(ride.departure_time)}
                             </div>
@@ -721,15 +719,14 @@ const SearchRides = () => {
                             <span className="text-sm font-medium text-gray-800">{ride.from_city}</span>
                           </div>
                           
-                          {/* Vertical connecting line */}
-                          <div className="absolute left-14 top-2 w-px h-10 bg-teal-600"></div>
+                          {/* Вертикальная линия соединяющая точки А и Б */}
+                          <div className="absolute left-14 top-2 w-px h-12 bg-teal-600 z-0"></div>
                           
                           {/* Duration info */}
-                          <div className="flex items-center space-x-3 my-4">
+                          <div className="flex items-center space-x-3 mb-4">
                             <div className="text-xs text-gray-500 w-12">
                               {(() => {
                                 if (routeInfo?.duration) {
-                                  // Парсим часы и минуты из API
                                   const durationText = routeInfo.duration;
                                   const hoursMatch = durationText.match(/(\d+)\s*ч/);
                                   const minutesMatch = durationText.match(/(\d+)\s*мин/);
@@ -737,13 +734,11 @@ const SearchRides = () => {
                                   let hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
                                   let minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
                                   
-                                  // Округляем минуты в большую сторону до 0 или 5
                                   const remainder = minutes % 5;
                                   if (remainder !== 0) {
                                     minutes = minutes + (5 - remainder);
                                   }
                                   
-                                  // Если минуты >= 60, переводим в часы
                                   if (minutes >= 60) {
                                     hours += Math.floor(minutes / 60);
                                     minutes = minutes % 60;
@@ -752,7 +747,6 @@ const SearchRides = () => {
                                   return minutes === 0 ? `${hours} ч` : `${hours} ч ${minutes.toString().padStart(2, '0')}`;
                                 }
                                 
-                                // Fallback для данных из базы
                                 const totalMinutes = Math.ceil((ride.duration_hours || 2) * 60);
                                 const remainder = totalMinutes % 5;
                                 const roundedMinutes = remainder === 0 ? totalMinutes : totalMinutes + (5 - remainder);
@@ -765,7 +759,7 @@ const SearchRides = () => {
                           </div>
                           
                           {/* Arrival */}
-                          <div className="flex items-center space-x-3 mt-2">
+                          <div className="flex items-center space-x-3">
                             <div className="text-lg font-semibold text-gray-900 w-12">
                               {(() => {
                                 if (routeInfo?.duration) {
@@ -777,41 +771,34 @@ const SearchRides = () => {
                                   let durationHours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
                                   let durationMinutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
                                   
-                                  // Округляем минуты длительности в большую сторону до 0 или 5
                                   const remainder = durationMinutes % 5;
                                   if (remainder !== 0) {
                                     durationMinutes = durationMinutes + (5 - remainder);
                                   }
                                   
-                                  // Если минуты >= 60, переводим в часы
                                   if (durationMinutes >= 60) {
                                     durationHours += Math.floor(durationMinutes / 60);
                                     durationMinutes = durationMinutes % 60;
                                   }
                                   
-                                  // Вычисляем время прибытия
                                   let arrivalHours = hours + durationHours;
                                   let arrivalMinutes = minutes + durationMinutes;
                                   
-                                  // Округляем минуты прибытия в большую сторону до 0 или 5
                                   const arrivalRemainder = arrivalMinutes % 5;
                                   if (arrivalRemainder !== 0) {
                                     arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
                                   }
                                   
-                                  // Если минуты >= 60, переводим в часы
                                   if (arrivalMinutes >= 60) {
                                     arrivalHours += Math.floor(arrivalMinutes / 60);
                                     arrivalMinutes = arrivalMinutes % 60;
                                   }
                                   
-                                  // Если часы >= 24, корректируем
                                   arrivalHours = arrivalHours % 24;
                                   
                                   return `${arrivalHours.toString().padStart(2, '0')}:${arrivalMinutes.toString().padStart(2, '0')}`;
                                 }
                                 
-                                // Fallback для данных из базы
                                 const [hours, minutes] = ride.departure_time.split(':').map(Number);
                                 const totalDurationMinutes = Math.ceil((ride.duration_hours || 2) * 60);
                                 const remainder = totalDurationMinutes % 5;
@@ -823,7 +810,6 @@ const SearchRides = () => {
                                 let arrivalHours = hours + durationHours;
                                 let arrivalMinutes = minutes + durationMinutes;
                                 
-                                // Округляем минуты прибытия в большую сторону до 0 или 5
                                 const arrivalRemainder = arrivalMinutes % 5;
                                 if (arrivalRemainder !== 0) {
                                   arrivalMinutes = arrivalMinutes + (5 - arrivalRemainder);
@@ -859,28 +845,28 @@ const SearchRides = () => {
                       </div>
                     </div>
                     
-                     {/* Driver Info */}
-                     <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                       <div className="flex items-center space-x-3">
-                         <Car className="h-4 w-4 text-gray-400" />
-                         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                           <User className="h-5 w-5 text-white" />
-                         </div>
-                         <div>
-                           <div className="flex flex-col">
-                             <span className="text-sm font-medium text-gray-800">
-                               {ride.driver?.name || 'Андрей'}
-                             </span>
-                             <div className="flex items-center space-x-1">
-                               <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                               <span className="text-sm font-medium text-gray-700">
-                                 {ride.driver?.rating || '4.9'}
-                               </span>
-                             </div>
-                           </div>
-                         </div>
-                       </div>
-                     </div>
+                    {/* Driver Info */}
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                      <div className="flex items-center space-x-3">
+                        <Car className="h-4 w-4 text-gray-400" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-800">
+                              {ride.driver?.name || 'Андрей'}
+                            </span>
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                              <span className="text-sm font-medium text-gray-700">
+                                {ride.driver?.rating || '4.9'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     
                     {/* No seats indicator */}
                     {ride.available_seats === 0 && (
