@@ -262,7 +262,7 @@ const RideDetailsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
