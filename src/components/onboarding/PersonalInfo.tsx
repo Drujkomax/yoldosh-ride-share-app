@@ -23,6 +23,17 @@ const PersonalInfo = ({
   const [errors, setErrors] = useState({ firstName: '', lastName: '' });
 
   const validateName = (name: string, field: 'firstName' | 'lastName') => {
+    // Фамилия не обязательна
+    if (field === 'lastName') {
+      if (name.trim() && name.trim().length < 2) {
+        setErrors(prev => ({ ...prev, [field]: 'Минимум 2 символа' }));
+        return false;
+      }
+      setErrors(prev => ({ ...prev, [field]: '' }));
+      return true;
+    }
+    
+    // Имя обязательно
     if (!name.trim()) {
       setErrors(prev => ({ ...prev, [field]: 'Поле обязательно' }));
       return false;
@@ -100,9 +111,9 @@ const PersonalInfo = ({
 
             <Button 
               onClick={handleNext}
-              disabled={!firstName.trim() || !lastName.trim() || !!errors.firstName || !!errors.lastName}
+              disabled={!firstName.trim() || !!errors.firstName || !!errors.lastName}
               className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
-                firstName.trim() && lastName.trim() && !errors.firstName && !errors.lastName
+                firstName.trim() && !errors.firstName && !errors.lastName
                   ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
