@@ -149,29 +149,26 @@ const RideDetailsPage = () => {
 
     setBookingLoading(true);
     try {
-      // Определяем статус бронирования в зависимости от типа подтверждения
-      const bookingStatus = ride.instant_booking_enabled ? 'confirmed' : 'pending';
-      
-      const { error } = await supabase
-        .from('bookings')
-        .insert({
-          ride_id: ride.id,
-          passenger_id: user.id,
-          seats_booked: 1,
-          total_price: ride.price_per_seat,
-          status: bookingStatus
-        });
-
-      if (error) throw error;
-      
-      // Разные сообщения для разных типов бронирования
       if (ride.instant_booking_enabled) {
+        // Мгновенное бронирование - создаем подтвержденное бронирование
+        const { error } = await supabase
+          .from('bookings')
+          .insert({
+            ride_id: ride.id,
+            passenger_id: user.id,
+            seats_booked: 1,
+            total_price: ride.price_per_seat,
+            status: 'confirmed'
+          });
+
+        if (error) throw error;
+        
         toast.success('Поездка забронирована! Вы можете связаться с водителем.');
+        navigate('/my-trips');
       } else {
-        toast.success('Запрос на бронирование отправлен водителю!');
+        // Обычное бронирование - создаем чат с водителем для обсуждения
+        await createChatWithDriver();
       }
-      
-      navigate('/my-trips');
     } catch (error) {
       console.error('Error booking ride:', error);
       toast.error('Ошибка при бронировании поездки');
@@ -180,20 +177,9 @@ const RideDetailsPage = () => {
     }
   };
 
-
-  const handleChatWithDriver = async () => {
-    if (!user?.id) {
-      toast.error('Необходимо войти в систему для отправки сообщения');
-      return;
-    }
-
-    if (user.id === ride.driver_id) {
-      toast.error('Нельзя создать чат с самим собой');
-      return;
-    }
-
+  const createChatWithDriver = async () => {
     try {
-      // Сначала проверяем, существует ли уже чат между пассажиром и водителем для этой поездки
+      // Проверяем, существует ли уже чат между пассажиром и водителем для этой поездки
       const { data: existingChat, error: searchError } = await supabase
         .from('chats')
         .select('id')
@@ -234,12 +220,57 @@ const RideDetailsPage = () => {
         chatId = newChat.id;
       }
 
+      // Отправляем приветственное сообщение с заявкой на бронирование
+      const bookingMessage = `Добрый день! Хочу забронировать место в вашей поездке ${ride.from_city} → ${ride.to_city} на ${formatDate(ride.departure_date)} в ${formatTime(ride.departure_time)}. 
+
+Количество мест: 1
+Цена: ${Math.floor(ride.price_per_seat).toLocaleString('ru-RU')} сум
+
+Жду вашего подтверждения.`;
+
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id,
+          content: bookingMessage,
+          message_type: 'text'
+        });
+
+      if (messageError) {
+        console.error('Error sending message:', messageError);
+        toast.error('Ошибка при отправке сообщения');
+        return;
+      }
+
+      // Обновляем время последнего сообщения в чате
+      await supabase
+        .from('chats')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', chatId);
+
+      toast.success('Заявка на бронирование отправлена водителю в чат!');
+      
       // Переходим в чат
       navigate(`/chat/${chatId}`);
     } catch (error) {
-      console.error('Error handling chat with driver:', error);
+      console.error('Error creating chat with driver:', error);
       toast.error('Ошибка при создании чата');
     }
+  };
+
+  const handleChatWithDriver = async () => {
+    if (!user?.id) {
+      toast.error('Необходимо войти в систему для отправки сообщения');
+      return;
+    }
+
+    if (user.id === ride.driver_id) {
+      toast.error('Нельзя создать чат с самим собой');
+      return;
+    }
+
+    await createChatWithDriver();
   };
 
   if (loading) {
@@ -262,6 +293,30 @@ const RideDetailsPage = () => {
   }
 
   const isOwnRide = user?.id === ride.driver_id;
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      const day = format(date, 'EEEE', { locale: ru });
+      const dayNumber = format(date, 'd', { locale: ru });
+      const month = format(date, 'MMMM', { locale: ru });
+      
+      // Делаем первую букву дня недели заглавной
+      const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
+      
+      return `${capitalizedDay}, ${dayNumber} ${month}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatTime = (timeStr: string) => {
+    try {
+      return timeStr.slice(0, 5);
+    } catch {
+      return timeStr;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -402,10 +457,12 @@ const RideDetailsPage = () => {
           {/* Separator */}
           <div className="border-t border-gray-200 pt-4">
             {/* Booking Confirmation */}
-            <div className="flex items-center space-x-3">
-              <CalendarIcon className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-700">Ваше бронирование будет подтверждено только после одобрения водителя</span>
-            </div>
+            {!ride.instant_booking_enabled && (
+              <div className="flex items-center space-x-3">
+                <CalendarIcon className="h-5 w-5 text-gray-400" />
+                <span className="text-gray-700">Ваше бронирование будет подтверждено только после одобрения водителя</span>
+              </div>
+            )}
           </div>
           
           {/* No Smoking */}
@@ -502,8 +559,8 @@ const RideDetailsPage = () => {
             disabled={bookingLoading || ride.available_seats === 0}
             className="w-full h-14 text-lg bg-blue-500 hover:bg-blue-600"
           >
-            {bookingLoading ? 'Бронирование...' : 
-              ride.instant_booking_enabled ? 'Забронировать сейчас' : 'Отправить запрос на бронирование'}
+            {bookingLoading ? 'Обработка...' : 
+              ride.instant_booking_enabled ? 'Забронировать сейчас' : 'Отправить заявку водителю'}
           </Button>
         )}
       </div>

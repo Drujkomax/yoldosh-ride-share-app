@@ -45,10 +45,50 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Загружаем пользователя из localStorage при инициализации
     const loadUserFromStorage = async () => {
       try {
-        console.log('UserContext - Загрузка пользователя из localStorage...');
+        console.log('UserContext - Проверяем Supabase сессию...');
+        
+        // Сначала проверяем активную сессию в Supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('UserContext - Ошибка получения сессии:', sessionError);
+        }
+        
+        if (session?.user) {
+          console.log('UserContext - Найдена активная сессия Supabase:', session.user.id);
+          
+          // Загружаем профиль из базы данных
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile && !profileError) {
+            console.log('UserContext - Профиль загружен из БД:', profile);
+            const completeUser: UserProfile = {
+              id: profile.id,
+              phone: profile.phone || '',
+              name: profile.name || '',
+              isVerified: profile.is_verified || false,
+              totalRides: profile.total_rides || 0,
+              rating: profile.rating || 0.0,
+              avatarUrl: profile.avatar_url
+            };
+            
+            setUser(completeUser);
+            
+            // Синхронизируем с localStorage
+            localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // Если нет активной сессии Supabase, проверяем localStorage
+        console.log('UserContext - Нет активной сессии Supabase, проверяем localStorage');
         const storedUser = localStorage.getItem('yoldosh_user');
         
         if (storedUser) {
@@ -63,20 +103,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             console.log('UserContext - Новый UUID сгенерирован:', parsedUser.id);
           }
           
-          // Убеждаемся, что все обязательные поля присутствуют
-          // ВАЖНО: больше не сохраняем роль, она определяется динамически
           const completeUser = {
             id: parsedUser.id,
             phone: parsedUser.phone || '',
             name: parsedUser.name || '',
-            // Убираем role - теперь определяется автоматически
             isVerified: parsedUser.isVerified || false,
             totalRides: parsedUser.totalRides || 0,
             rating: parsedUser.rating || 0.0,
             avatarUrl: parsedUser.avatarUrl
           };
           
-          console.log('UserContext - Данные пользователя нормализованы без роли:', completeUser);
+          console.log('UserContext - Данные пользователя нормализованы:', completeUser);
           
           // Проверяем, существует ли профиль в Supabase, если нет - создаем
           const { data: existingProfile } = await supabase
@@ -109,10 +146,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           
           setUser(completeUser);
         } else {
-          console.log('UserContext - Пользователь не найден в localStorage');
+          console.log('UserContext - Пользователь не найден нигде');
         }
       } catch (error) {
-        console.error('UserContext - Ошибка при загрузке пользователя из localStorage:', error);
+        console.error('UserContext - Ошибка при загрузке пользователя:', error);
         localStorage.removeItem('yoldosh_user');
       } finally {
         setLoading(false);
@@ -120,6 +157,43 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadUserFromStorage();
+
+    // Подписываемся на изменения аутентификации Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('UserContext - Auth state changed:', event, session?.user?.id);
+      
+      if (session?.user) {
+        // Пользователь вошел в систему через Supabase
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (profile) {
+          const completeUser: UserProfile = {
+            id: profile.id,
+            phone: profile.phone || '',
+            name: profile.name || '',
+            isVerified: profile.is_verified || false,
+            totalRides: profile.total_rides || 0,
+            rating: profile.rating || 0.0,
+            avatarUrl: profile.avatar_url
+          };
+          
+          setUser(completeUser);
+          localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Пользователь вышел из системы
+        setUser(null);
+        localStorage.removeItem('yoldosh_user');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const updateUser = async (updatedUser: UserProfile | null) => {
@@ -140,7 +214,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         id: updatedUser.id,
         phone: updatedUser.phone || '',
         name: updatedUser.name || '',
-        // Убираем role - теперь определяется автоматически
         isVerified: updatedUser.isVerified || false,
         totalRides: updatedUser.totalRides || 0,
         rating: updatedUser.rating || 0.0,
