@@ -133,7 +133,7 @@ const RideDetailsPage = () => {
   };
 
   const handleBookRide = async () => {
-    if (!user?.id) {
+    if (!user) {
       toast.error('Необходимо войти в систему для бронирования');
       return;
     }
