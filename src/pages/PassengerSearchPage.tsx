@@ -38,15 +38,28 @@ const PassengerSearchPage = () => {
   useEffect(() => {
     const fromParam = searchParams.get('from');
     const toParam = searchParams.get('to');
+    const dateParam = searchParams.get('date');
+    const seatsParam = searchParams.get('seats');
     const passengersParam = searchParams.get('passengers');
     
     if (fromParam) setFromCity(fromParam);
     if (toParam) setToCity(toParam);
-    if (passengersParam) {
-      const count = parseInt(passengersParam);
-      if (!isNaN(count) && count >= 1 && count <= 8) {
-        setPassengers(count);
+    
+    // Восстанавливаем дату из URL
+    if (dateParam) {
+      const parsedDate = new Date(dateParam);
+      if (!isNaN(parsedDate.getTime())) {
+        setDate(parsedDate);
       }
+    }
+    
+    // Проверяем оба возможных параметра для количества пассажиров
+    const seatsCount = seatsParam ? parseInt(seatsParam) : null;
+    const passengersCount = passengersParam ? parseInt(passengersParam) : null;
+    const finalCount = seatsCount || passengersCount;
+    
+    if (finalCount && !isNaN(finalCount) && finalCount >= 1 && finalCount <= 8) {
+      setPassengers(finalCount);
     }
   }, []);
 
