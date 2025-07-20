@@ -294,30 +294,6 @@ const RideDetailsPage = () => {
 
   const isOwnRide = user?.id === ride.driver_id;
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      const day = format(date, 'EEEE', { locale: ru });
-      const dayNumber = format(date, 'd', { locale: ru });
-      const month = format(date, 'MMMM', { locale: ru });
-      
-      // Делаем первую букву дня недели заглавной
-      const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
-      
-      return `${capitalizedDay}, ${dayNumber} ${month}`;
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatTime = (timeStr: string) => {
-    try {
-      return timeStr.slice(0, 5);
-    } catch {
-      return timeStr;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
