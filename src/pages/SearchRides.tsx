@@ -407,7 +407,13 @@ const SearchRides = () => {
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(-1);
+                    // Сохраняем текущие фильтры в URL при возврате
+                    const params = new URLSearchParams();
+                    if (searchCriteria.from) params.set('from', searchCriteria.from);
+                    if (searchCriteria.to) params.set('to', searchCriteria.to);
+                    if (searchCriteria.date) params.set('date', searchCriteria.date);
+                    if (searchCriteria.seats) params.set('seats', searchCriteria.seats);
+                    navigate(`/passenger-search?${params.toString()}`);
                   }}
                   className="p-2 hover:bg-gray-200 rounded-lg"
                 >
