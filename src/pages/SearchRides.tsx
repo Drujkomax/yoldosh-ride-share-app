@@ -407,7 +407,7 @@ const SearchRides = () => {
                   variant="ghost"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate('/passenger-search');
+                    navigate(-1);
                   }}
                   className="p-2 hover:bg-gray-200 rounded-lg"
                 >
