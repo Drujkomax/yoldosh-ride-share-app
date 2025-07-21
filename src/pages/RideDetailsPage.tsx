@@ -35,7 +35,7 @@ interface Ride {
 }
 
 const RideDetailsPage = () => {
-  const { rideId } = useParams();
+  const { id: rideId } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
   const { role: currentUserRole } = useUserRole();
