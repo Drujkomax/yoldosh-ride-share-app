@@ -71,16 +71,12 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   const { data: chats = [], isLoading } = useQuery({
-    queryKey: ['chats'],
+    queryKey: ['chats', user?.id],
     queryFn: async () => {
-      // Получаем текущего аутентифицированного пользователя
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const currentUserId = authUser?.id;
+      console.log('useChats - Загрузка чатов пользователя:', user?.id);
       
-      console.log('useChats - Загрузка чатов пользователя:', currentUserId);
-      
-      if (!currentUserId) {
-        console.log('useChats - Пользователь не аутентифицирован');
+      if (!user?.id) {
+        console.log('useChats - Пользователь не найден');
         return [];
       }
 
@@ -88,7 +84,7 @@ export const useChats = () => {
       const { data: chatsData, error } = await supabase
         .from('chats')
         .select('*')
-        .or(`participant1_id.eq.${currentUserId},participant2_id.eq.${currentUserId}`)
+        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (error) {
@@ -138,7 +134,7 @@ export const useChats = () => {
             .from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('chat_id', chat.id)
-            .neq('sender_id', currentUserId)
+            .neq('sender_id', user.id)
             .is('read_at', null);
 
           return {
@@ -175,7 +171,7 @@ export const useChats = () => {
         },
         () => {
           console.log('useChats - Обновление чата');
-          queryClient.invalidateQueries({ queryKey: ['chats'] });
+          queryClient.invalidateQueries({ queryKey: ['chats', user.id] });
         }
       )
       .subscribe();
@@ -191,7 +187,7 @@ export const useChats = () => {
         },
         () => {
           console.log('useChats - Новое сообщение');
-          queryClient.invalidateQueries({ queryKey: ['chats'] });
+          queryClient.invalidateQueries({ queryKey: ['chats', user.id] });
           queryClient.invalidateQueries({ queryKey: ['messages'] });
         }
       )
