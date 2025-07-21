@@ -9,15 +9,18 @@ import { useChats } from '@/hooks/useChats';
 import BottomNavigation from '@/components/BottomNavigation';
 import MobilePageLayout from '@/components/MobilePageLayout';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useUser } from '@/contexts/UserContext';
 
 const ChatsListPage = () => {
   const navigate = useNavigate();
   const { chats, isLoading } = useChats();
   const { role } = useUserRole();
+  const { user } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
 
   const filteredChats = chats.filter(chat => {
-    const otherParticipant = chat.participants?.find(p => p.id !== chat.user_id);
+    const currentUserId = user?.id;
+    const otherParticipant = chat.participant1_id !== currentUserId ? chat.participant1 : chat.participant2;
     const chatName = otherParticipant?.name || 'Пользователь';
     return chatName.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -103,8 +106,9 @@ const ChatsListPage = () => {
             ) : (
               <div className="space-y-3">
                 {filteredChats.map((chat) => {
-                  const otherParticipant = chat.participants?.find(p => p.id !== chat.user_id);
-                  const lastMessagePreview = getLastMessagePreview(chat.last_message);
+                  const currentUserId = user?.id;
+                  const otherParticipant = chat.participant1_id !== currentUserId ? chat.participant1 : chat.participant2;
+                  const lastMessagePreview = getLastMessagePreview(chat.lastMessage?.content || null);
                   
                   return (
                     <div
