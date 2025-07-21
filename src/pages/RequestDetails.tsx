@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, MapPin, Calendar, Users, Star, User, MessageCircle, Phone, Shield, Car, Loader2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRideRequests } from '@/hooks/useRideRequests';
+import MobilePageLayout from '@/components/MobilePageLayout';
 
 const RequestDetails = () => {
   const navigate = useNavigate();
@@ -40,21 +41,21 @@ const RequestDetails = () => {
 
   if (!request) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center">
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8">
+      <MobilePageLayout hasBottomNav={false} className="flex items-center justify-center">
+        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl p-8 mx-4">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-slate-800 mb-4">Заявка не найдена</h2>
-            <Button onClick={() => navigate('/search-requests')} className="bg-gradient-primary">
+            <Button onClick={() => navigate('/search-requests')} className="bg-gradient-primary mobile-tap-highlight-transparent">
               Вернуться к заявкам
             </Button>
           </div>
         </Card>
-      </div>
+      </MobilePageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
+    <MobilePageLayout className="bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
         <div className="container mx-auto px-4 py-4">
@@ -62,7 +63,7 @@ const RequestDetails = () => {
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="hover:bg-yoldosh-primary/10"
+              className="hover:bg-yoldosh-primary/10 mobile-tap-highlight-transparent"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {t('back')}
@@ -108,7 +109,7 @@ const RequestDetails = () => {
               {request.passenger?.phone && (
                 <Button
                   onClick={handleCall}
-                  className="bg-yoldosh-success hover:bg-green-700 rounded-xl"
+                  className="bg-yoldosh-success hover:bg-green-700 rounded-xl mobile-tap-highlight-transparent"
                 >
                   <Phone className="h-4 w-4 mr-2" />
                   Позвонить
@@ -201,25 +202,25 @@ const RequestDetails = () => {
                 value={responseMessage}
                 onChange={(e) => setResponseMessage(e.target.value)}
                 placeholder="Здравствуйте! Я готов взять вас в поездку. У меня чистая машина, еду аккуратно..."
-                className="min-h-24 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80"
+                className="min-h-24 rounded-xl border-2 bg-white/80 dark:bg-slate-700/80 mobile-tap-highlight-transparent"
               />
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Опишите ваши условия, время отправления, характеристики автомобиля
               </div>
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => navigate(-1)}
-                className="flex-1 rounded-xl border-slate-300 dark:border-slate-600"
+                className="flex-1 rounded-xl border-slate-300 dark:border-slate-600 mobile-tap-highlight-transparent"
               >
                 Отмена
               </Button>
               <Button
                 onClick={handleSendResponse}
                 disabled={isResponding || !responseMessage.trim()}
-                className="flex-1 bg-gradient-accent hover:scale-105 transition-all duration-300 rounded-xl"
+                className="flex-1 bg-gradient-accent hover:scale-105 transition-all duration-300 rounded-xl mobile-tap-highlight-transparent"
               >
                 {isResponding ? (
                   <>
@@ -234,7 +235,7 @@ const RequestDetails = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </MobilePageLayout>
   );
 };
 

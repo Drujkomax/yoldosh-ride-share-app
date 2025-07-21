@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, CalendarDays, Clock, Users, LucideIcon, Loader2 } from 'lucide-react';
 import BottomNavigation from '@/components/BottomNavigation';
+import MobilePageLayout from '@/components/MobilePageLayout';
 import { createChat } from '@/hooks/useChats';
 import { useUser } from '@/contexts/UserContext';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -180,70 +181,79 @@ const RideDetailsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <MobilePageLayout hasBottomNav={false} className="flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      </MobilePageLayout>
     );
   }
 
   if (!ride) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <MobilePageLayout hasBottomNav={false} className="flex items-center justify-center">
         <p>Ride not found</p>
-      </div>
+      </MobilePageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20">
+    <MobilePageLayout className="bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <Card className="shadow-lg rounded-lg">
           <CardHeader className="p-6">
             <CardTitle className="text-2xl font-semibold">{ride.from_city} → {ride.to_city}</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-6 space-y-6">
             <div className="mb-4">
-              <div className="flex items-center text-gray-700">
-                <Icon icon={MapPin} />
+              <div className="flex items-center text-gray-700 mb-2">
+                <MapPin className="mr-2 h-4 w-4 text-gray-500" />
                 {ride.pickup_address}
               </div>
               <div className="flex items-center text-gray-700">
-                <Icon icon={MapPin} />
+                <MapPin className="mr-2 h-4 w-4 text-gray-500" />
                 {ride.dropoff_address}
               </div>
             </div>
+            
             <div className="mb-4">
-              <div className="flex items-center text-gray-700">
-                <Icon icon={CalendarDays} />
+              <div className="flex items-center text-gray-700 mb-2">
+                <CalendarDays className="mr-2 h-4 w-4 text-gray-500" />
                 {formatDate(ride.departure_date)}
               </div>
               <div className="flex items-center text-gray-700">
-                <Icon icon={Clock} />
+                <Clock className="mr-2 h-4 w-4 text-gray-500" />
                 {formatTime(ride.departure_time)}
               </div>
             </div>
+            
             <div className="mb-4">
-              <div className="flex items-center text-gray-700">
-                <Icon icon={Users} />
+              <div className="flex items-center text-gray-700 mb-2">
+                <Users className="mr-2 h-4 w-4 text-gray-500" />
                 {ride.available_seats} мест
               </div>
               <div className="flex items-center text-gray-700">
                 <Badge variant="secondary">{ride.price_per_seat} ₸</Badge>
               </div>
             </div>
+            
             {ride.description && (
-              <div className="mb-4">
+              <div className="mb-6">
                 <p className="text-gray-800">{ride.description}</p>
               </div>
             )}
-            <Button onClick={createBookingRequest} className="w-full">
-              Запросить бронирование
-            </Button>
+            
+            <div className="pt-4">
+              <Button 
+                onClick={createBookingRequest} 
+                className="w-full py-3 text-lg font-semibold mobile-tap-highlight-transparent"
+              >
+                Запросить бронирование
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
       <BottomNavigation />
-    </div>
+    </MobilePageLayout>
   );
 };
 

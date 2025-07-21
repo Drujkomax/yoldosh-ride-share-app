@@ -81,6 +81,28 @@
   .animate-scale-in {
     animation: scaleIn 0.2s ease-out forwards;
   }
+
+  /* Mobile-specific utilities */
+  .mobile-page-container {
+    @apply min-h-screen pb-mobile-safe;
+  }
+
+  .mobile-content-padding {
+    @apply pb-mobile-nav;
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.25rem);
+  }
+
+  .mobile-scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-tap-highlight-transparent {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @keyframes fadeIn {

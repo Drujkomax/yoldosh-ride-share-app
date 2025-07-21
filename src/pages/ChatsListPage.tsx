@@ -3,228 +3,160 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, User, Car, MapPin, Clock, Search, ArrowLeft, Loader2 } from 'lucide-react';
-import BottomNavigation from '@/components/BottomNavigation';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, MessageCircle, Search, User, Clock, MapPin, Shield } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
-import { useUser } from '@/contexts/UserContext';
+import BottomNavigation from '@/components/BottomNavigation';
+import MobilePageLayout from '@/components/MobilePageLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 
 const ChatsListPage = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
-  const { role: currentUserRole } = useUserRole();
   const { chats, isLoading } = useChats();
+  const { role } = useUserRole();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const getOtherParticipant = (chat: any) => {
-    if (!user) return null;
-    return chat.participant1_id === user.id ? chat.participant2 : chat.participant1;
-  };
-
-  const getParticipantRole = (chat: any, participantId: string) => {
-    // Определяем роль относительно конкретной поездки
-    if (!chat?.ride) return 'passenger';
-    
-    // Проверяем, кто водитель этой поездки через связь с таблицей rides
-    const rideDriverId = chat.ride.driver_id || chat.participant1_id; // fallback if driver_id not available
-    
-    return participantId === rideDriverId ? 'driver' : 'passenger';
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    return role === 'driver' 
-      ? 'bg-yoldosh-primary/10 text-yoldosh-primary border-0' 
-      : 'bg-yoldosh-secondary/10 text-yoldosh-secondary border-0';
-  };
-
   const filteredChats = chats.filter(chat => {
-    const otherParticipant = getOtherParticipant(chat);
-    if (!otherParticipant) return false;
-    
-    const searchLower = searchQuery.toLowerCase();
-    return otherParticipant.name?.toLowerCase().includes(searchLower) ||
-           chat.ride?.from_city?.toLowerCase().includes(searchLower) ||
-           chat.ride?.to_city?.toLowerCase().includes(searchLower);
+    const otherParticipant = chat.participants?.find(p => p.id !== chat.user_id);
+    const chatName = otherParticipant?.name || 'Пользователь';
+    return chatName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  const formatTime = (dateStr: string) => {
+  const formatTime = (dateStr: string | undefined): string => {
     if (!dateStr) return '';
-    
     try {
-      const now = new Date();
-      const messageDate = new Date(dateStr);
-      const diffInMinutes = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60));
-      
-      if (diffInMinutes < 1) {
-        return 'Только что';
-      } else if (diffInMinutes < 60) {
-        return `${diffInMinutes}м назад`;
-      } else if (diffInMinutes < 24 * 60) {
-        return `${Math.floor(diffInMinutes / 60)}ч назад`;
-      } else {
-        return messageDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-      }
-    } catch {
-      return '';
+      const date = new Date(dateStr);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Invalid Time';
     }
   };
 
-  const handleChatClick = (chat: any) => {
-    console.log('Переход в чат:', chat.id);
-    navigate(`/chat/${chat.id}`);
+  const getLastMessagePreview = (message: string | null): string => {
+    if (!message) return 'No messages yet';
+    return message.length > 50 ? message.substring(0, 50) + '...' : message;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-          <p className="text-slate-600">Загрузка чатов...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pb-20">
+    <MobilePageLayout className="bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
-        <div className="container mx-auto px-6 py-6">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
-              onClick={() => navigate('/passenger')}
-              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+              onClick={() => navigate(-1)}
+              className="hover:bg-yoldosh-primary/10 mobile-tap-highlight-transparent"
             >
-              <ArrowLeft className="h-5 w-5 mr-2" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Назад
             </Button>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Сообщения
-              </h1>
-              <p className="text-slate-600 mt-1">Ваши активные чаты</p>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">Входящие сообщения</h1>
+            <div className="flex items-center space-x-2">
+              {role && (
+                <Badge variant="outline" className="text-xs">
+                  {role === 'driver' ? 'Водитель' : 'Пассажир'}
+                </Badge>
+              )}
             </div>
-            <div className="w-16"></div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* Search */}
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl mb-8">
-          <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Поиск по имени или маршруту..."
-                className="w-full h-12 pl-12 pr-4 rounded-xl border-2 border-slate-200 focus:border-yoldosh-primary focus:ring-4 focus:ring-yoldosh-primary/20 bg-white/80 backdrop-blur-sm transition-all duration-300"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Input
+              placeholder="Поиск по сообщениям..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-slate-200 dark:border-slate-700 mobile-tap-highlight-transparent"
+            />
+          </div>
+        </div>
 
         {/* Chats List */}
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
+        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-slate-800 flex items-center">
-              <MessageCircle className="h-5 w-5 mr-2" />
-              Все чаты ({filteredChats.length})
+            <CardTitle className="flex items-center text-slate-800 dark:text-slate-200">
+              <MessageCircle className="h-6 w-6 mr-3 text-yoldosh-primary" />
+              Активные чаты ({filteredChats.length})
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            {filteredChats.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">
-                  {chats.length === 0 ? 'Нет активных чатов' : 'Чаты не найдены'}
-                </p>
-                <p className="text-sm">
-                  {chats.length === 0 
-                    ? 'Чаты появятся после бронирования поездок'
-                    : 'Попробуйте изменить поисковый запрос'
-                  }
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yoldosh-primary"></div>
+              </div>
+            ) : filteredChats.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 mx-auto text-slate-400 mb-4" />
+                <p className="text-slate-600 dark:text-slate-400">
+                  {searchQuery ? 'Чаты по запросу не найдены' : 'У вас пока нет сообщений'}
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="space-y-3">
                 {filteredChats.map((chat) => {
-                  const otherParticipant = getOtherParticipant(chat);
-                  const otherParticipantRole = getParticipantRole(chat, otherParticipant?.id || '');
+                  const otherParticipant = chat.participants?.find(p => p.id !== chat.user_id);
+                  const lastMessagePreview = getLastMessagePreview(chat.last_message);
                   
-                  if (!otherParticipant) return null;
-
                   return (
                     <div
                       key={chat.id}
-                      onClick={() => handleChatClick(chat)}
-                      className="p-6 hover:bg-gradient-to-r hover:from-white hover:to-slate-50 cursor-pointer transition-all duration-300 hover:scale-[1.02] first:rounded-t-3xl last:rounded-b-3xl"
+                      onClick={() => navigate(`/chat/${chat.id}`)}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-white to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-slate-200 dark:border-slate-600 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] mobile-tap-highlight-transparent"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                          otherParticipantRole === 'driver' 
-                            ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
-                            : 'bg-gradient-to-br from-green-500 to-green-600'
-                        }`}>
-                          {otherParticipantRole === 'driver' ? (
-                            <Car className="h-6 w-6 text-white" />
-                          ) : (
-                            <User className="h-6 w-6 text-white" />
-                          )}
+                        <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center flex-shrink-0">
+                          <User className="h-6 w-6 text-white" />
                         </div>
+                        
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-3">
-                              <span className="font-bold text-lg text-slate-800 truncate">
-                                {otherParticipant.name || 'Пользователь'}
-                              </span>
-                              <Badge className={getRoleBadgeColor(otherParticipantRole)}>
-                                {otherParticipantRole === 'driver' ? 'Водитель' : 'Пассажир'}
-                              </Badge>
-                              {otherParticipant.is_verified && (
-                                <Badge className="bg-green-100 text-green-700 border-0 text-xs flex-shrink-0">
-                                  ✓
-                                </Badge>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                                {otherParticipant?.name || 'Пользователь'}
+                              </h3>
+                              {otherParticipant?.is_verified && (
+                                <Shield className="h-4 w-4 text-yoldosh-success" />
                               )}
-                            </div>
-                            <div className="flex items-center space-x-2 flex-shrink-0">
-                              <span className="text-sm text-slate-500">
-                                {formatTime(chat.last_message_at)}
-                              </span>
                               {chat.unreadCount > 0 && (
-                                <Badge className="h-6 w-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-                                  {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                                <Badge className="bg-red-500 text-white text-xs">
+                                  {chat.unreadCount}
                                 </Badge>
                               )}
                             </div>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
+                              {formatTime(chat.last_message_at)}
+                            </span>
                           </div>
                           
+                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
+                            {lastMessagePreview}
+                          </p>
+                          
                           {chat.ride && (
-                            <div className="flex items-center space-x-3 text-sm text-slate-600 mb-2">
+                            <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
                               <div className="flex items-center space-x-1">
-                                <MapPin className="h-4 w-4 flex-shrink-0" />
-                                <span className="font-medium truncate">
+                                <MapPin className="h-3 w-3" />
+                                <span className="truncate">
                                   {chat.ride.from_city} → {chat.ride.to_city}
                                 </span>
                               </div>
-                              <div className="flex items-center space-x-1 flex-shrink-0">
-                                <Clock className="h-4 w-4" />
+                              <div className="flex items-center space-x-1">
+                                <Clock className="h-3 w-3" />
                                 <span>
-                                  {chat.ride.departure_date ? 
-                                    new Date(chat.ride.departure_date).toLocaleDateString('ru-RU') : 
-                                    'Дата не указана'
-                                  }
+                                  {new Date(chat.ride.departure_date).toLocaleDateString('ru-RU')}
                                 </span>
                               </div>
                             </div>
                           )}
-                          
-                          <p className="text-slate-700 font-medium truncate">
-                            {chat.lastMessage?.content || 'Нет сообщений'}
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -237,7 +169,7 @@ const ChatsListPage = () => {
       </div>
 
       <BottomNavigation />
-    </div>
+    </MobilePageLayout>
   );
 };
 

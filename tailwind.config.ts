@@ -75,6 +75,11 @@ export default {
 				md: '0.75rem',
 				sm: '0.5rem'
 			},
+			spacing: {
+				'mobile-nav': '5rem', // 80px
+				'mobile-safe': '6.25rem', // 100px
+				'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+			},
 			animation: {
 				'fade-in': 'fadeIn 0.6s ease-out',
 				'slide-up': 'slideUp 0.4s ease-out',

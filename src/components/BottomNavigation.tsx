@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus, FileText, MessageCircle, User } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { chats } = useChats();
+  const isMobile = useIsMobile();
 
   // Подсчитываем общее количество непрочитанных сообщений
   const totalUnreadCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
@@ -74,7 +76,7 @@ const BottomNavigation = () => {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 shadow-lg mobile-safe-bottom">
       <div className="flex justify-around items-center py-2 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -85,7 +87,7 @@ const BottomNavigation = () => {
               key={item.path}
               onClick={() => navigate(item.path)}
               variant="ghost"
-              className={`flex-1 flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-300 hover:scale-105 relative ${
+              className={`flex-1 flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-300 hover:scale-105 relative mobile-tap-highlight-transparent ${
                 getActiveStyles(item.color, isActiveItem)
               }`}
             >
