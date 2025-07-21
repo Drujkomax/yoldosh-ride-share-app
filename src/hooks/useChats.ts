@@ -83,7 +83,7 @@ export const useChats = () => {
       }
 
       try {
-        // Загружаем чаты где пользователь является участником
+        // Загружаем чаты с информацией о водителе поездки
         const { data: chatsData, error } = await supabase
           .from('chats')
           .select(`
@@ -95,7 +95,7 @@ export const useChats = () => {
               id, name, phone, rating, total_rides, is_verified
             ),
             ride:rides!chats_ride_id_fkey (
-              id, from_city, to_city, departure_date, departure_time
+              id, from_city, to_city, departure_date, departure_time, driver_id
             )
           `)
           .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
@@ -19,7 +18,7 @@ export interface UserCar {
 }
 
 export const useUserCars = () => {
-  const { user } = useUser();
+  const { user, refreshUserRole } = useUser();
   const queryClient = useQueryClient();
 
   const { data: cars = [], isLoading, error } = useQuery({
@@ -69,9 +68,11 @@ export const useUserCars = () => {
       console.log('useUserCars - Машина успешно добавлена:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['user-cars'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Обновляем роль пользователя после добавления машины
+      await refreshUserRole();
       toast.success("Машина успешно добавлена!");
     },
     onError: (error: any) => {
@@ -99,9 +100,11 @@ export const useUserCars = () => {
       console.log('useUserCars - Машина успешно обновлена:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['user-cars'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Обновляем роль если изменился статус активности машины
+      await refreshUserRole();
       toast.success("Изменения сохранены");
     },
     onError: (error) => {
@@ -126,9 +129,11 @@ export const useUserCars = () => {
       
       console.log('useUserCars - Машина успешно удалена');
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['user-cars'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Обновляем роль после удаления машины
+      await refreshUserRole();
       toast.success("Машина удалена");
     },
     onError: (error) => {

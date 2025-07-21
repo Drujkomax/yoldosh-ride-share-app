@@ -8,11 +8,14 @@ import { useMessages } from '@/hooks/useChats';
 import { supabase } from '@/integrations/supabase/client';
 import ChatRideInfo from '@/components/ChatRideInfo';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const ChatPage = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { role: currentUserRole } = useUserRole();
   const { messages, sendMessage, markAsRead, isLoading, isSending } = useMessages(chatId || '');
   const [newMessage, setNewMessage] = useState('');
   const [chat, setChat] = useState<any>(null);
@@ -207,6 +210,26 @@ const ChatPage = () => {
     }
   };
 
+  const getParticipantRole = (participantId: string) => {
+    // Определяем роль относительно этой поездки
+    if (!chat?.ride) return 'passenger';
+    
+    // Если это водитель поездки - показываем как водителя
+    if (chat.ride && chat.participant1_id === chat.ride.driver_id) {
+      return participantId === chat.participant1_id ? 'driver' : 'passenger';
+    } else if (chat.ride && chat.participant2_id === chat.ride.driver_id) {
+      return participantId === chat.participant2_id ? 'driver' : 'passenger';
+    }
+    
+    return 'passenger';
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    return role === 'driver' 
+      ? 'bg-yoldosh-primary/10 text-yoldosh-primary border-0' 
+      : 'bg-yoldosh-secondary/10 text-yoldosh-secondary border-0';
+  };
+
   if (isLoading || chatLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -232,6 +255,8 @@ const ChatPage = () => {
     ? chat.participant2 
     : chat.participant1;
 
+  const otherParticipantRole = getParticipantRole(otherParticipant?.id || '');
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -252,8 +277,18 @@ const ChatPage = () => {
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                   <User className="h-5 w-5 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
+                    <Badge className={getRoleBadgeColor(otherParticipantRole)}>
+                      {otherParticipantRole === 'driver' ? 'Водитель' : 'Пассажир'}
+                    </Badge>
+                    {otherParticipant?.is_verified && (
+                      <Badge className="bg-green-100 text-green-700 border-0 text-xs">
+                        ✓
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -285,7 +320,7 @@ const ChatPage = () => {
           messages.map((message) => {
             const isMyMessage = message.sender_id === user?.id;
             const isSystemMessage = message.sender_type === 'system';
-            const isDriverAndCanRespond = user?.role === 'driver' && 
+            const isDriverAndCanRespond = currentUserRole === 'driver' && 
               message.system_action_type === 'booking_request' && 
               !message.is_action_completed;
 

@@ -4,6 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useRides } from '@/hooks/useRides';
 import { useUser } from '@/contexts/UserContext';
+import { useCanCreateRides } from '@/hooks/useUserRole';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Car, AlertTriangle } from 'lucide-react';
 import AddressSearchPage from '@/components/AddressSearchPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
@@ -36,12 +40,14 @@ const RideCreationFlow = () => {
   const navigate = useNavigate();
   const { createRide, isCreating } = useRides();
   const { user, isAuthenticated } = useUser();
+  const canCreateRides = useCanCreateRides();
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepHistory, setStepHistory] = useState<number[]>([]);
   const [currentAddressType, setCurrentAddressType] = useState<'from' | 'to'>('from');
   const [userHasPhoto, setUserHasPhoto] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
+  const [bypassCheck, setBypassCheck] = useState(false);
   
   const [rideData, setRideData] = useState<RideFormData>({
     departure_date: '',
@@ -87,7 +93,6 @@ const RideCreationFlow = () => {
         }
       } catch (error) {
         console.error('RideCreationFlow - Ошибка получения пользователя:', error);
-        // Не редиректим на onboarding при ошибке, если пользователь есть в контексте
       } finally {
         setIsUserLoading(false);
       }
@@ -95,6 +100,57 @@ const RideCreationFlow = () => {
     
     getCurrentUser();
   }, [navigate, user]);
+
+  // Проверка прав на создание поездки
+  if (!bypassCheck && !canCreateRides && !isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <Car className="h-8 w-8 text-orange-600" />
+            </div>
+            <CardTitle className="text-xl">Добавьте автомобиль</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center space-y-2">
+              <AlertTriangle className="h-12 w-12 text-orange-500 mx-auto" />
+              <p className="text-gray-600">
+                Для публикации поездок необходимо добавить автомобиль в профиль
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Button 
+                onClick={() => navigate('/profile')} 
+                className="w-full"
+              >
+                Добавить автомобиль
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/passenger')}
+                className="w-full"
+              >
+                Вернуться назад
+              </Button>
+              
+              {/* Временная кнопка для тестирования */}
+              <Button 
+                variant="destructive" 
+                onClick={() => setBypassCheck(true)}
+                className="w-full text-xs"
+                size="sm"
+              >
+                🚧 Обойти проверку (для тестирования)
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const goToNextStep = () => {
     setStepHistory(prev => [...prev, currentStep]);

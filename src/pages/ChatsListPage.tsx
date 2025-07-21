@@ -7,10 +7,12 @@ import { MessageCircle, User, Car, MapPin, Clock, Search, ArrowLeft, Loader2 } f
 import BottomNavigation from '@/components/BottomNavigation';
 import { useChats } from '@/hooks/useChats';
 import { useUser } from '@/contexts/UserContext';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const ChatsListPage = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { role: currentUserRole } = useUserRole();
   const { chats, isLoading } = useChats();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -19,9 +21,20 @@ const ChatsListPage = () => {
     return chat.participant1_id === user.id ? chat.participant2 : chat.participant1;
   };
 
-  const getChatType = (chat: any) => {
-    if (!user) return 'passenger';
-    return user.role === 'driver' ? 'passenger' : 'driver';
+  const getParticipantRole = (chat: any, participantId: string) => {
+    // Определяем роль относительно конкретной поездки
+    if (!chat?.ride) return 'passenger';
+    
+    // Проверяем, кто водитель этой поездки через связь с таблицей rides
+    const rideDriverId = chat.ride.driver_id || chat.participant1_id; // fallback if driver_id not available
+    
+    return participantId === rideDriverId ? 'driver' : 'passenger';
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    return role === 'driver' 
+      ? 'bg-yoldosh-primary/10 text-yoldosh-primary border-0' 
+      : 'bg-yoldosh-secondary/10 text-yoldosh-secondary border-0';
   };
 
   const filteredChats = chats.filter(chat => {
@@ -140,7 +153,7 @@ const ChatsListPage = () => {
               <div className="divide-y divide-gray-100">
                 {filteredChats.map((chat) => {
                   const otherParticipant = getOtherParticipant(chat);
-                  const chatType = getChatType(chat);
+                  const otherParticipantRole = getParticipantRole(chat, otherParticipant?.id || '');
                   
                   if (!otherParticipant) return null;
 
@@ -151,8 +164,12 @@ const ChatsListPage = () => {
                       className="p-6 hover:bg-gradient-to-r hover:from-white hover:to-slate-50 cursor-pointer transition-all duration-300 hover:scale-[1.02] first:rounded-t-3xl last:rounded-b-3xl"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center flex-shrink-0">
-                          {chatType === 'driver' ? (
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                          otherParticipantRole === 'driver' 
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600' 
+                            : 'bg-gradient-to-br from-green-500 to-green-600'
+                        }`}>
+                          {otherParticipantRole === 'driver' ? (
                             <Car className="h-6 w-6 text-white" />
                           ) : (
                             <User className="h-6 w-6 text-white" />
@@ -164,14 +181,8 @@ const ChatsListPage = () => {
                               <span className="font-bold text-lg text-slate-800 truncate">
                                 {otherParticipant.name || 'Пользователь'}
                               </span>
-                              <Badge 
-                                className={`text-xs flex-shrink-0 ${
-                                  chatType === 'driver' 
-                                    ? 'bg-yoldosh-primary/10 text-yoldosh-primary border-0' 
-                                    : 'bg-yoldosh-secondary/10 text-yoldosh-secondary border-0'
-                                }`}
-                              >
-                                {chatType === 'driver' ? 'Водитель' : 'Пассажир'}
+                              <Badge className={getRoleBadgeColor(otherParticipantRole)}>
+                                {otherParticipantRole === 'driver' ? 'Водитель' : 'Пассажир'}
                               </Badge>
                               {otherParticipant.is_verified && (
                                 <Badge className="bg-green-100 text-green-700 border-0 text-xs flex-shrink-0">
@@ -217,13 +228,13 @@ const ChatsListPage = () => {
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <BottomNavigation />
     </div>

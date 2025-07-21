@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,7 +6,7 @@ export type UserRole = 'driver' | 'passenger';
 interface UserProfile {
   id: string;
   phone: string;
-  role?: UserRole; // Теперь опциональная, определяется динамически
+  role?: UserRole; // Опциональная, определяется динамически
   canDrive?: boolean; // Может ли пользователь водить (есть ли машина)
   isVerified: boolean;
   name?: string;
@@ -21,6 +20,7 @@ interface UserContextType {
   setUser: (user: UserProfile | null) => void;
   isAuthenticated: boolean;
   loading: boolean;
+  refreshUserRole: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -44,6 +44,33 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Функция для обновления роли пользователя
+  const refreshUserRole = async () => {
+    if (!user?.id) return;
+    
+    try {
+      console.log('UserContext - Обновление роли пользователя:', user.id);
+      
+      // Загружаем роль из profiles_with_role view
+      const { data: profileWithRole, error } = await supabase
+        .from('profiles_with_role')
+        .select('role, can_drive')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileWithRole && !error) {
+        console.log('UserContext - Роль обновлена:', profileWithRole);
+        setUser(prev => prev ? {
+          ...prev,
+          role: profileWithRole.role as UserRole,
+          canDrive: profileWithRole.can_drive
+        } : null);
+      }
+    } catch (error) {
+      console.error('UserContext - Ошибка обновления роли:', error);
+    }
+  };
+
   useEffect(() => {
     const loadUserFromStorage = async () => {
       try {
@@ -59,15 +86,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           console.log('UserContext - Найдена активная сессия Supabase:', session.user.id);
           
-          // Загружаем профиль из базы данных
+          // Загружаем профиль с ролью из profiles_with_role view
           const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('profiles_with_role')
             .select('*')
             .eq('id', session.user.id)
             .single();
           
           if (profile && !profileError) {
-            console.log('UserContext - Профиль загружен из БД:', profile);
+            console.log('UserContext - Профиль с ролью загружен из БД:', profile);
             const completeUser: UserProfile = {
               id: profile.id,
               phone: profile.phone || '',
@@ -75,7 +102,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               isVerified: profile.is_verified || false,
               totalRides: profile.total_rides || 0,
               rating: profile.rating || 0.0,
-              avatarUrl: profile.avatar_url
+              avatarUrl: profile.avatar_url,
+              role: profile.role as UserRole,
+              canDrive: profile.can_drive
             };
             
             setUser(completeUser);
@@ -222,7 +251,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       console.log('UserContext - Пользователь обновлен без роли:', updatedUser);
 
-      // Обновляем или создаем профиль в Supabase
+      // Обновляем профиль в Supabase и получаем актуальную роль
       try {
         const { error } = await supabase
           .from('profiles')
@@ -239,6 +268,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           console.error('UserContext - Ошибка обновления профиля:', error);
         } else {
           console.log('UserContext - Профиль успешно обновлен в Supabase');
+          // Обновляем роль после изменения профиля
+          await refreshUserRole();
         }
       } catch (error) {
         console.error('UserContext - Ошибка при работе с Supabase:', error);
@@ -263,7 +294,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         user, 
         setUser: updateUser, 
         isAuthenticated: !!user,
-        loading
+        loading,
+        refreshUserRole
       }}
     >
       {children}
