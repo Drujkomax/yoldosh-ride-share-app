@@ -71,12 +71,16 @@ export const useChats = () => {
   const queryClient = useQueryClient();
 
   const { data: chats = [], isLoading } = useQuery({
-    queryKey: ['chats', user?.id],
+    queryKey: ['chats'],
     queryFn: async () => {
-      console.log('useChats - Загрузка чатов пользователя:', user?.id);
+      // Получаем текущего аутентифицированного пользователя
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const currentUserId = authUser?.id;
       
-      if (!user?.id) {
-        console.log('useChats - Пользователь не найден');
+      console.log('useChats - Загрузка чатов пользователя:', currentUserId);
+      
+      if (!currentUserId) {
+        console.log('useChats - Пользователь не аутентифицирован');
         return [];
       }
 
@@ -84,7 +88,7 @@ export const useChats = () => {
       const { data: chatsData, error } = await supabase
         .from('chats')
         .select('*')
-        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+        .or(`participant1_id.eq.${currentUserId},participant2_id.eq.${currentUserId}`)
         .order('last_message_at', { ascending: false });
 
       if (error) {
@@ -134,7 +138,7 @@ export const useChats = () => {
             .from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('chat_id', chat.id)
-            .neq('sender_id', user.id)
+            .neq('sender_id', currentUserId)
             .is('read_at', null);
 
           return {
