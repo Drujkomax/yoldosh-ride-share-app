@@ -39,7 +39,7 @@ const PhotoCaptureScreen = ({ onPhotoSelected, onBack }: PhotoCaptureScreenProps
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'user';
-    input.onchange = handleFileSelect;
+    input.onchange = (event) => handleFileSelect(event as any);
     input.click();
   };
 
@@ -47,7 +47,7 @@ const PhotoCaptureScreen = ({ onPhotoSelected, onBack }: PhotoCaptureScreenProps
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = handleFileSelect;
+    input.onchange = (event) => handleFileSelect(event as any);
     input.click();
   };
 
