@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -179,6 +180,26 @@ const RideDetailsPage = () => {
 
   const createBookingRequest = async () => {
     try {
+      console.log('createBookingRequest - Создание запроса на бронирование');
+      
+      // Проверяем, есть ли уже активный запрос от этого пользователя для этой поездки
+      const { data: existingBooking } = await supabase
+        .from('bookings')
+        .select('id, status')
+        .eq('ride_id', ride.id)
+        .eq('passenger_id', user.id)
+        .in('status', ['pending', 'confirmed'])
+        .maybeSingle();
+
+      if (existingBooking) {
+        if (existingBooking.status === 'confirmed') {
+          toast.error('Вы уже забронировали места в этой поездке');
+        } else {
+          toast.error('Ваш запрос на бронирование уже отправлен и ожидает подтверждения');
+        }
+        return;
+      }
+
       // Создаем запрос на бронирование со статусом pending
       const { data: newBooking, error: bookingError } = await supabase
         .from('bookings')
@@ -192,7 +213,12 @@ const RideDetailsPage = () => {
         .select('id')
         .single();
 
-      if (bookingError) throw bookingError;
+      if (bookingError) {
+        console.error('Ошибка создания бронирования:', bookingError);
+        throw bookingError;
+      }
+
+      console.log('Бронирование создано:', newBooking);
 
       // Проверяем, существует ли уже чат между пассажиром и водителем для этой поездки
       const { data: existingChat, error: searchError } = await supabase
@@ -213,6 +239,7 @@ const RideDetailsPage = () => {
       if (existingChat) {
         // Чат уже существует, используем его ID
         chatId = existingChat.id;
+        console.log('Используем существующий чат:', chatId);
       } else {
         // Создаем новый чат
         const { data: newChat, error: createError } = await supabase
@@ -233,6 +260,7 @@ const RideDetailsPage = () => {
         }
 
         chatId = newChat.id;
+        console.log('Создан новый чат:', chatId);
       }
 
       // Отправляем системное сообщение с запросом на бронирование
@@ -265,6 +293,7 @@ const RideDetailsPage = () => {
         .update({ last_message_at: new Date().toISOString() })
         .eq('id', chatId);
 
+      console.log('Запрос на бронирование отправлен успешно');
       toast.success('Запрос на бронирование отправлен водителю');
       
       // Переходим в чат
@@ -383,7 +412,7 @@ const RideDetailsPage = () => {
 
       <div className="p-4 space-y-4">
         {/* No Available Seats Message */}
-        {ride.available_seats === 0 && (
+        {ride?.available_seats === 0 && (
           <div className="flex items-center space-x-2 text-gray-500 text-sm bg-gray-100 p-3 rounded-lg">
             <div className="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center">
               <span className="text-xs">!</span>
@@ -601,11 +630,11 @@ const RideDetailsPage = () => {
         {!isOwnRide && (
           <Button 
             onClick={handleBookRide}
-            disabled={bookingLoading || ride.available_seats === 0}
+            disabled={bookingLoading || ride?.available_seats === 0}
             className="w-full h-14 text-lg bg-blue-500 hover:bg-blue-600"
           >
             {bookingLoading ? 'Обработка...' : 
-              ride.instant_booking_enabled ? 'Забронировать сейчас' : 'Отправить заявку водителю'}
+              ride?.instant_booking_enabled ? 'Забронировать сейчас' : 'Отправить заявку водителю'}
           </Button>
         )}
       </div>

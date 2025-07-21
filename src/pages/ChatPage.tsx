@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,15 +26,16 @@ const ChatPage = () => {
       
       setChatLoading(true);
       try {
+        console.log('Загрузка чата:', chatId);
         const { data: chatData, error } = await supabase
           .from('chats')
           .select(`
             *,
             participant1:profiles!chats_participant1_id_fkey (
-              name, phone, rating, total_rides, is_verified
+              id, name, phone, rating, total_rides, is_verified
             ),
             participant2:profiles!chats_participant2_id_fkey (
-              name, phone, rating, total_rides, is_verified
+              id, name, phone, rating, total_rides, is_verified
             ),
             ride:rides!chats_ride_id_fkey (
               id, from_city, to_city, departure_date, departure_time, available_seats
@@ -64,6 +64,7 @@ const ChatPage = () => {
           return;
         }
 
+        console.log('Чат загружен:', chatData);
         setChat(chatData);
       } catch (error) {
         console.error('Ошибка загрузки чата:', error);
@@ -73,7 +74,7 @@ const ChatPage = () => {
     };
 
     loadChat();
-  }, [chatId]);
+  }, [chatId, user?.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -136,6 +137,8 @@ const ChatPage = () => {
   // Обработка ответа водителя на запрос бронирования
   const handleBookingResponse = async (messageId: string, bookingRequestId: string, action: 'accept' | 'reject') => {
     try {
+      console.log('Обработка ответа на бронирование:', { messageId, bookingRequestId, action });
+      
       // Обновляем статус бронирования
       const newStatus = action === 'accept' ? 'confirmed' : 'rejected';
       const { error: bookingError } = await supabase
@@ -144,6 +147,7 @@ const ChatPage = () => {
         .eq('id', bookingRequestId);
 
       if (bookingError) {
+        console.error('Ошибка обновления бронирования:', bookingError);
         throw bookingError;
       }
 
@@ -154,6 +158,7 @@ const ChatPage = () => {
         .eq('id', messageId);
 
       if (messageError) {
+        console.error('Ошибка обновления сообщения:', messageError);
         throw messageError;
       }
 

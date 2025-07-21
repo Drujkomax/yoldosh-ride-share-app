@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,6 +12,7 @@ export interface Chat {
   last_message_at: string;
   created_at: string;
   participant1?: {
+    id: string;
     name: string;
     phone: string;
     rating?: number;
@@ -20,6 +20,7 @@ export interface Chat {
     is_verified: boolean;
   };
   participant2?: {
+    id: string;
     name: string;
     phone: string;
     rating?: number;
@@ -27,6 +28,7 @@ export interface Chat {
     is_verified: boolean;
   };
   ride?: {
+    id: string;
     from_city: string;
     to_city: string;
     departure_date: string;
@@ -80,78 +82,69 @@ export const useChats = () => {
         return [];
       }
 
-      // Загружаем чаты где пользователь является участником
-      const { data: chatsData, error } = await supabase
-        .from('chats')
-        .select('*')
-        .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
-        .order('last_message_at', { ascending: false });
+      try {
+        // Загружаем чаты где пользователь является участником
+        const { data: chatsData, error } = await supabase
+          .from('chats')
+          .select(`
+            *,
+            participant1:profiles!chats_participant1_id_fkey (
+              id, name, phone, rating, total_rides, is_verified
+            ),
+            participant2:profiles!chats_participant2_id_fkey (
+              id, name, phone, rating, total_rides, is_verified
+            ),
+            ride:rides!chats_ride_id_fkey (
+              id, from_city, to_city, departure_date, departure_time
+            )
+          `)
+          .or(`participant1_id.eq.${user.id},participant2_id.eq.${user.id}`)
+          .order('last_message_at', { ascending: false });
 
-      if (error) {
-        console.error('useChats - Ошибка загрузки чатов:', error);
+        if (error) {
+          console.error('useChats - Ошибка загрузки чатов:', error);
+          return [];
+        }
+
+        console.log('useChats - Загруженные чаты:', chatsData);
+
+        // Загружаем дополнительные данные для каждого чата
+        const chatsWithData = await Promise.all(
+          (chatsData || []).map(async (chat) => {
+            // Последнее сообщение
+            const { data: lastMessage } = await supabase
+              .from('messages')
+              .select('content, created_at, sender_id, message_type, location_data, sender_type')
+              .eq('chat_id', chat.id)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            // Количество непрочитанных сообщений
+            const { count: unreadCount } = await supabase
+              .from('messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('chat_id', chat.id)
+              .neq('sender_id', user.id)
+              .is('read_at', null);
+
+            return {
+              ...chat,
+              lastMessage,
+              unreadCount: unreadCount || 0
+            };
+          })
+        );
+
+        console.log('useChats - Загружено чатов с данными:', chatsWithData.length);
+        return chatsWithData as Chat[];
+      } catch (error) {
+        console.error('useChats - Ошибка в запросе чатов:', error);
         return [];
       }
-
-      // Загружаем дополнительные данные для каждого чата
-      const chatsWithData = await Promise.all(
-        (chatsData || []).map(async (chat) => {
-          // Загружаем участников
-          const [participant1Response, participant2Response] = await Promise.all([
-            supabase
-              .from('profiles')
-              .select('name, phone, rating, total_rides, is_verified')
-              .eq('id', chat.participant1_id)
-              .single(),
-            supabase
-              .from('profiles')
-              .select('name, phone, rating, total_rides, is_verified')
-              .eq('id', chat.participant2_id)
-              .single()
-          ]);
-
-          // Загружаем поездку если есть
-          let ride = null;
-          if (chat.ride_id) {
-            const { data: rideData } = await supabase
-              .from('rides')
-              .select('from_city, to_city, departure_date, departure_time')
-              .eq('id', chat.ride_id)
-              .single();
-            ride = rideData;
-          }
-
-          // Последнее сообщение
-          const { data: lastMessage } = await supabase
-            .from('messages')
-            .select('content, created_at, sender_id, message_type, location_data, sender_type')
-            .eq('chat_id', chat.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          // Количество непрочитанных сообщений
-          const { count: unreadCount } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('chat_id', chat.id)
-            .neq('sender_id', user.id)
-            .is('read_at', null);
-
-          return {
-            ...chat,
-            participant1: participant1Response.data,
-            participant2: participant2Response.data,
-            ride,
-            lastMessage,
-            unreadCount: unreadCount || 0
-          };
-        })
-      );
-
-      console.log('useChats - Загружено чатов:', chatsWithData.length);
-      return chatsWithData as Chat[];
     },
     enabled: !!user?.id,
+    refetchInterval: 30000, // Обновляем каждые 30 секунд
   });
 
   // Realtime подписка на обновления чатов

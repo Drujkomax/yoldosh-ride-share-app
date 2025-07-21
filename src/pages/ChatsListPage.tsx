@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -58,10 +57,8 @@ const ChatsListPage = () => {
   };
 
   const handleChatClick = (chat: any) => {
-    const otherParticipant = getOtherParticipant(chat);
-    if (!otherParticipant?.name) return;
-
-    navigate(`/chat/${otherParticipant.name}?chatId=${chat.id}`);
+    console.log('Переход в чат:', chat.id);
+    navigate(`/chat/${chat.id}`);
   };
 
   if (isLoading) {
