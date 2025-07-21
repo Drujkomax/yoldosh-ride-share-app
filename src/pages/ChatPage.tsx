@@ -42,10 +42,25 @@ const ChatPage = () => {
             )
           `)
           .eq('id', chatId)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Ошибка загрузки чата:', error);
+          return;
+        }
+
+        if (!chatData) {
+          console.log('Чат не найден:', chatId);
+          return;
+        }
+
+        // Проверяем, является ли пользователь участником чата
+        if (user?.id && chatData.participant1_id !== user.id && chatData.participant2_id !== user.id) {
+          console.error('Пользователь не является участником чата:', {
+            userId: user.id,
+            participant1: chatData.participant1_id,
+            participant2: chatData.participant2_id
+          });
           return;
         }
 
