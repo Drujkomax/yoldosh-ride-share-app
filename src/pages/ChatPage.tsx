@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Send, User, Check, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Send, User, Check, CheckCheck, CheckCircle, XCircle } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useMessages } from '@/hooks/useChats';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,6 +118,48 @@ const ChatPage = () => {
     }
   };
 
+  // Обработка ответа водителя на запрос бронирования
+  const handleBookingResponse = async (messageId: string, bookingRequestId: string, action: 'accept' | 'reject') => {
+    try {
+      // Обновляем статус бронирования
+      const newStatus = action === 'accept' ? 'confirmed' : 'rejected';
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingRequestId);
+
+      if (bookingError) {
+        throw bookingError;
+      }
+
+      // Отмечаем сообщение как обработанное
+      const { error: messageError } = await supabase
+        .from('messages')
+        .update({ is_action_completed: true })
+        .eq('id', messageId);
+
+      if (messageError) {
+        throw messageError;
+      }
+
+      // Отправляем системное сообщение о результате
+      const responseText = action === 'accept' 
+        ? '✅ Команда Yoldosh: Запрос на бронирование подтвержден!' 
+        : '❌ Команда Yoldosh: Запрос на бронирование отклонен.';
+
+      await sendMessage({
+        content: responseText,
+        senderType: 'system',
+        systemActionType: 'booking_confirmation'
+      });
+
+      toast.success(action === 'accept' ? 'Запрос подтвержден' : 'Запрос отклонен');
+    } catch (error) {
+      console.error('Ошибка обработки запроса бронирования:', error);
+      toast.error('Не удалось обработать запрос');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -222,29 +264,74 @@ const ChatPage = () => {
         ) : (
           messages.map((message) => {
             const isMyMessage = message.sender_id === user?.id;
+            const isSystemMessage = message.sender_type === 'system';
+            const isDriverAndCanRespond = user?.role === 'driver' && 
+              message.system_action_type === 'booking_request' && 
+              !message.is_action_completed;
+
             return (
               <div
                 key={message.id}
-                className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${isSystemMessage ? 'justify-center' : isMyMessage ? 'justify-end' : 'justify-start'}`}
               >
-                 <div
+                <div
                   className={`max-w-[70%] p-3 rounded-lg ${
-                    isMyMessage
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-white text-gray-900 border'
+                    isSystemMessage
+                      ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                      : isMyMessage
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white text-gray-900 border'
                   }`}
                 >
+                  {/* Заголовок для системных сообщений */}
+                  {isSystemMessage && (
+                    <div className="flex items-center mb-2">
+                      <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-2">
+                        <span className="text-xs text-white font-bold">Y</span>
+                      </div>
+                      <span className="text-xs font-semibold">Команда Yoldosh</span>
+                    </div>
+                  )}
+                  
                   <p className="text-sm">{message.content}</p>
+                  
+                  {/* Кнопки подтверждения/отклонения для водителей */}
+                  {isDriverAndCanRespond && (
+                    <div className="flex space-x-2 mt-3">
+                      <Button
+                        size="sm"
+                        onClick={() => handleBookingResponse(message.id, message.booking_request_id!, 'accept')}
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Подтвердить
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleBookingResponse(message.id, message.booking_request_id!, 'reject')}
+                        className="border-red-500 text-red-500 hover:bg-red-50"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Отклонить
+                      </Button>
+                    </div>
+                  )}
+                  
                   <div className={`flex items-center justify-between mt-1`}>
                     <p
                       className={`text-xs ${
-                        isMyMessage ? 'text-blue-100' : 'text-gray-500'
+                        isSystemMessage 
+                          ? 'text-orange-600'
+                          : isMyMessage 
+                            ? 'text-blue-100' 
+                            : 'text-gray-500'
                       }`}
                     >
                       {formatTime(message.created_at)}
                     </p>
                     {/* Галочки только для моих сообщений */}
-                    {isMyMessage && (
+                    {isMyMessage && !isSystemMessage && (
                       <div className="ml-2">
                         {message.read_at ? (
                           <CheckCheck className="h-3 w-3 text-blue-200" />

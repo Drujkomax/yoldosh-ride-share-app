@@ -166,14 +166,112 @@ const RideDetailsPage = () => {
         toast.success('Поездка забронирована! Вы можете связаться с водителем.');
         navigate('/my-trips');
       } else {
-        // Обычное бронирование - создаем чат с водителем для обсуждения
-        await createChatWithDriver();
+        // Обычное бронирование - создаем запрос на бронирование
+        await createBookingRequest();
       }
     } catch (error) {
       console.error('Error booking ride:', error);
       toast.error('Ошибка при бронировании поездки');
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const createBookingRequest = async () => {
+    try {
+      // Создаем запрос на бронирование со статусом pending
+      const { data: newBooking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          ride_id: ride.id,
+          passenger_id: user.id,
+          seats_booked: 1,
+          total_price: ride.price_per_seat,
+          status: 'pending'
+        })
+        .select('id')
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // Проверяем, существует ли уже чат между пассажиром и водителем для этой поездки
+      const { data: existingChat, error: searchError } = await supabase
+        .from('chats')
+        .select('id')
+        .eq('ride_id', ride.id)
+        .or(`and(participant1_id.eq.${user.id},participant2_id.eq.${ride.driver_id}),and(participant1_id.eq.${ride.driver_id},participant2_id.eq.${user.id})`)
+        .maybeSingle();
+
+      if (searchError) {
+        console.error('Error searching for existing chat:', searchError);
+        toast.error('Ошибка при поиске чата');
+        return;
+      }
+
+      let chatId;
+
+      if (existingChat) {
+        // Чат уже существует, используем его ID
+        chatId = existingChat.id;
+      } else {
+        // Создаем новый чат
+        const { data: newChat, error: createError } = await supabase
+          .from('chats')
+          .insert({
+            ride_id: ride.id,
+            participant1_id: user.id,
+            participant2_id: ride.driver_id,
+            last_message_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (createError) {
+          console.error('Error creating chat:', createError);
+          toast.error('Ошибка при создании чата');
+          return;
+        }
+
+        chatId = newChat.id;
+      }
+
+      // Отправляем системное сообщение с запросом на бронирование
+      const requestContent = `🚗 Новый запрос на бронирование!\n\nМаршрут: ${ride.from_city} → ${ride.to_city}\nДата: ${formatDate(ride.departure_date)}\nВремя: ${formatTime(ride.departure_time)}\nКоличество мест: 1\nОбщая стоимость: ${Math.floor(ride.price_per_seat).toLocaleString('ru-RU')} сум\n\nПожалуйста, подтвердите или отклоните запрос.`;
+      
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          chat_id: chatId,
+          sender_id: user.id, // ID отправителя (пассажира)
+          content: requestContent,
+          sender_type: 'system',
+          system_action_type: 'booking_request',
+          booking_request_id: newBooking.id,
+          action_data: {
+            seats: 1,
+            totalPrice: ride.price_per_seat
+          }
+        });
+
+      if (messageError) {
+        console.error('Error sending system message:', messageError);
+        toast.error('Ошибка при отправке сообщения');
+        return;
+      }
+
+      // Обновляем время последнего сообщения в чате
+      await supabase
+        .from('chats')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', chatId);
+
+      toast.success('Запрос на бронирование отправлен водителю');
+      
+      // Переходим в чат
+      navigate(`/chat/${chatId}`);
+    } catch (error) {
+      console.error('Error creating booking request:', error);
+      toast.error('Ошибка при создании запроса на бронирование');
     }
   };
 
@@ -220,36 +318,7 @@ const RideDetailsPage = () => {
         chatId = newChat.id;
       }
 
-      // Отправляем приветственное сообщение с заявкой на бронирование
-      const bookingMessage = `Добрый день! Хочу забронировать место в вашей поездке ${ride.from_city} → ${ride.to_city} на ${formatDate(ride.departure_date)} в ${formatTime(ride.departure_time)}. 
-
-Количество мест: 1
-Цена: ${Math.floor(ride.price_per_seat).toLocaleString('ru-RU')} сум
-
-Жду вашего подтверждения.`;
-
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          chat_id: chatId,
-          sender_id: user.id,
-          content: bookingMessage,
-          message_type: 'text'
-        });
-
-      if (messageError) {
-        console.error('Error sending message:', messageError);
-        toast.error('Ошибка при отправке сообщения');
-        return;
-      }
-
-      // Обновляем время последнего сообщения в чате
-      await supabase
-        .from('chats')
-        .update({ last_message_at: new Date().toISOString() })
-        .eq('id', chatId);
-
-      toast.success('Заявка на бронирование отправлена водителю в чат!');
+      toast.success('Чат создан');
       
       // Переходим в чат
       navigate(`/chat/${chatId}`);

@@ -56,6 +56,11 @@ export interface Message {
   };
   read_at?: string;
   created_at: string;
+  sender_type?: 'user' | 'system';
+  system_action_type?: 'booking_request' | 'booking_confirmation';
+  booking_request_id?: string;
+  action_data?: any;
+  is_action_completed?: boolean;
   sender?: {
     name: string;
   };
@@ -118,7 +123,7 @@ export const useChats = () => {
           // Последнее сообщение
           const { data: lastMessage } = await supabase
             .from('messages')
-            .select('content, created_at, sender_id, message_type, location_data')
+            .select('content, created_at, sender_id, message_type, location_data, sender_type')
             .eq('chat_id', chat.id)
             .order('created_at', { ascending: false })
             .limit(1)
@@ -236,10 +241,22 @@ export const useMessages = (chatId: string) => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, messageType = 'text', locationData }: { 
+    mutationFn: async ({ 
+      content, 
+      messageType = 'text', 
+      locationData,
+      senderType = 'user',
+      systemActionType,
+      bookingRequestId,
+      actionData
+    }: { 
       content: string; 
       messageType?: 'text' | 'location';
       locationData?: any;
+      senderType?: 'user' | 'system';
+      systemActionType?: 'booking_request' | 'booking_confirmation';
+      bookingRequestId?: string;
+      actionData?: any;
     }) => {
       console.log('useMessages - Отправка сообщения:', { content, messageType, locationData, chatId, userId: user?.id });
       
@@ -281,7 +298,11 @@ export const useMessages = (chatId: string) => {
           sender_id: user.id,
           content,
           message_type: messageType,
-          location_data: locationData || null
+          location_data: locationData || null,
+          sender_type: senderType,
+          system_action_type: systemActionType,
+          booking_request_id: bookingRequestId,
+          action_data: actionData
         }])
         .select()
         .single();

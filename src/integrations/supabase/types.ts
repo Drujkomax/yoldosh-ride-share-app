@@ -175,34 +175,49 @@ export type Database = {
       }
       messages: {
         Row: {
+          action_data: Json | null
+          booking_request_id: string | null
           chat_id: string
           content: string
           created_at: string | null
           id: string
+          is_action_completed: boolean | null
           location_data: Json | null
           message_type: string | null
           read_at: string | null
           sender_id: string
+          sender_type: string | null
+          system_action_type: string | null
         }
         Insert: {
+          action_data?: Json | null
+          booking_request_id?: string | null
           chat_id: string
           content: string
           created_at?: string | null
           id?: string
+          is_action_completed?: boolean | null
           location_data?: Json | null
           message_type?: string | null
           read_at?: string | null
           sender_id: string
+          sender_type?: string | null
+          system_action_type?: string | null
         }
         Update: {
+          action_data?: Json | null
+          booking_request_id?: string | null
           chat_id?: string
           content?: string
           created_at?: string | null
           id?: string
+          is_action_completed?: boolean | null
           location_data?: Json | null
           message_type?: string | null
           read_at?: string | null
           sender_id?: string
+          sender_type?: string | null
+          system_action_type?: string | null
         }
         Relationships: [
           {
