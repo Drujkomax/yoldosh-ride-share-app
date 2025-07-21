@@ -15,7 +15,7 @@ import PassengerCountPage from '@/components/PassengerCountPage';
 import PriceSettingPage from '@/components/PriceSettingPage';
 import InstantBookingPage from '@/components/InstantBookingPage';
 import ReturnTripPage from '@/components/ReturnTripPage';
-import ProfilePhotoPage from '@/components/ProfilePhotoPage';
+import PhotoUploadFlow from '@/components/PhotoUploadFlow';
 import RideCommentsPage from '@/components/RideCommentsPage';
 import BottomNavigation from '@/components/BottomNavigation';
 
@@ -81,7 +81,7 @@ const RideCreationFlow = () => {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         setSupabaseUser(authUser);
         
-        // Проверяем есть ли фото профиля
+        // Проверяем есть ли валидное фото профиля
         if (user.id) {
           const { data } = await supabase
             .from('profiles')
@@ -89,7 +89,10 @@ const RideCreationFlow = () => {
             .eq('id', user.id)
             .single();
           
-          setUserHasPhoto(!!data?.avatar_url);
+          // Check if avatar_url exists and is not empty/null
+          const hasValidPhoto = data?.avatar_url && data.avatar_url.trim() !== '';
+          setUserHasPhoto(hasValidPhoto);
+          console.log('RideCreationFlow - User has photo:', hasValidPhoto, 'Avatar URL:', data?.avatar_url);
         }
       } catch (error) {
         console.error('RideCreationFlow - Ошибка получения пользователя:', error);
@@ -155,9 +158,10 @@ const RideCreationFlow = () => {
   const goToNextStep = () => {
     setStepHistory(prev => [...prev, currentStep]);
     
-    // Skip photo step if user already has photo
+    // Skip photo step if user already has a valid photo
     if (currentStep === 8 && userHasPhoto) {
-      setCurrentStep(10);
+      console.log('RideCreationFlow - Skipping photo step, user already has photo');
+      setCurrentStep(10); // Skip to comments
     } else {
       setCurrentStep(prev => prev + 1);
     }
@@ -245,10 +249,16 @@ const RideCreationFlow = () => {
   };
 
   const handlePhotoUpload = (uploaded: boolean) => {
+    console.log('RideCreationFlow - Photo upload completed:', uploaded);
     setRideData(prev => ({
       ...prev,
       photo_uploaded: uploaded
     }));
+    
+    if (uploaded) {
+      setUserHasPhoto(true);
+    }
+    
     goToNextStep();
   };
 
@@ -389,7 +399,7 @@ const RideCreationFlow = () => {
         );
       case 9:
         return (
-          <ProfilePhotoPage
+          <PhotoUploadFlow
             onComplete={handlePhotoUpload}
             onBack={goBack}
           />

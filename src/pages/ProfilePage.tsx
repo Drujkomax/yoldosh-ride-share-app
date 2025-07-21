@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,18 +9,26 @@ import { useProfile } from '@/hooks/useProfile';
 import { useReviews } from '@/hooks/useReviews';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import BottomNavigation from '@/components/BottomNavigation';
+import PhotoUploadFlow from '@/components/PhotoUploadFlow';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews, isLoading: reviewsLoading } = useReviews();
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('about'); // 'about' или 'account'
+  const [activeTab, setActiveTab] = useState('about');
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
   const handleLogout = () => {
     setUser(null);
     navigate('/');
+  };
+
+  const handlePhotoUploadComplete = (uploaded: boolean) => {
+    setShowPhotoUpload(false);
+    if (uploaded) {
+      // Photo was uploaded successfully, the user context is already updated
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -39,6 +46,15 @@ const ProfilePage = () => {
   const averageRating = reviews.length > 0 
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
     : profile?.rating || 0;
+
+  if (showPhotoUpload) {
+    return (
+      <PhotoUploadFlow
+        onComplete={handlePhotoUploadComplete}
+        onBack={() => setShowPhotoUpload(false)}
+      />
+    );
+  }
 
   if (profileLoading) {
     return (
@@ -105,11 +121,22 @@ const ProfilePage = () => {
           <>
             {/* Profile Info */}
             <div className="flex items-center space-x-4 py-4 cursor-pointer" onClick={() => navigate('/edit-profile')}>
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-400" />
+              <div className="relative">
+                {profile?.avatar_url ? (
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={profile.avatar_url} />
+                    <AvatarFallback className="bg-gray-200">
+                      <User className="h-8 w-8 text-gray-400" />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                    <User className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-teal-900">{profile?.name || 'Bunyod'}</div>
+                <div className="text-xl font-bold text-teal-900">{profile?.name || 'Пользователь'}</div>
                 <div className="text-gray-500">Новичок</div>
               </div>
               <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -125,8 +152,23 @@ const ProfilePage = () => {
 
             {/* Add Photo */}
             <div className="flex items-center space-x-3 py-4">
-              <Plus className="h-5 w-5 text-teal-600" />
-              <span className="text-teal-600 font-medium">Добавить фото профиля</span>
+              {profile?.avatar_url ? (
+                <button 
+                  onClick={() => setShowPhotoUpload(true)}
+                  className="flex items-center space-x-3 text-teal-600 font-medium"
+                >
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="text-gray-700">Изменить фото профиля</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setShowPhotoUpload(true)}
+                  className="flex items-center space-x-3 text-teal-600 font-medium"
+                >
+                  <Plus className="h-5 w-5 text-teal-600" />
+                  <span className="text-teal-600 font-medium">Добавить фото профиля</span>
+                </button>
+              )}
             </div>
 
             {/* Verify Profile Section */}
