@@ -15,15 +15,9 @@ const PhotoCaptureScreen = ({ onPhotoSelected, onBack }: PhotoCaptureScreenProps
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Пожалуйста, выберите изображение');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Размер файла не должен превышать 5MB');
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 50MB');
       return;
     }
 
