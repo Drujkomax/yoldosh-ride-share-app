@@ -10,6 +10,7 @@ import BottomNavigation from '@/components/BottomNavigation';
 import MobilePageLayout from '@/components/MobilePageLayout';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useUser } from '@/contexts/UserContext';
+import UserAvatar from '@/components/UserAvatar';
 
 const ChatsListPage = () => {
   const navigate = useNavigate();
@@ -117,9 +118,11 @@ const ChatsListPage = () => {
                       className="p-4 rounded-2xl bg-gradient-to-r from-white to-slate-50 dark:from-slate-700 dark:to-slate-800 border border-slate-200 dark:border-slate-600 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] mobile-tap-highlight-transparent"
                     >
                       <div className="flex items-start space-x-4">
-                        <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center flex-shrink-0">
-                          <User className="h-6 w-6 text-white" />
-                        </div>
+                         <UserAvatar 
+                           size="md"
+                           userId={otherParticipant?.id}
+                           name={otherParticipant?.name}
+                         />
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
