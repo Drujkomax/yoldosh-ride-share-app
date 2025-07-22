@@ -43,8 +43,17 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
   };
 
   const handlePhotoConfirm = async (croppedBlob: Blob) => {
-    if (!user?.id) {
-      toast.error('Пользователь не найден');
+    // Проверяем аутентификацию пользователя в Supabase
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authUser) {
+      console.error('Auth error:', authError);
+      toast.error('Необходимо войти в систему для загрузки фото');
+      return;
+    }
+
+    if (!user?.id || user.id !== authUser.id) {
+      toast.error('Ошибка идентификации пользователя');
       return;
     }
 
@@ -54,6 +63,7 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
     }
 
     console.log('Starting photo upload process...');
+    console.log('Authenticated user:', authUser.id);
     setIsUploading(true);
 
     try {
@@ -70,10 +80,11 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
         name: file.name,
         type: file.type,
         size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-        originalSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+        originalSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`,
+        userId: user.id
       });
 
-      // Загружаем в Supabase Storage
+      // Загружаем в Supabase Storage с правильным путем для RLS
       const storagePath = `${user.id}/${timestamp}.${fileExtension}`;
 
       const { error: uploadError } = await supabase.storage
