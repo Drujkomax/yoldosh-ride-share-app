@@ -75,7 +75,7 @@ export const NotificationSettingsPage: React.FC = () => {
 
   return (
     <SettingsLayout title="Уведомления">
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3">
         {/* Global Marketing Toggle */}
         <Card>
           <NotificationToggle
@@ -103,7 +103,7 @@ export const NotificationSettingsPage: React.FC = () => {
                   </div>
                   <button
                     onClick={() => navigate(category.path)}
-                    className="flex items-center gap-2 px-4 py-4 text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 px-3 py-3 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <Icon className="h-4 w-4" />
                     <ChevronRight className="h-4 w-4" />

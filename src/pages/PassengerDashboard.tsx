@@ -134,40 +134,39 @@ const PassengerDashboard = () => {
       )}
 
       {/* Header with Illustration */}
-      <div className="px-6 pt-16 pb-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Поездки на ваш выбор по самым низким ценам
+      <div className="px-4 pt-12 pb-4">
+        <div className="text-center mb-4">
+          <h1 className="text-xl font-bold text-white mb-1">
+            Поездки на ваш выбор
           </h1>
         </div>
         
-        {/* Transportation Illustration */}
-        <div className="flex justify-center items-center mb-8">
-          <div className="relative">
+        {/* Transportation Illustration - Compact */}
+        <div className="flex justify-center items-center mb-4">
+          <div className="relative scale-75">
             {/* Car */}
-            <div className="w-20 h-12 bg-teal-600 rounded-lg mr-4 relative">
-              <div className="absolute bottom-0 left-2 w-3 h-3 bg-gray-300 rounded-full"></div>
-              <div className="absolute bottom-0 right-2 w-3 h-3 bg-gray-300 rounded-full"></div>
-              <div className="absolute top-2 left-2 right-2 flex justify-between">
-                <div className="w-2 h-2 bg-yellow-300 rounded-full"></div>
-                <div className="w-2 h-2 bg-yellow-300 rounded-full"></div>
+            <div className="w-16 h-10 bg-teal-600 rounded-lg mr-3 relative">
+              <div className="absolute bottom-0 left-1 w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className="absolute bottom-0 right-1 w-2 h-2 bg-gray-300 rounded-full"></div>
+              <div className="absolute top-1 left-1 right-1 flex justify-between">
+                <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full"></div>
               </div>
             </div>
             
             {/* Bus */}
-            <div className="w-32 h-16 bg-red-500 rounded-lg relative inline-block">
-              <div className="absolute top-2 left-2 right-2 flex justify-between">
-                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
-                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
-                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
-                <div className="w-4 h-4 bg-yellow-300 rounded-full"></div>
+            <div className="w-24 h-12 bg-red-500 rounded-lg relative inline-block">
+              <div className="absolute top-1 left-1 right-1 flex justify-between">
+                <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
+                <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
               </div>
-              <div className="absolute bottom-0 left-3 w-4 h-4 bg-gray-300 rounded-full"></div>
-              <div className="absolute bottom-0 right-3 w-4 h-4 bg-gray-300 rounded-full"></div>
+              <div className="absolute bottom-0 left-2 w-3 h-3 bg-gray-300 rounded-full"></div>
+              <div className="absolute bottom-0 right-2 w-3 h-3 bg-gray-300 rounded-full"></div>
               {/* Passengers silhouettes */}
-              <div className="absolute top-6 left-2 right-2 flex justify-around">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="w-3 h-4 bg-gray-800 rounded-t-full"></div>
+              <div className="absolute top-4 left-1 right-1 flex justify-around">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="w-2 h-3 bg-gray-800 rounded-t-full"></div>
                 ))}
               </div>
             </div>
@@ -176,22 +175,22 @@ const PassengerDashboard = () => {
       </div>
 
       {/* Search Form */}
-      <div className="px-6 mb-6">
-        <Card className="bg-white shadow-xl rounded-2xl overflow-hidden">
+      <div className="px-4 mb-4">
+        <Card className="bg-white shadow-xl rounded-xl overflow-hidden">
           <CardContent className="p-0">
             <div className="space-y-0">
               {/* From Location */}
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-3 border-b border-gray-100">
                 <Button
                   onClick={() => setShowFromSelector(true)}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
                   <div className="flex items-center space-x-3 w-full">
-                    <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0"></div>
+                    <div className="w-2.5 h-2.5 bg-gray-400 rounded-full flex-shrink-0"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-gray-500 text-sm">Откуда</div>
-                      <div className="text-gray-900 font-medium truncate">
+                      <div className="text-gray-500 text-xs">Откуда</div>
+                      <div className="text-gray-900 font-medium truncate text-sm">
                         {fromCity || 'Выберите место отправления'}
                       </div>
                     </div>
@@ -200,17 +199,17 @@ const PassengerDashboard = () => {
               </div>
               
               {/* To Location */}
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-3 border-b border-gray-100">
                 <Button
                   onClick={() => setShowToSelector(true)}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
                   <div className="flex items-center space-x-3 w-full">
-                    <div className="w-3 h-3 bg-gray-400 rounded-full flex-shrink-0"></div>
+                    <div className="w-2.5 h-2.5 bg-gray-400 rounded-full flex-shrink-0"></div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-gray-500 text-sm">Куда</div>
-                      <div className="text-gray-900 font-medium truncate">
+                      <div className="text-gray-500 text-xs">Куда</div>
+                      <div className="text-gray-900 font-medium truncate text-sm">
                         {toCity || 'Выберите место назначения'}
                       </div>
                     </div>
@@ -219,16 +218,16 @@ const PassengerDashboard = () => {
               </div>
 
               {/* Date */}
-              <div className="p-4 border-b border-gray-100">
+              <div className="p-3 border-b border-gray-100">
                 <Button
                   onClick={() => setShowDatePicker(true)}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
                   <div className="flex items-center space-x-3 w-full">
-                    <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-gray-900 font-medium">
+                      <div className="text-gray-900 font-medium text-sm">
                         {date ? format(date, 'EEE dd MMM', { locale: ru }) : 'Сегодня'}
                       </div>
                     </div>
@@ -237,16 +236,16 @@ const PassengerDashboard = () => {
               </div>
 
               {/* Passengers */}
-              <div className="p-4">
+              <div className="p-3">
                 <Button
                   onClick={() => setShowPassengerSelector(true)}
                   variant="ghost"
                   className="w-full justify-start p-0 h-auto text-left hover:bg-transparent"
                 >
                   <div className="flex items-center space-x-3 w-full">
-                    <Users className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <div className="text-gray-900 font-medium">
+                      <div className="text-gray-900 font-medium text-sm">
                         {passengers}
                       </div>
                     </div>
@@ -259,11 +258,11 @@ const PassengerDashboard = () => {
       </div>
 
       {/* Search Button */}
-      <div className="px-6 mb-6">
+      <div className="px-4 mb-4">
         <Button
           onClick={handleSearch}
           disabled={!fromCity || !toCity || !date || isSearching}
-          className="w-full h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold text-lg"
+          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
         >
           {isSearching ? 'Поиск...' : 'Поиск'}
         </Button>
@@ -271,26 +270,26 @@ const PassengerDashboard = () => {
 
       {/* Recent Searches */}
       {searchHistory.length > 0 && (
-        <div className="px-6 mb-6">
-          <div className="space-y-3">
-            {searchHistory.slice(0, 3).map((item) => (
+        <div className="px-4 mb-4">
+          <div className="space-y-2">
+            {searchHistory.slice(0, 2).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-4 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => handleSearchHistoryClick(item)}
               >
-                <div className="flex items-center space-x-3">
-                  <Clock className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-4 h-4 text-gray-400" />
                   <div>
-                    <div className="text-gray-900 font-medium">
+                    <div className="text-gray-900 font-medium text-sm">
                       {item.from_city} → {item.to_city}
                     </div>
-                    <div className="text-gray-500 text-sm">
-                      {item.departure_date ? format(new Date(item.departure_date), 'EEE dd MMM', { locale: ru }) : ''} • {item.passengers_count || 1} пас.
+                    <div className="text-gray-500 text-xs">
+                      {item.departure_date ? format(new Date(item.departure_date), 'dd MMM', { locale: ru }) : ''} • {item.passengers_count || 1} пас.
                     </div>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-gray-400" />
               </div>
             ))}
           </div>

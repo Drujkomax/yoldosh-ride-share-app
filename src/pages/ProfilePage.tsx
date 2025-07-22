@@ -158,12 +158,12 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header with Tabs */}
       <div className="bg-white">
-        <div className="px-4 py-4">
-          <div className="flex justify-center mb-6">
+        <div className="px-3 py-3">
+          <div className="flex justify-center mb-4">
             <div className="flex bg-gray-100 rounded-lg p-1 w-full max-w-md">
               <button
                 onClick={() => setActiveTab('about')}
-                className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'about'
                     ? 'bg-white text-teal-700 shadow-sm'
                     : 'text-gray-600'
@@ -173,7 +173,7 @@ const ProfilePage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('account')}
-                className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ${
                   activeTab === 'account'
                     ? 'bg-white text-teal-700 shadow-sm'
                     : 'text-gray-600'
@@ -186,140 +186,140 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      <div className="px-4 space-y-6">
+      <div className="px-3 space-y-4">
         {activeTab === 'about' && (
           <>
             {/* Profile Info */}
-            <div className="flex items-center space-x-4 py-4 cursor-pointer" onClick={() => navigate('/edit-profile')}>
+            <div className="flex items-center space-x-3 py-3 cursor-pointer" onClick={() => navigate('/edit-profile')}>
               <div className="relative">
-                <UserAvatar size="lg" />
+                <UserAvatar size="md" />
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-teal-900">{user?.name || 'Пользователь'}</div>
-                <div className="text-gray-500">Новичок</div>
+                <div className="text-lg font-bold text-teal-900">{user?.name || 'Пользователь'}</div>
+                <div className="text-gray-500 text-sm">Новичок</div>
               </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-gray-400" />
             </div>
 
             {/* Edit Profile Link */}
             <button 
               onClick={() => navigate('/edit-profile')}
-              className="w-full text-left text-teal-600 font-medium py-2"
+              className="w-full text-left text-teal-600 font-medium py-1 text-sm"
             >
               Редактировать информацию о себе
             </button>
 
             {/* Add Photo */}
-            <div className="flex items-center space-x-3 py-4">
+            <div className="flex items-center space-x-3 py-2">
               {user?.avatarUrl ? (
                 <button 
                   onClick={() => setShowPhotoUpload(true)}
-                  className="flex items-center space-x-3 text-teal-600 font-medium"
+                  className="flex items-center space-x-2 text-teal-600 font-medium text-sm"
                 >
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-gray-700">Изменить фото профиля</span>
                 </button>
               ) : (
                 <button 
                   onClick={() => setShowPhotoUpload(true)}
-                  className="flex items-center space-x-3 text-teal-600 font-medium"
+                  className="flex items-center space-x-2 text-teal-600 font-medium text-sm"
                 >
-                  <Plus className="h-5 w-5 text-teal-600" />
+                  <Plus className="h-4 w-4 text-teal-600" />
                   <span className="text-teal-600 font-medium">Добавить фото профиля</span>
                 </button>
               )}
             </div>
 
             {/* Verify Profile Section */}
-            <div className="py-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Подтвердите свой профиль</h3>
+            <div className="py-3">
+              <h3 className="text-base font-bold text-gray-900 mb-3">Подтвердите свой профиль</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {/* Verify Passport */}
                 <button 
                   onClick={() => navigate('/myid-verification')}
-                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
                 >
-                  <Plus className="h-5 w-5 text-teal-600" />
-                  <span className="text-teal-600 font-medium">Проверить паспорт</span>
+                  <Plus className="h-4 w-4 text-teal-600" />
+                  <span className="text-teal-600 font-medium text-sm">Проверить паспорт</span>
                 </button>
                 
                 {/* Verify Email */}
-                <div className="flex items-center space-x-3">
-                  <Plus className="h-5 w-5 text-teal-600" />
-                  <span className="text-teal-600 font-medium">Подтвердить почту {profile?.email || 'Не указана'}</span>
+                <div className="flex items-center space-x-2 p-2">
+                  <Plus className="h-4 w-4 text-teal-600" />
+                  <span className="text-teal-600 font-medium text-sm">Подтвердить почту</span>
                 </div>
                 
                 {/* Phone Verified */}
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="h-5 w-5 text-teal-600" />
-                  <span className="text-gray-700">{profile?.phone}</span>
+                <div className="flex items-center space-x-2 p-2">
+                  <CheckCircle className="h-4 w-4 text-teal-600" />
+                  <span className="text-gray-700 text-sm">{profile?.phone}</span>
                 </div>
               </div>
             </div>
 
             {/* About Section */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">О себе</h3>
+            <div className="border-t border-gray-200 pt-3">
+              <h3 className="text-base font-bold text-gray-900 mb-3">О себе</h3>
               
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {/* Tell About Yourself */}
-                <div className="flex items-center space-x-3">
-                  <Plus className="h-5 w-5 text-teal-600" />
-                  <span className="text-teal-600 font-medium">Расскажите немного о себе</span>
+                <div className="flex items-center space-x-2 p-2">
+                  <Plus className="h-4 w-4 text-teal-600" />
+                  <span className="text-teal-600 font-medium text-sm">Расскажите немного о себе</span>
                 </div>
                 
                 {/* Trip Preferences */}
-                <div className="flex items-center space-x-3">
-                  <Plus className="h-5 w-5 text-teal-600" />
-                  <span className="text-teal-600 font-medium">Смена опций поездки</span>
+                <div className="flex items-center space-x-2 p-2">
+                  <Plus className="h-4 w-4 text-teal-600" />
+                  <span className="text-teal-600 font-medium text-sm">Смена опций поездки</span>
                 </div>
               </div>
             </div>
 
             {/* Cars Section */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Машины</h3>
+            <div className="border-t border-gray-200 pt-3">
+              <h3 className="text-base font-bold text-gray-900 mb-3">Машины</h3>
               
-              <div className="flex items-center space-x-4 py-4 cursor-pointer" onClick={() => navigate('/manage-cars')}>
-                <Car className="h-6 w-6 text-gray-400" />
+              <div className="flex items-center space-x-3 py-3 cursor-pointer" onClick={() => navigate('/manage-cars')}>
+                <Car className="h-5 w-5 text-gray-400" />
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">HYUNDAI ACCENT</div>
-                  <div className="text-gray-500 text-sm">Бежевый</div>
+                  <div className="font-medium text-gray-900 text-sm">HYUNDAI ACCENT</div>
+                  <div className="text-gray-500 text-xs">Бежевый</div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-gray-400" />
+                <ChevronRight className="h-4 w-4 text-gray-400" />
               </div>
             </div>
           </>
         )}
 
         {activeTab === 'account' && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Account Settings Menu */}
             <div className="bg-white rounded-lg divide-y divide-gray-100">
               {accountMenuItems.map((item, index) => (
                 <button
                   key={index}
                   onClick={item.onClick}
-                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <item.icon className="h-5 w-5 text-teal-600" />
-                    <span className="text-gray-900 font-medium">{item.title}</span>
+                    <item.icon className="h-4 w-4 text-teal-600" />
+                    <span className="text-gray-900 font-medium text-sm">{item.title}</span>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
                 </button>
               ))}
             </div>
 
             {/* Logout Button */}
-            <div className="pt-4">
+            <div className="pt-2">
               <Button 
                 variant="outline" 
-                className="w-full h-12 justify-start text-red-600 border-red-200 hover:bg-red-50"
+                className="w-full h-10 justify-start text-red-600 border-red-200 hover:bg-red-50 text-sm"
                 onClick={handleLogout}
               >
-                <LogOut className="h-5 w-5 mr-3" />
+                <LogOut className="h-4 w-4 mr-2" />
                 Выйти из аккаунта
               </Button>
             </div>

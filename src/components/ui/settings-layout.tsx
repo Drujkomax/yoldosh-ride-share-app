@@ -22,8 +22,8 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
-        <div className="flex items-center justify-between h-14 px-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between h-12 px-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -32,7 +32,7 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
+            <h1 className="text-base font-semibold text-foreground">{title}</h1>
           </div>
           {headerAction}
         </div>

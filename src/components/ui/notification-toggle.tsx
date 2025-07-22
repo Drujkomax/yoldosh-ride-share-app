@@ -17,11 +17,11 @@ export const NotificationToggle: React.FC<NotificationToggleProps> = ({
   disabled = false,
 }) => {
   return (
-    <div className="flex items-center justify-between py-3 px-4">
-      <div className="flex-1 pr-4">
+    <div className="flex items-center justify-between py-2.5 px-3">
+      <div className="flex-1 pr-3">
         <div className="text-sm font-medium text-foreground">{label}</div>
         {description && (
-          <div className="text-xs text-muted-foreground mt-1">{description}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
         )}
       </div>
       <Switch

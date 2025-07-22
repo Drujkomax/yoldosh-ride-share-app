@@ -37,7 +37,7 @@ export const PushNotificationsPage: React.FC = () => {
 
   return (
     <SettingsLayout title="Push-уведомления" backTo="/settings/notifications">
-      <div className="p-4 space-y-4">
+      <div className="p-3 space-y-3">
         {/* Main Toggle */}
         <Card>
           <NotificationToggle
@@ -82,7 +82,7 @@ export const PushNotificationsPage: React.FC = () => {
         </div>
 
         {!preferences.push_enabled && (
-          <Card className="p-4">
+          <Card className="p-3">
             <p className="text-sm text-muted-foreground text-center">
               Включите push-уведомления, чтобы настроить отдельные типы уведомлений
             </p>

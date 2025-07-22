@@ -1,11 +1,14 @@
 
 export const MOBILE_CONSTANTS = {
-  BOTTOM_NAV_HEIGHT: 80, // Height of bottom navigation
+  BOTTOM_NAV_HEIGHT: 68, // Reduced height of bottom navigation
   SAFE_AREA_BOTTOM: 34, // iPhone home indicator
-  SCROLL_PADDING: 20, // Additional padding for comfortable scrolling
-  PAGE_PADDING_BOTTOM: 100, // Final bottom padding
-  HEADER_HEIGHT: 64, // Standard header height
-  MODAL_PADDING: 16, // Padding for modal content
+  SCROLL_PADDING: 12, // Reduced padding for comfortable scrolling
+  PAGE_PADDING_BOTTOM: 85, // Reduced final bottom padding
+  HEADER_HEIGHT: 56, // Reduced standard header height
+  MODAL_PADDING: 12, // Reduced padding for modal content
+  COMPACT_SPACING: 8, // Very compact spacing for 360px screens
+  FORM_ITEM_HEIGHT: 48, // Standard form item height
+  BUTTON_HEIGHT: 44, // Standard button height
 } as const;
 
 export const getMobilePadding = (hasBottomNav: boolean = true) => {
