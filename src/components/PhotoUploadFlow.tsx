@@ -43,17 +43,8 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
   };
 
   const handlePhotoConfirm = async (croppedBlob: Blob) => {
-    // Проверяем аутентификацию пользователя в Supabase
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !authUser) {
-      console.error('Auth error:', authError);
-      toast.error('Необходимо войти в систему для загрузки фото');
-      return;
-    }
-
-    if (!user?.id || user.id !== authUser.id) {
-      toast.error('Ошибка идентификации пользователя');
+    if (!user?.id) {
+      toast.error('Пользователь не найден');
       return;
     }
 
@@ -63,7 +54,7 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
     }
 
     console.log('Starting photo upload process...');
-    console.log('Authenticated user:', authUser.id);
+    console.log('User from context:', user.id);
     setIsUploading(true);
 
     try {
