@@ -23,13 +23,15 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
-    // Определяем MIME-type исходного файла
+    // Определяем выходной формат
     const getOutputFormat = () => {
-      const mimeType = originalFile.type;
+      const mimeType = originalFile.type.toLowerCase();
+      console.log('Original file MIME type:', mimeType);
+      
       if (mimeType.includes('png')) return { type: 'image/png', quality: 1 };
-      if (mimeType.includes('webp')) return { type: 'image/webp', quality: 0.95 };
-      if (mimeType.includes('gif')) return { type: 'image/png', quality: 1 }; // GIF -> PNG для поддержки прозрачности
-      return { type: 'image/jpeg', quality: 0.95 }; // По умолчанию JPEG
+      if (mimeType.includes('webp')) return { type: 'image/webp', quality: 0.92 };
+      if (mimeType.includes('gif')) return { type: 'image/png', quality: 1 };
+      return { type: 'image/jpeg', quality: 0.92 };
     };
 
     useEffect(() => {
@@ -40,29 +42,34 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
           clearTimeout(debounceTimeoutRef.current);
         }
         debounceTimeoutRef.current = setTimeout(() => {
-          createCrop();
+          createCrop().then(blob => {
+            if (blob) {
+              onCropComplete(blob);
+            }
+          });
         }, 300);
       }
     }, [isImageLoaded, cropPosition, scale]);
 
     const handleImageLoad = () => {
+      console.log('Image loaded successfully');
       setIsImageLoaded(true);
       if (imageRef.current) {
         const img = imageRef.current;
         const containerSize = size;
-        const imgAspect = img.naturalWidth / img.naturalHeight;
         
-        let newScale;
-        if (imgAspect > 1) {
-          newScale = containerSize / img.naturalHeight;
-        } else {
-          newScale = containerSize / img.naturalWidth;
-        }
+        // Простая логика масштабирования
+        const scaleToFit = Math.max(
+          containerSize / img.naturalWidth,
+          containerSize / img.naturalHeight
+        );
         
-        setScale(newScale * 1.2); // Немного больше для лучшего покрытия
+        setScale(scaleToFit * 1.1); // Немного больше для покрытия круга
+        
+        // Центрируем изображение
         setCropPosition({
-          x: (containerSize - img.naturalWidth * newScale * 1.2) / 2,
-          y: (containerSize - img.naturalHeight * newScale * 1.2) / 2
+          x: (containerSize - img.naturalWidth * scaleToFit * 1.1) / 2,
+          y: (containerSize - img.naturalHeight * scaleToFit * 1.1) / 2
         });
       }
     };
@@ -70,83 +77,112 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
     const drawCanvas = () => {
       const canvas = canvasRef.current;
       const img = imageRef.current;
-      if (!canvas || !img) return;
+      if (!canvas || !img) {
+        console.log('Canvas or image not available for drawing');
+        return;
+      }
 
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        console.log('Cannot get canvas context');
+        return;
+      }
 
-      // Clear canvas
-      ctx.clearRect(0, 0, size, size);
+      try {
+        // Очищаем canvas
+        ctx.clearRect(0, 0, size, size);
 
-      // Draw image
-      ctx.save();
-      ctx.drawImage(
-        img,
-        cropPosition.x,
-        cropPosition.y,
-        img.naturalWidth * scale,
-        img.naturalHeight * scale
-      );
-      ctx.restore();
+        // Рисуем изображение
+        ctx.save();
+        ctx.drawImage(
+          img,
+          cropPosition.x,
+          cropPosition.y,
+          img.naturalWidth * scale,
+          img.naturalHeight * scale
+        );
+        ctx.restore();
 
-      // Draw overlay (darkened area outside circle)
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, 0, size, size);
+        // Добавляем затемнение вне круга
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, size, size);
 
-      // Cut out circle
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2 - 10, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.restore();
+        // Вырезаем круг
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 10, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
 
-      // Draw circle border
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(size / 2, size / 2, size / 2 - 10, 0, 2 * Math.PI);
-      ctx.stroke();
+        // Рисуем границу круга
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 10, 0, 2 * Math.PI);
+        ctx.stroke();
+      } catch (error) {
+        console.error('Error drawing canvas:', error);
+      }
     };
 
     const createCrop = async (): Promise<Blob | null> => {
+      console.log('Creating crop...');
+      
       return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = imageRef.current;
-        
-        if (!ctx || !img) {
-          console.error('Ошибка: не удалось получить контекст canvas или изображение');
-          resolve(null);
-          return;
-        }
-
-        const cropSize = Math.min(size - 20, 400); // Ограничиваем размер для производительности
-        canvas.width = cropSize;
-        canvas.height = cropSize;
-
-        const centerX = size / 2;
-        const centerY = size / 2;
-        const radius = cropSize / 2;
-
         try {
-          // Create circular mask
+          const img = imageRef.current;
+          
+          if (!img) {
+            console.error('Image not loaded');
+            resolve(null);
+            return;
+          }
+
+          // Создаем новый canvas для обрезки
+          const cropCanvas = document.createElement('canvas');
+          const ctx = cropCanvas.getContext('2d');
+          
+          if (!ctx) {
+            console.error('Cannot create canvas context');
+            resolve(null);
+            return;
+          }
+
+          const cropSize = 300; // Фиксированный размер для аватара
+          cropCanvas.width = cropSize;
+          cropCanvas.height = cropSize;
+
+          console.log('Crop canvas created:', cropSize, 'x', cropSize);
+
+          // Создаем круглую маску
           ctx.save();
           ctx.beginPath();
-          ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+          ctx.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, 2 * Math.PI);
           ctx.clip();
 
-          // Draw the cropped image
-          const sourceX = centerX - radius - cropPosition.x;
-          const sourceY = centerY - radius - cropPosition.y;
-          
+          // Вычисляем параметры для обрезки
+          const centerX = size / 2;
+          const centerY = size / 2;
+          const radius = cropSize / 2;
+
+          // Рисуем обрезанное изображение
+          const sourceX = (centerX - radius - cropPosition.x) / scale;
+          const sourceY = (centerY - radius - cropPosition.y) / scale;
+          const sourceWidth = cropSize / scale;
+          const sourceHeight = cropSize / scale;
+
+          console.log('Drawing cropped image with params:', {
+            sourceX, sourceY, sourceWidth, sourceHeight,
+            destX: 0, destY: 0, destWidth: cropSize, destHeight: cropSize
+          });
+
           ctx.drawImage(
             img,
-            sourceX / scale,
-            sourceY / scale,
-            (cropSize * 2) / scale,
-            (cropSize * 2) / scale,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
             0,
             0,
             cropSize,
@@ -156,17 +192,20 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
           ctx.restore();
 
           const format = getOutputFormat();
-          canvas.toBlob((blob) => {
+          console.log('Converting to blob with format:', format);
+
+          cropCanvas.toBlob((blob) => {
             if (blob) {
-              onCropComplete(blob);
+              console.log('Crop created successfully, size:', blob.size, 'bytes');
               resolve(blob);
             } else {
-              console.error('Ошибка: не удалось создать blob из canvas');
+              console.error('Failed to create blob');
               resolve(null);
             }
           }, format.type, format.quality);
+
         } catch (error) {
-          console.error('Ошибка при обработке изображения:', error);
+          console.error('Error in createCrop:', error);
           resolve(null);
         }
       });
@@ -180,7 +219,9 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
     const handleMouseDown = (e: React.MouseEvent) => {
       setIsDragging(true);
       setDragStart({
-        x: e.clientX - cropPosition.x,
+        x: e.clientX - crop
+
+Position.x,
         y: e.clientY - cropPosition.y
       });
     };
@@ -238,6 +279,7 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
           ref={imageRef}
           src={imageUrl}
           onLoad={handleImageLoad}
+          onError={(e) => console.error('Image load error:', e)}
           className="hidden"
           alt="Source"
         />

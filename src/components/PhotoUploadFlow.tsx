@@ -35,7 +35,7 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
   };
 
   const getFileExtension = (file: File) => {
-    const type = file.type;
+    const type = file.type.toLowerCase();
     if (type.includes('png')) return 'png';
     if (type.includes('webp')) return 'webp';
     if (type.includes('gif')) return 'gif';
@@ -53,14 +53,16 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
       return;
     }
 
+    console.log('Starting photo upload process...');
     setIsUploading(true);
 
     try {
       const fileExtension = getFileExtension(selectedFile);
       const timestamp = Date.now();
       
-      // Create file from blob with proper extension and type
-      const file = new File([croppedBlob], `avatar-${user.id}-${timestamp}.${fileExtension}`, {
+      // Создаем File из blob с правильным типом и расширением
+      const fileName = `avatar-${user.id}-${timestamp}.${fileExtension}`;
+      const file = new File([croppedBlob], fileName, {
         type: croppedBlob.type
       });
 
@@ -71,29 +73,35 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
         originalSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
       });
 
-      // Upload to Supabase Storage
-      const fileName = `${user.id}/${timestamp}.${fileExtension}`;
+      // Загружаем в Supabase Storage
+      const storagePath = `${user.id}/${timestamp}.${fileExtension}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, {
+        .upload(storagePath, file, {
           upsert: true,
           contentType: file.type
         });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        throw uploadError;
+        throw new Error(`Ошибка загрузки: ${uploadError.message}`);
       }
 
-      // Get public URL
+      console.log('File uploaded successfully to:', storagePath);
+
+      // Получаем публичный URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .getPublicUrl(storagePath);
 
       console.log('Generated public URL:', publicUrl);
 
-      // Update user profile
+      if (!publicUrl) {
+        throw new Error('Не удалось получить URL изображения');
+      }
+
+      // Обновляем профиль пользователя
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
@@ -101,10 +109,12 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
 
       if (updateError) {
         console.error('Profile update error:', updateError);
-        throw updateError;
+        throw new Error(`Ошибка обновления профиля: ${updateError.message}`);
       }
 
-      // Update user context
+      console.log('Profile updated successfully with new avatar URL');
+
+      // Обновляем контекст пользователя
       setUser({
         ...user,
         avatarUrl: publicUrl
@@ -114,7 +124,8 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
       onComplete(true);
     } catch (error) {
       console.error('Error uploading photo:', error);
-      toast.error('Ошибка при загрузке фото. Попробуйте еще раз.');
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      toast.error(`Ошибка при загрузке фото: ${errorMessage}`);
     } finally {
       setIsUploading(false);
     }

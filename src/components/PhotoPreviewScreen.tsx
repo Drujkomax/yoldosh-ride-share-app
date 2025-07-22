@@ -14,6 +14,7 @@ interface PhotoPreviewScreenProps {
 const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false }: PhotoPreviewScreenProps) => {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cropError, setCropError] = useState<string>('');
   const cropperRef = useRef<CircularCropperRef>(null);
 
   useEffect(() => {
@@ -26,29 +27,38 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
   }, [photoFile]);
 
   const handleCropComplete = (blob: Blob) => {
-    // Automatic crop complete callback - можно использовать для превью
-    console.log('Crop completed automatically, blob size:', blob.size);
+    // Автоматическое завершение обрезки - для отладки
+    console.log('Auto crop completed, blob size:', blob.size);
   };
 
   const handleConfirm = async () => {
+    console.log('User clicked "Use this photo"');
+    
     if (!cropperRef.current) {
-      alert('Компонент обрезки не готов. Попробуйте еще раз.');
+      const errorMsg = 'Компонент обрезки не готов. Попробуйте еще раз.';
+      console.error(errorMsg);
+      setCropError(errorMsg);
       return;
     }
 
     setIsProcessing(true);
+    setCropError('');
     
     try {
+      console.log('Requesting crop from CircularCropper...');
       const croppedBlob = await cropperRef.current.getCurrentCrop();
       
       if (croppedBlob) {
+        console.log('Crop successful, blob size:', croppedBlob.size, 'type:', croppedBlob.type);
         onConfirm(croppedBlob);
       } else {
-        alert('Не удалось обрезать изображение. Попробуйте еще раз.');
+        const errorMsg = 'Не удалось обрезать изображение. Попробуйте еще раз.';
+        console.error(errorMsg);
+        setCropError(errorMsg);
       }
     } catch (error) {
-      console.error('Ошибка при обрезке изображения:', error);
-      alert('Произошла ошибка при обрезке изображения.');
+      console.error('Error during crop operation:', error);
+      setCropError('Произошла ошибка при обрезке изображения.');
     } finally {
       setIsProcessing(false);
     }
@@ -107,6 +117,13 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
             </div>
           </div>
 
+          {/* Error Display */}
+          {cropError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-red-700 text-sm">{cropError}</p>
+            </div>
+          )}
+
           {/* Cropper */}
           <div className="flex justify-center">
             {imageUrl && (
@@ -158,7 +175,7 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
               <li>• Ваше лицо должно занимать большую часть круга</li>
               <li>• Убедитесь, что лицо хорошо освещено</li>
               <li>• Избегайте размытых изображений</li>
-              <li>• Фото будет автоматически обрезано при сохранении</li>
+              <li>• Фото автоматически обрезается при сохранении</li>
             </ul>
           </div>
         </div>
