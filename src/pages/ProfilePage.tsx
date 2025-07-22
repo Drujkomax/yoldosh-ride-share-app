@@ -167,10 +167,13 @@ const ProfilePage = () => {
               
               <div className="space-y-4">
                 {/* Verify Passport */}
-                <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => navigate('/myid-verification')}
+                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                >
                   <Plus className="h-5 w-5 text-teal-600" />
                   <span className="text-teal-600 font-medium">Проверить паспорт</span>
-                </div>
+                </button>
                 
                 {/* Verify Email */}
                 <div className="flex items-center space-x-3">
