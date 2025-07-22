@@ -116,11 +116,17 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
 
       console.log('Profile updated successfully with new avatar URL');
 
-      // Обновляем контекст пользователя
-      setUser({
+      // Обновляем контекст пользователя с новым avatar URL
+      const updatedUser = {
         ...user,
         avatarUrl: publicUrl
-      });
+      };
+      
+      // Принудительно обновляем localStorage и контекст
+      localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      console.log('User context updated with new avatar:', updatedUser);
 
       toast.success('Фото профиля успешно обновлено!');
       onComplete(true);
