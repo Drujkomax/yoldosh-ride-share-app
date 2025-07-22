@@ -10,6 +10,7 @@ import ChatRideInfo from '@/components/ChatRideInfo';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { useUserRole } from '@/hooks/useUserRole';
+import UserAvatar from '@/components/UserAvatar';
 
 const ChatPage = () => {
   const { chatId } = useParams();
@@ -274,9 +275,12 @@ const ChatPage = () => {
                 className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
                 onClick={() => navigate(`/profile/${otherParticipant?.id}`)}
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-white" />
-                </div>
+                <UserAvatar 
+                  size="md" 
+                  userId={otherParticipant?.id}
+                  name={otherParticipant?.name}
+                  avatarUrl={otherParticipant?.avatar_url}
+                />
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
                     <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
