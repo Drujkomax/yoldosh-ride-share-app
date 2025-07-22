@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useUser } from '@/contexts/UserContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UserAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -19,9 +20,35 @@ const UserAvatar = ({
   name
 }: UserAvatarProps) => {
   const { user } = useUser();
+  const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
   
-  // Используем переданные пропы или данные из контекста
-  const displayAvatarUrl = avatarUrl || (userId ? (userId === user?.id ? user?.avatarUrl : undefined) : user?.avatarUrl);
+  // Загружаем аватар пользователя, если передан userId и это не текущий пользователь
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (userId && userId !== user?.id && !avatarUrl) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', userId)
+            .single();
+          
+          if (profile?.avatar_url) {
+            setFetchedAvatarUrl(profile.avatar_url);
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки аватара пользователя:', error);
+        }
+      }
+    };
+
+    fetchUserAvatar();
+  }, [userId, user?.id, avatarUrl]);
+  
+  // Определяем какой URL использовать для отображения
+  const displayAvatarUrl = avatarUrl || 
+    (userId === user?.id ? user?.avatarUrl : fetchedAvatarUrl) || 
+    (!userId ? user?.avatarUrl : null);
   const displayName = name || user?.name;
   
   console.log('UserAvatar render:', {
