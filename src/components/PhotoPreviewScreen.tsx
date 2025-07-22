@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RotateCcw, Check, Loader2 } from 'lucide-react';
-import CircularCropper from './CircularCropper';
+import CircularCropper, { CircularCropperRef } from './CircularCropper';
 
 interface PhotoPreviewScreenProps {
   photoFile: File;
@@ -13,7 +13,8 @@ interface PhotoPreviewScreenProps {
 
 const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false }: PhotoPreviewScreenProps) => {
   const [imageUrl, setImageUrl] = useState<string>('');
-  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const cropperRef = useRef<CircularCropperRef>(null);
 
   useEffect(() => {
     const url = URL.createObjectURL(photoFile);
@@ -25,15 +26,45 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
   }, [photoFile]);
 
   const handleCropComplete = (blob: Blob) => {
-    setCroppedBlob(blob);
+    // Automatic crop complete callback - можно использовать для превью
+    console.log('Crop completed automatically, blob size:', blob.size);
   };
 
-  const handleConfirm = () => {
-    if (croppedBlob) {
-      onConfirm(croppedBlob);
-    } else {
-      alert('Пожалуйста, подождите завершения обработки изображения');
+  const handleConfirm = async () => {
+    if (!cropperRef.current) {
+      alert('Компонент обрезки не готов. Попробуйте еще раз.');
+      return;
     }
+
+    setIsProcessing(true);
+    
+    try {
+      const croppedBlob = await cropperRef.current.getCurrentCrop();
+      
+      if (croppedBlob) {
+        onConfirm(croppedBlob);
+      } else {
+        alert('Не удалось обрезать изображение. Попробуйте еще раз.');
+      }
+    } catch (error) {
+      console.error('Ошибка при обрезке изображения:', error);
+      alert('Произошла ошибка при обрезке изображения.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getFileFormatInfo = () => {
+    const type = photoFile.type;
+    if (type.includes('png')) return 'PNG';
+    if (type.includes('webp')) return 'WebP';
+    if (type.includes('gif')) return 'GIF';
+    return 'JPEG';
+  };
+
+  const getFileSizeInfo = () => {
+    const sizeInMB = (photoFile.size / (1024 * 1024)).toFixed(1);
+    return `${sizeInMB} МБ`;
   };
 
   return (
@@ -45,7 +76,7 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
             variant="ghost"
             onClick={onBack}
             className="p-2"
-            disabled={isUploading}
+            disabled={isUploading || isProcessing}
           >
             <ArrowLeft className="h-6 w-6 text-teal-600" />
           </Button>
@@ -68,17 +99,22 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
             <h2 className="text-xl font-bold text-gray-900 mb-2">
               Отрегулируйте ваше фото
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 mb-2">
               Убедитесь, что ваше лицо находится в центре круга
             </p>
+            <div className="text-sm text-gray-500">
+              Формат: {getFileFormatInfo()} • Размер: {getFileSizeInfo()}
+            </div>
           </div>
 
           {/* Cropper */}
           <div className="flex justify-center">
             {imageUrl && (
               <CircularCropper
+                ref={cropperRef}
                 imageUrl={imageUrl}
                 onCropComplete={handleCropComplete}
+                originalFile={photoFile}
                 size={280}
               />
             )}
@@ -88,16 +124,26 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
           <div className="space-y-3 pt-4">
             <Button
               onClick={handleConfirm}
-              disabled={!croppedBlob}
+              disabled={isProcessing || !imageUrl}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg disabled:opacity-50"
             >
-              <Check className="h-5 w-5 mr-2" />
-              Использовать это фото
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Обработка...
+                </>
+              ) : (
+                <>
+                  <Check className="h-5 w-5 mr-2" />
+                  Использовать это фото
+                </>
+              )}
             </Button>
             
             <Button
               onClick={onBack}
               variant="outline"
+              disabled={isProcessing}
               className="w-full border-gray-300 text-gray-700 py-3 rounded-lg"
             >
               <RotateCcw className="h-5 w-5 mr-2" />
@@ -112,6 +158,7 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
               <li>• Ваше лицо должно занимать большую часть круга</li>
               <li>• Убедитесь, что лицо хорошо освещено</li>
               <li>• Избегайте размытых изображений</li>
+              <li>• Фото будет автоматически обрезано при сохранении</li>
             </ul>
           </div>
         </div>

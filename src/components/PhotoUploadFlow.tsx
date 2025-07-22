@@ -25,8 +25,21 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
   };
 
   const handlePhotoSelected = (file: File) => {
+    console.log('Selected file:', {
+      name: file.name,
+      type: file.type,
+      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+    });
     setSelectedFile(file);
     setCurrentStep('preview');
+  };
+
+  const getFileExtension = (file: File) => {
+    const type = file.type;
+    if (type.includes('png')) return 'png';
+    if (type.includes('webp')) return 'webp';
+    if (type.includes('gif')) return 'gif';
+    return 'jpg';
   };
 
   const handlePhotoConfirm = async (croppedBlob: Blob) => {
@@ -35,30 +48,50 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
       return;
     }
 
+    if (!selectedFile) {
+      toast.error('Файл не выбран');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
-      // Create file from blob
-      const file = new File([croppedBlob], `avatar-${user.id}-${Date.now()}.jpg`, {
-        type: 'image/jpeg'
+      const fileExtension = getFileExtension(selectedFile);
+      const timestamp = Date.now();
+      
+      // Create file from blob with proper extension and type
+      const file = new File([croppedBlob], `avatar-${user.id}-${timestamp}.${fileExtension}`, {
+        type: croppedBlob.type
+      });
+
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        originalSize: `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
       });
 
       // Upload to Supabase Storage
-      const fileExt = 'jpg';
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${timestamp}.${fileExtension}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, {
-          upsert: true
+          upsert: true,
+          contentType: file.type
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
+
+      console.log('Generated public URL:', publicUrl);
 
       // Update user profile
       const { error: updateError } = await supabase
@@ -66,7 +99,10 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
         .update({ avatar_url: publicUrl })
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw updateError;
+      }
 
       // Update user context
       setUser({
