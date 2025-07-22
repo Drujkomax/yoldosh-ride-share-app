@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield, Loader2, Plus, CheckCircle, ChevronRight, Mail } from 'lucide-react';
+import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield, Loader2, Plus, CheckCircle, ChevronRight, Mail, MessageSquare, Users, Bell, Moon, Lock, CreditCard, Wallet, HelpCircle, Gift, Zap } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useReviews } from '@/hooks/useReviews';
@@ -16,7 +17,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
-  const { reviews, isLoading: reviewsLoading } = useReviews();
+  const { reviews, isLoading: reviewsLoading } = useReviewsреального();
   const [activeTab, setActiveTab] = useState('about');
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
@@ -84,6 +85,74 @@ const ProfilePage = () => {
       </div>
     );
   }
+
+  const accountMenuItems = [
+    {
+      icon: MessageSquare,
+      title: "Отзывы",
+      onClick: () => navigate('/my-reviews')
+    },
+    {
+      icon: Users,
+      title: "Сохраненные пассажиры",
+      onClick: () => console.log('Сохраненные пассажиры')
+    },
+    {
+      icon: Bell,
+      title: "Настройки уведомлений",
+      onClick: () => console.log('Настройки уведомлений')
+    },
+    {
+      icon: Moon,
+      title: "Темная тема",
+      onClick: () => console.log('Темная тема')
+    },
+    {
+      icon: Lock,
+      title: "Пароль",
+      onClick: () => console.log('Пароль')
+    },
+    {
+      icon: Mail,
+      title: "Почтовый адрес",
+      onClick: () => console.log('Почтовый адрес')
+    },
+    {
+      icon: CreditCard,
+      title: "Способы получения выплат",
+      onClick: () => console.log('Способы получения выплат')
+    },
+    {
+      icon: Wallet,
+      title: "Выплаты",
+      onClick: () => console.log('Выплаты')
+    },
+    {
+      icon: CreditCard,
+      title: "Способы оплаты",
+      onClick: () => console.log('Способы оплаты')
+    },
+    {
+      icon: CreditCard,
+      title: "Платежи и возвраты",
+      onClick: () => console.log('Платежи и возвраты')
+    },
+    {
+      icon: Gift,
+      title: "Спецпредложения",
+      onClick: () => console.log('Спецпредложения')
+    },
+    {
+      icon: Star,
+      title: "Оцените приложение",
+      onClick: () => console.log('Оцените приложение')
+    },
+    {
+      icon: HelpCircle,
+      title: "Помощь",
+      onClick: () => console.log('Помощь')
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -226,38 +295,25 @@ const ProfilePage = () => {
 
         {activeTab === 'account' && (
           <div className="space-y-6">
-            {/* Account Settings */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Настройки аккаунта</h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700">Телефон</span>
-                    <span className="text-gray-500">{profile?.phone}</span>
+            {/* Account Settings Menu */}
+            <div className="bg-white rounded-lg divide-y divide-gray-100">
+              {accountMenuItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={item.onClick}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <item.icon className="h-5 w-5 text-teal-600" />
+                    <span className="text-gray-900 font-medium">{item.title}</span>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-700">Статус верификации</span>
-                    <span className={`text-sm ${profile?.is_verified ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {profile?.is_verified ? 'Подтвержден' : 'Не подтвержден'}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </button>
+              ))}
+            </div>
 
-            {/* Action Buttons */}
-            <div className="space-y-4">
-              <Button 
-                variant="outline" 
-                className="w-full h-12 justify-start"
-                onClick={() => navigate('/settings')}
-              >
-                <Settings className="h-5 w-5 mr-3" />
-                Настройки
-              </Button>
-              
+            {/* Logout Button */}
+            <div className="pt-4">
               <Button 
                 variant="outline" 
                 className="w-full h-12 justify-start text-red-600 border-red-200 hover:bg-red-50"
