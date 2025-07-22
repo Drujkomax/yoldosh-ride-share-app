@@ -21,8 +21,18 @@ const UserAvatar = ({
   const { user } = useUser();
   
   // Используем переданные пропы или данные из контекста
-  const displayAvatarUrl = avatarUrl || (userId === user?.id ? user?.avatarUrl : undefined);
+  const displayAvatarUrl = avatarUrl || (userId ? (userId === user?.id ? user?.avatarUrl : undefined) : user?.avatarUrl);
   const displayName = name || user?.name;
+  
+  console.log('UserAvatar render:', {
+    avatarUrl,
+    userId,
+    userFromContext: user?.id,
+    userAvatarUrl: user?.avatarUrl,
+    displayAvatarUrl,
+    name,
+    displayName
+  });
   
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -38,10 +48,17 @@ const UserAvatar = ({
     xl: 'h-10 w-10'
   };
 
-  if (displayAvatarUrl) {
+  // Проверяем что URL не пустой и не null/undefined
+  if (displayAvatarUrl && displayAvatarUrl.trim() !== '') {
     return (
       <Avatar className={`${sizeClasses[size]} ${className}`}>
-        <AvatarImage src={displayAvatarUrl} alt={displayName} />
+        <AvatarImage 
+          src={displayAvatarUrl} 
+          alt={displayName || 'User avatar'}
+          onError={(e) => {
+            console.error('Avatar image failed to load:', displayAvatarUrl);
+          }}
+        />
         <AvatarFallback className="bg-gray-200">
           <User className={`${iconSizes[size]} text-gray-400`} />
         </AvatarFallback>
