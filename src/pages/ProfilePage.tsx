@@ -17,7 +17,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
-  const { reviews, isLoading: reviewsLoading } = useReviewsреального();
+  const { reviews, isLoading: reviewsLoading } = useReviews();
   const [activeTab, setActiveTab] = useState('about');
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
