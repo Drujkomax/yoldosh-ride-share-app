@@ -19,6 +19,10 @@ const CircularCropper = ({ imageUrl, onCropComplete, size = 200 }: CircularCropp
   useEffect(() => {
     if (isImageLoaded) {
       drawCanvas();
+      // Автоматически создаем первичную обрезку при загрузке
+      setTimeout(() => {
+        getCroppedImage();
+      }, 100);
     }
   }, [isImageLoaded, cropPosition, scale]);
 
@@ -138,7 +142,10 @@ const CircularCropper = ({ imageUrl, onCropComplete, size = 200 }: CircularCropp
     const ctx = canvas.getContext('2d');
     const img = imageRef.current;
     
-    if (!ctx || !img) return;
+    if (!ctx || !img) {
+      console.error('Ошибка: не удалось получить контекст canvas или изображение');
+      return;
+    }
 
     const cropSize = size - 20; // Account for border
     canvas.width = cropSize;
@@ -149,35 +156,41 @@ const CircularCropper = ({ imageUrl, onCropComplete, size = 200 }: CircularCropp
     const centerY = size / 2;
     const radius = cropSize / 2;
 
-    // Create circular mask
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
-    ctx.clip();
+    try {
+      // Create circular mask
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(radius, radius, radius, 0, 2 * Math.PI);
+      ctx.clip();
 
-    // Draw the cropped image
-    const sourceX = centerX - radius - cropPosition.x;
-    const sourceY = centerY - radius - cropPosition.y;
-    
-    ctx.drawImage(
-      img,
-      sourceX / scale,
-      sourceY / scale,
-      (cropSize * 2) / scale,
-      (cropSize * 2) / scale,
-      0,
-      0,
-      cropSize,
-      cropSize
-    );
-    
-    ctx.restore();
+      // Draw the cropped image
+      const sourceX = centerX - radius - cropPosition.x;
+      const sourceY = centerY - radius - cropPosition.y;
+      
+      ctx.drawImage(
+        img,
+        sourceX / scale,
+        sourceY / scale,
+        (cropSize * 2) / scale,
+        (cropSize * 2) / scale,
+        0,
+        0,
+        cropSize,
+        cropSize
+      );
+      
+      ctx.restore();
 
-    canvas.toBlob((blob) => {
-      if (blob) {
-        onCropComplete(blob);
-      }
-    }, 'image/jpeg', 0.9);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          onCropComplete(blob);
+        } else {
+          console.error('Ошибка: не удалось создать blob из canvas');
+        }
+      }, 'image/jpeg', 0.95);
+    } catch (error) {
+      console.error('Ошибка при обработке изображения:', error);
+    }
   };
 
   return (

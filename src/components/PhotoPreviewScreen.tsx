@@ -31,6 +31,8 @@ const PhotoPreviewScreen = ({ photoFile, onConfirm, onBack, isUploading = false 
   const handleConfirm = () => {
     if (croppedBlob) {
       onConfirm(croppedBlob);
+    } else {
+      alert('Пожалуйста, подождите завершения обработки изображения');
     }
   };
 
