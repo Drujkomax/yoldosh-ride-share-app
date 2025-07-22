@@ -29,6 +29,11 @@ import DriverHomePage from "./pages/DriverHomePage";
 import DriverReviewsPage from "./pages/DriverReviewsPage";
 import SearchFiltersPage from "./pages/SearchFiltersPage";
 import MyIdVerificationPage from "./pages/MyIdVerificationPage";
+import { NotificationSettingsPage } from "./pages/NotificationSettingsPage";
+import { PushNotificationsPage } from "./pages/PushNotificationsPage";
+import { EmailNotificationsPage } from "./pages/EmailNotificationsPage";
+import { ThemeSettingsPage } from "./pages/ThemeSettingsPage";
+import { SavedPassengersPage } from "./pages/SavedPassengersPage";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +71,14 @@ function App() {
                 <Route path="/driver-reviews/:driverId" element={<DriverReviewsPage />} />
                 <Route path="/search-filters" element={<SearchFiltersPage />} />
                 <Route path="/myid-verification" element={<MyIdVerificationPage />} />
+                
+                {/* Settings Pages */}
+                <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+                <Route path="/settings/notifications/push" element={<PushNotificationsPage />} />
+                <Route path="/settings/notifications/email" element={<EmailNotificationsPage />} />
+                <Route path="/settings/theme" element={<ThemeSettingsPage />} />
+                <Route path="/settings/saved-passengers" element={<SavedPassengersPage />} />
+                
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

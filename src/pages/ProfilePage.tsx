@@ -95,17 +95,17 @@ const ProfilePage = () => {
     {
       icon: Users,
       title: "Сохраненные пассажиры",
-      onClick: () => console.log('Сохраненные пассажиры')
+      onClick: () => navigate('/settings/saved-passengers')
     },
     {
       icon: Bell,
       title: "Настройки уведомлений",
-      onClick: () => console.log('Настройки уведомлений')
+      onClick: () => navigate('/settings/notifications')
     },
     {
       icon: Moon,
-      title: "Темная тема",
-      onClick: () => console.log('Темная тема')
+      title: "Тема приложения",
+      onClick: () => navigate('/settings/theme')
     },
     {
       icon: Lock,

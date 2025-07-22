@@ -698,6 +698,65 @@ export type Database = {
           },
         ]
       }
+      saved_passengers: {
+        Row: {
+          created_at: string
+          id: string
+          nickname: string | null
+          notes: string | null
+          saved_passenger_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          notes?: string | null
+          saved_passenger_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          notes?: string | null
+          saved_passenger_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_passengers_saved_passenger_id_fkey"
+            columns: ["saved_passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_passengers_saved_passenger_id_fkey"
+            columns: ["saved_passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_passengers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_passengers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_cars: {
         Row: {
           color: string | null
@@ -797,6 +856,87 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notification_preferences: {
+        Row: {
+          calls_enabled: boolean
+          calls_urgent_only: boolean
+          created_at: string
+          email_enabled: boolean
+          email_messages: boolean
+          email_promotions: boolean
+          email_ride_updates: boolean
+          email_weekly_summary: boolean
+          id: string
+          marketing_enabled: boolean
+          push_enabled: boolean
+          push_messages: boolean
+          push_promotions: boolean
+          push_ride_updates: boolean
+          sms_enabled: boolean
+          sms_important_only: boolean
+          sms_ride_updates: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calls_enabled?: boolean
+          calls_urgent_only?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          email_messages?: boolean
+          email_promotions?: boolean
+          email_ride_updates?: boolean
+          email_weekly_summary?: boolean
+          id?: string
+          marketing_enabled?: boolean
+          push_enabled?: boolean
+          push_messages?: boolean
+          push_promotions?: boolean
+          push_ride_updates?: boolean
+          sms_enabled?: boolean
+          sms_important_only?: boolean
+          sms_ride_updates?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calls_enabled?: boolean
+          calls_urgent_only?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          email_messages?: boolean
+          email_promotions?: boolean
+          email_ride_updates?: boolean
+          email_weekly_summary?: boolean
+          id?: string
+          marketing_enabled?: boolean
+          push_enabled?: boolean
+          push_messages?: boolean
+          push_promotions?: boolean
+          push_ride_updates?: boolean
+          sms_enabled?: boolean
+          sms_important_only?: boolean
+          sms_ride_updates?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_notifications: {
         Row: {
           created_at: string | null
@@ -846,6 +986,150 @@ export type Database = {
             foreignKeyName: "user_notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_payment_methods: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          method_name: string
+          method_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          method_name: string
+          method_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          method_name?: string
+          method_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_payment_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_payment_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_payout_methods: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          is_verified: boolean
+          method_name: string
+          method_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details: Json
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          is_verified?: boolean
+          method_name: string
+          method_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          is_verified?: boolean
+          method_name?: string
+          method_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_payout_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_payout_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_with_role"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_theme_preferences: {
+        Row: {
+          created_at: string
+          id: string
+          theme_mode: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          theme_mode?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          theme_mode?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_theme_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_theme_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles_with_role"
             referencedColumns: ["id"]
           },
