@@ -219,9 +219,7 @@ const CircularCropper = forwardRef<CircularCropperRef, CircularCropperProps>(
     const handleMouseDown = (e: React.MouseEvent) => {
       setIsDragging(true);
       setDragStart({
-        x: e.clientX - crop
-
-Position.x,
+        x: e.clientX - cropPosition.x,
         y: e.clientY - cropPosition.y
       });
     };
