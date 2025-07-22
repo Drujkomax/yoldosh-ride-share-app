@@ -10,6 +10,7 @@ import { useReviews } from '@/hooks/useReviews';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import BottomNavigation from '@/components/BottomNavigation';
 import PhotoUploadFlow from '@/components/PhotoUploadFlow';
+import UserAvatar from '@/components/UserAvatar';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -122,21 +123,10 @@ const ProfilePage = () => {
             {/* Profile Info */}
             <div className="flex items-center space-x-4 py-4 cursor-pointer" onClick={() => navigate('/edit-profile')}>
               <div className="relative">
-                {profile?.avatar_url ? (
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={profile.avatar_url} />
-                    <AvatarFallback className="bg-gray-200">
-                      <User className="h-8 w-8 text-gray-400" />
-                    </AvatarFallback>
-                  </Avatar>
-                ) : (
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                    <User className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
+                <UserAvatar size="lg" />
               </div>
               <div className="flex-1">
-                <div className="text-xl font-bold text-teal-900">{profile?.name || 'Пользователь'}</div>
+                <div className="text-xl font-bold text-teal-900">{user?.name || 'Пользователь'}</div>
                 <div className="text-gray-500">Новичок</div>
               </div>
               <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -152,7 +142,7 @@ const ProfilePage = () => {
 
             {/* Add Photo */}
             <div className="flex items-center space-x-3 py-4">
-              {profile?.avatar_url ? (
+              {user?.avatarUrl ? (
                 <button 
                   onClick={() => setShowPhotoUpload(true)}
                   className="flex items-center space-x-3 text-teal-600 font-medium"

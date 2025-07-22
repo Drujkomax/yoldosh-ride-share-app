@@ -7,6 +7,7 @@ import { ArrowLeft, Star, User, ChevronLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import UserAvatar from '@/components/UserAvatar';
 
 interface Review {
   id: string;
@@ -147,9 +148,7 @@ const DriverReviewsPage = () => {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="h-8 w-8 text-gray-400" />
-                </div>
+                <UserAvatar size="lg" avatarUrl={driverInfo.avatar_url} name={driverInfo.name} />
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="font-bold text-xl">{driverInfo.name}</span>
@@ -185,9 +184,7 @@ const DriverReviewsPage = () => {
               <Card key={review.id}>
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-4">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
+                    <UserAvatar size="md" avatarUrl={review.reviewer?.avatar_url} name={review.reviewer?.name} />
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Star, User, Phone, MessageCircle, MapPin } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 const PassengerProfile = () => {
   const navigate = useNavigate();
@@ -86,9 +87,7 @@ const PassengerProfile = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center space-x-4 mb-6">
-              <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-10 w-10 text-gray-400" />
-              </div>
+              <UserAvatar size="xl" />
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <h2 className="text-2xl font-bold">{passenger.name}</h2>
@@ -142,9 +141,7 @@ const PassengerProfile = () => {
                 <div key={review.id} className="border-b pb-4 last:border-b-0">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-400" />
-                      </div>
+                      <UserAvatar size="md" />
                       <div>
                         <div className="font-medium">{review.driverName}</div>
                         <div className="flex items-center space-x-2 text-sm text-gray-500">

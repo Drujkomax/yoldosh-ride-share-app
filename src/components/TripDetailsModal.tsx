@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { X, MapPin, Calendar, Clock, Star, User, ChevronRight, Share2, FileText, AlertTriangle, PawPrint, Users, Shield, CreditCard, MessageSquare, Navigation } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 interface TripDetailsModalProps {
   booking: any;
@@ -237,8 +238,8 @@ const TripDetailsModal: React.FC<TripDetailsModalProps> = ({ booking, isOpen, on
           {/* Driver Info */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center relative">
-                <User className="h-6 w-6 text-gray-600" />
+              <div className="relative">
+                <UserAvatar size="md" />
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                   <Shield className="h-3 w-3 text-white" />
                 </div>

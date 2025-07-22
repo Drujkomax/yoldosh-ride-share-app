@@ -8,6 +8,7 @@ import { ArrowLeft, MapPin, Calendar, Clock, Star, User, ChevronRight, Share2, F
 import { useMyTrips } from '@/hooks/useMyTrips';
 import { useUser } from '@/contexts/UserContext';
 import BottomNavigation from '@/components/BottomNavigation';
+import UserAvatar from '@/components/UserAvatar';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -225,9 +226,7 @@ const MyTripsPage = () => {
           {/* Other User Info (Driver/Passenger) */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-gray-600" />
-              </div>
+              <UserAvatar size="md" userId={trip.other_user_id} avatarUrl={trip.other_user_avatar} name={trip.other_user_name} />
               <div>
                 <div className="font-medium text-gray-900">
                   {trip.other_user_name || (trip.trip_type === 'driver' ? 'Пассажир' : 'Водитель')}

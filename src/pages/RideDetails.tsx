@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Calendar, Users, Star, User, Car, Phone, MessageCircle, Edit } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import UserAvatar from '@/components/UserAvatar';
 
 const RideDetails = () => {
   const navigate = useNavigate();
@@ -155,9 +156,7 @@ const RideDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-400" />
-              </div>
+              <UserAvatar size="lg" />
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-1">
                   <span className="font-bold text-lg">{ride.driver.name}</span>
@@ -265,9 +264,7 @@ const RideDetails = () => {
                     onClick={() => handleViewPassengerProfile(passenger.name)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-400" />
-                      </div>
+                      <UserAvatar size="md" />
                       <div>
                         <div className="font-medium">{passenger.name}</div>
                         <div className="flex items-center space-x-1 text-sm">
