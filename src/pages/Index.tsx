@@ -15,8 +15,8 @@ const Index = () => {
         console.log('Index - Пользователь авторизован, редирект на /passenger-search');
         navigate('/passenger-search');
       } else {
-        console.log('Index - Пользователь не авторизован, редирект на /onboarding');
-        navigate('/onboarding');
+        console.log('Index - Пользователь не авторизован, редирект на /login');
+        navigate('/login');
       }
     }
   }, [isAuthenticated, loading, navigate]);

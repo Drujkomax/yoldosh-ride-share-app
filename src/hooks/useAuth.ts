@@ -162,10 +162,25 @@ export const useAuth = () => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     console.log('useAuth - Выход из системы');
-    setUser(null);
-    toast.success('Выход выполнен успешно!');
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('useAuth - Ошибка выхода:', error);
+        toast.error('Ошибка при выходе из системы');
+      } else {
+        setUser(null);
+        toast.success('Выход выполнен успешно!');
+      }
+    } catch (error) {
+      console.error('useAuth - Неожиданная ошибка при выходе:', error);
+      toast.error('Произошла неожиданная ошибка');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {

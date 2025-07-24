@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from "@/contexts/UserContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
+import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import PassengerSearchPage from "./pages/PassengerSearchPage";
 import FullScreenCalendar from "./pages/FullScreenCalendar";
@@ -47,7 +48,8 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
                 <Route path="/passenger-search" element={<PassengerSearchPage />} />
                 <Route path="/full-screen-calendar" element={<FullScreenCalendar />} />
                 <Route path="/passenger-count" element={<PassengerCountPage />} />
