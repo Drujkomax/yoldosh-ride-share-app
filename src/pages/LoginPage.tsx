@@ -52,22 +52,58 @@ const LoginPage = () => {
     return value;
   };
 
-  const checkUserExists = async (identifier: string) => {
+  const getProfileByAuth = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, email, phone')
-        .or(`email.eq.${identifier},phone.eq.${identifier}`)
+        .select('*')
+        .eq('id', userId)
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking user:', error);
+        console.error('Error getting profile:', error);
         return null;
       }
 
       return data;
     } catch (error) {
       console.error('Unexpected error:', error);
+      return null;
+    }
+  };
+
+  const createProfileFromAuth = async (authUser: any, additionalData: any = {}) => {
+    try {
+      const profile = {
+        id: authUser.id,
+        email: authUser.email,
+        phone: additionalData.phone || '',
+        name: additionalData.name || authUser.user_metadata?.name || '',
+        first_name: additionalData.firstName || authUser.user_metadata?.first_name || '',
+        last_name: additionalData.lastName || authUser.user_metadata?.last_name || '',
+        is_verified: false,
+        total_rides: 0,
+        rating: 0.0,
+        onboarding_completed: true,
+        privacy_consent: true,
+        marketing_consent: false,
+        registration_method: 'email',
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(profile)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Unexpected error creating profile:', error);
       return null;
     }
   };
@@ -82,53 +118,65 @@ const LoginPage = () => {
     
     try {
       const identifier = loginType === 'email' ? email : phone;
-      console.log('Checking if user exists:', identifier);
+      const userEmail = loginType === 'email' ? email : `${phone.replace(/\D/g, '')}@temp.com`;
       
-      // Check if user exists in our profiles table
-      const existingUser = await checkUserExists(identifier);
+      console.log('Attempting login with:', userEmail);
       
-      if (!existingUser) {
-        // User doesn't exist, show registration modal
-        setShowRegisterModal(true);
-        setIsLoading(false);
-        return;
-      }
+      // First, try to authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: userEmail,
+        password
+      });
 
-      // User exists, try to sign in with Supabase Auth
-      const signInData = loginType === 'email' 
-        ? { email, password }
-        : { email: existingUser.email || `${phone}@temp.com`, password };
-
-      const { data, error } = await supabase.auth.signInWithPassword(signInData);
-
-      if (error) {
-        console.error('Login error:', error);
+      if (authError) {
+        console.error('Auth login error:', authError);
         
-        if (error.message.includes('Invalid login credentials')) {
-          toast.error('Неверный пароль');
+        if (authError.message.includes('Invalid login credentials')) {
+          toast.error('Неверный email/телефон или пароль');
+        } else if (authError.message.includes('Email not confirmed')) {
+          toast.error('Подтвердите email для входа');
         } else {
-          // If auth fails but user exists, might need to create auth account
+          // User might not exist in auth, show registration modal
           setShowRegisterModal(true);
         }
         return;
       }
 
-      if (data.user) {
+      if (authData.user) {
+        // User successfully authenticated, now check/create profile
+        let userProfile = await getProfileByAuth(authData.user.id);
+        
+        if (!userProfile) {
+          // Profile doesn't exist, create it from auth data
+          console.log('Profile not found, creating from auth data');
+          userProfile = await createProfileFromAuth(authData.user, {
+            phone: loginType === 'phone' ? phone : '',
+            name: authData.user.user_metadata?.name || '',
+            firstName: authData.user.user_metadata?.first_name || '',
+            lastName: authData.user.user_metadata?.last_name || '',
+          });
+          
+          if (!userProfile) {
+            toast.error('Ошибка при создании профиля');
+            return;
+          }
+        }
+
         // Successfully logged in
         toast.success('Добро пожаловать!');
         
-        // Load user profile
-        const userProfile = {
-          id: existingUser.id,
-          phone: existingUser.phone || '',
-          name: existingUser.name || '',
-          email: existingUser.email || '',
-          isVerified: false,
-          totalRides: 0,
-          rating: 0.0
+        // Set user in context
+        const contextUser = {
+          id: userProfile.id,
+          phone: userProfile.phone || '',
+          name: userProfile.name || '',
+          email: userProfile.email || '',
+          isVerified: userProfile.is_verified || false,
+          totalRides: userProfile.total_rides || 0,
+          rating: userProfile.rating || 0.0
         };
 
-        setUser(userProfile);
+        setUser(contextUser);
         navigate('/passenger-search');
       }
     } catch (error) {
