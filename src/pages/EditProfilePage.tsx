@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const { profile, updateProfile } = useProfile();
   
   const [formData, setFormData] = useState({
@@ -30,15 +30,32 @@ const EditProfilePage = () => {
   const handleSave = async () => {
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      
+      // Обновляем профиль в БД
       await updateProfile({
         name: fullName,
         date_of_birth: formData.dateOfBirth,
         email: formData.email,
         phone: formData.phone
       });
+      
+      // Обновляем данные пользователя в контексте
+      if (user) {
+        const updatedUser = {
+          ...user,
+          name: fullName,
+          email: formData.email,
+          phone: formData.phone
+        };
+        
+        // setUser из контекста автоматически обновит данные в БД и localStorage
+        setUser(updatedUser);
+      }
+      
       toast.success('Профиль обновлен');
       navigate('/profile');
     } catch (error) {
+      console.error('Ошибка при обновлении профиля:', error);
       toast.error('Ошибка при обновлении профиля');
     }
   };
