@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import PhoneVerificationModal from '@/components/PhoneVerificationModal';
+import { EmailVerificationModal } from '@/components/EmailVerificationModal';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ const EditProfilePage = () => {
 
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -37,6 +40,8 @@ const EditProfilePage = () => {
       
       // Проверяем, изменился ли номер телефона
       const phoneChanged = formData.phone !== profile?.phone;
+      // Проверяем, изменился ли email
+      const emailChanged = formData.email !== profile?.email;
       
       if (phoneChanged) {
         // Если номер телефона изменился, запускаем процесс верификации
@@ -45,7 +50,14 @@ const EditProfilePage = () => {
         return; // Не сохраняем пока не подтвердим номер
       }
       
-      // Если номер не изменился, сохраняем остальные данные
+      if (emailChanged) {
+        // Если email изменился, запускаем процесс верификации
+        setPendingEmail(formData.email);
+        setShowEmailVerification(true);
+        return; // Не сохраняем пока не подтвердим email
+      }
+      
+      // Если ничего не изменилось, сохраняем остальные данные
       await saveProfile();
     } catch (error) {
       console.error('Ошибка при обновлении профиля:', error);
@@ -86,6 +98,15 @@ const EditProfilePage = () => {
       await saveProfile();
     } catch (error) {
       console.error('Ошибка при сохранении профиля после верификации:', error);
+      toast.error('Ошибка при сохранении данных');
+    }
+  };
+
+  const handleEmailVerificationSuccess = async () => {
+    try {
+      await saveProfile();
+    } catch (error) {
+      console.error('Ошибка при сохранении профиля после верификации email:', error);
       toast.error('Ошибка при сохранении данных');
     }
   };
@@ -192,6 +213,14 @@ const EditProfilePage = () => {
         onClose={() => setShowPhoneVerification(false)}
         phoneNumber={pendingPhoneNumber}
         onVerificationSuccess={handlePhoneVerificationSuccess}
+      />
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showEmailVerification}
+        onClose={() => setShowEmailVerification(false)}
+        newEmail={pendingEmail}
+        onVerified={handleEmailVerificationSuccess}
       />
     </div>
   );
