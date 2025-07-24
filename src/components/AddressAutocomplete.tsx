@@ -58,18 +58,24 @@ const AddressAutocomplete = ({
     }, 300);
   };
 
+  // Функция для очистки названия города от ", Узбекистан" и областей
+  const cleanCityName = (address: string) => {
+    if (!address) return address;
+    return address.replace(/, Узбекистан$/, '').replace(/, Андижанская область$/, '').replace(/, Ташкентская область$/, '').replace(/, [^,]+ская область$/, '');
+  };
+
   const handleSelectPrediction = async (prediction: any) => {
     const details = await getPlaceDetails(prediction.place_id);
     const address = prediction.description;
-    const normalizedAddress = standardizeCityName(address);
+    const cleanedAddress = cleanCityName(address);
     
-    // Сохраняем в недавние поиски
-    const newRecentSearches = [normalizedAddress, ...recentSearches.filter(item => item !== normalizedAddress)].slice(0, 5);
+    // Сохраняем в недавние поиски очищенное название
+    const newRecentSearches = [cleanedAddress, ...recentSearches.filter(item => item !== cleanedAddress)].slice(0, 5);
     setRecentSearches(newRecentSearches);
     localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
     
     const coordinates = details ? [details.geometry.location.lat, details.geometry.location.lng] as [number, number] : undefined;
-    onSelect(normalizedAddress, coordinates);
+    onSelect(cleanedAddress, coordinates);
     onClose();
   };
 
@@ -77,15 +83,15 @@ const AddressAutocomplete = ({
     try {
       const location = await getCurrentLocation();
       
-      // Нормализуем адрес текущего местоположения
-      const normalizedAddress = standardizeCityName(location.address);
+      // Очищаем адрес текущего местоположения
+      const cleanedAddress = cleanCityName(location.address);
       
       // Сохраняем текущее местоположение в недавние поиски
-      const newRecentSearches = [normalizedAddress, ...recentSearches.filter(item => item !== normalizedAddress)].slice(0, 5);
+      const newRecentSearches = [cleanedAddress, ...recentSearches.filter(item => item !== cleanedAddress)].slice(0, 5);
       setRecentSearches(newRecentSearches);
       localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
       
-      onSelect(normalizedAddress, [location.lat, location.lng]);
+      onSelect(cleanedAddress, [location.lat, location.lng]);
       onClose();
     } catch (error) {
       console.error('Error getting current location:', error);
