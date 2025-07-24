@@ -7,6 +7,7 @@ import RegistrationMethod from '@/components/onboarding/RegistrationMethod';
 import EmailRegistration from '@/components/onboarding/EmailRegistration';
 import DeviceVerification from '@/components/onboarding/DeviceVerification';
 import PersonalInfo from '@/components/onboarding/PersonalInfo';
+import PasswordCreation from '@/components/onboarding/PasswordCreation';
 import DateOfBirth from '@/components/onboarding/DateOfBirth';
 
 const OnboardingPage = () => {
@@ -77,6 +78,17 @@ const OnboardingPage = () => {
         );
       
       case 6:
+        return (
+          <PasswordCreation
+            password={onboardingData.password || ''}
+            confirmPassword={onboardingData.confirmPassword || ''}
+            onPasswordChange={(password) => updateOnboardingData({ password })}
+            onConfirmPasswordChange={(confirmPassword) => updateOnboardingData({ confirmPassword })}
+            onNext={nextStep}
+          />
+        );
+      
+      case 7:
         return (
           <DateOfBirth
             dateOfBirth={onboardingData.dateOfBirth}

@@ -8,6 +8,8 @@ export interface OnboardingData {
   lastName: string;
   dateOfBirth?: Date;
   phone: string;
+  password?: string;
+  confirmPassword?: string;
   verificationCode?: string;
 }
 

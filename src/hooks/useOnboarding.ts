@@ -26,6 +26,8 @@ export const useOnboarding = () => {
     firstName: '',
     lastName: '',
     phone: '+998',
+    password: '',
+    confirmPassword: '',
   });
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
@@ -45,59 +47,79 @@ export const useOnboarding = () => {
     try {
       console.log('Completing registration with data:', onboardingData);
       
-      const userId = generateUUID();
+      if (!onboardingData.password) {
+        toast.error('Пароль не указан');
+        return false;
+      }
+
+      // Создаем пользователя в Supabase Auth
+      const userEmail = onboardingData.email || `${onboardingData.phone.replace(/\D/g, '')}@temp.com`;
       
-      // Создаем профиль пользователя с полными данными onboarding
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: userId,
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userEmail,
+        password: onboardingData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            firstName: onboardingData.firstName,
+            lastName: onboardingData.lastName,
             phone: onboardingData.phone,
-            name: `${onboardingData.firstName} ${onboardingData.lastName}`,
+            registrationMethod: onboardingData.registrationMethod,
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('Auth registration error:', authError);
+        if (authError.message.includes('User already registered')) {
+          toast.error('Пользователь с таким email уже зарегистрирован');
+        } else {
+          toast.error('Ошибка при создании аккаунта: ' + authError.message);
+        }
+        return false;
+      }
+
+      if (authData.user) {
+        // Профиль будет создан автоматически через триггер
+        // Обновляем дополнительные данные профиля
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
             first_name: onboardingData.firstName,
             last_name: onboardingData.lastName,
-            email: onboardingData.email,
             date_of_birth: onboardingData.dateOfBirth ? onboardingData.dateOfBirth.toISOString().split('T')[0] : null,
             marketing_consent: onboardingData.marketingConsent,
             privacy_consent: onboardingData.privacyConsent,
             registration_method: onboardingData.registrationMethod,
             terms_accepted_at: new Date().toISOString(),
             onboarding_completed: true,
-            is_verified: false,
-            total_rides: 0,
-            rating: 0.0
-          }
-        ])
-        .select()
-        .single();
+          })
+          .eq('id', authData.user.id);
 
-      if (error) {
-        console.error('Registration error:', error);
-        if (error.code === '23505') {
-          toast.error('Пользователь с таким номером или email уже существует');
-        } else {
-          toast.error('Ошибка при регистрации');
+        if (updateError) {
+          console.error('Profile update error:', updateError);
+          // Не фейлим регистрацию из-за ошибки обновления профиля
         }
-        return false;
+
+        // Сохраняем пользователя в контексте
+        const userProfile = {
+          id: authData.user.id,
+          phone: onboardingData.phone,
+          name: `${onboardingData.firstName} ${onboardingData.lastName}`,
+          email: userEmail,
+          isVerified: false,
+          totalRides: 0,
+          rating: 0.0,
+        };
+
+        setUser(userProfile);
+        
+        toast.success('Регистрация завершена успешно!');
+        navigate('/passenger-search');
+        return true;
       }
 
-      // Сохраняем пользователя в контексте
-      const userProfile = {
-        id: profile.id,
-        phone: profile.phone,
-        name: profile.name,
-        isVerified: profile.is_verified || false,
-        totalRides: profile.total_rides || 0,
-        rating: profile.rating || 0.0,
-        avatarUrl: profile.avatar_url
-      };
-
-      setUser(userProfile);
-      
-      toast.success('Регистрация завершена успешно!');
-      navigate('/passenger-search');
-      return true;
+      return false;
     } catch (error) {
       console.error('Unexpected registration error:', error);
       toast.error('Произошла неожиданная ошибка при регистрации');
