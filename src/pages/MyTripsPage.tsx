@@ -275,15 +275,8 @@ const MyTripsPage = () => {
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="px-4 py-4">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/passenger')}
-              className="p-2 mr-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-bold text-gray-900">Your rides</h1>
+          <div className="flex items-center justify-center">
+            <h1 className="text-xl font-bold text-gray-900">Мои поездки</h1>
           </div>
         </div>
       </div>
