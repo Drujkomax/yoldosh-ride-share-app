@@ -252,10 +252,19 @@ const ProfilePage = () => {
                   <span className="text-teal-600 font-medium text-sm">Проверить паспорт</span>
                 </button>
                 
-                {/* Verify Email */}
+                {/* Email */}
                 <div className="flex items-center space-x-2 p-2">
-                  <Plus className="h-4 w-4 text-teal-600" />
-                  <span className="text-teal-600 font-medium text-sm">Подтвердить почту</span>
+                  {user?.email ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-teal-600" />
+                      <span className="text-gray-700 text-sm">{user.email}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 text-teal-600" />
+                      <span className="text-teal-600 font-medium text-sm">Добавить почту</span>
+                    </>
+                  )}
                 </div>
                 
                 {/* Phone Verified */}
