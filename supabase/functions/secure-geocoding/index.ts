@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 interface GeocodingRequest {
-  type: 'google-maps' | 'yandex' | '2gis'
+  type: 'google-maps'
   operation: 'geocode' | 'reverse' | 'directions'
   query?: string
   latitude?: number

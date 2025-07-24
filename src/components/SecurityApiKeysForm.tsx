@@ -21,20 +21,6 @@ const SecurityApiKeysForm: React.FC = () => {
       description: 'Required for Google Maps integration and geocoding services',
       required: true,
       visible: false
-    },
-    {
-      name: 'Yandex Maps API Key',
-      value: localStorage.getItem('yandex_maps_api_key') || '',
-      description: 'Optional - for Yandex Maps integration (fallback service)',
-      required: false,
-      visible: false
-    },
-    {
-      name: '2GIS API Key',
-      value: localStorage.getItem('twogis_api_key') || '',
-      description: 'Optional - for 2GIS mapping services in Central Asia',
-      required: false,
-      visible: false
     }
   ]);
 
