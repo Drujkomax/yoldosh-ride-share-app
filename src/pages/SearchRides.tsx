@@ -347,6 +347,12 @@ const SearchRides = () => {
     setShowAddressSearch(false);
   };
 
+  // Функция для очистки названия города от ", Узбекистан" 
+  const cleanCityName = (address: string) => {
+    if (!address) return address;
+    return address.replace(/, Узбекистан$/, '').replace(/, Андижанская область$/, '').replace(/, Ташкентская область$/, '').replace(/, [^,]+ская область$/, '');
+  };
+
   const openAddressSearch = (type: 'from' | 'to') => {
     setAddressSearchType(type);
     setShowAddressSearch(true);
@@ -479,7 +485,7 @@ const SearchRides = () => {
                         <div className="w-3 h-3 border-2 border-blue-500 rounded-full flex-shrink-0" />
                         <div className="flex-1">
                           <div className="text-lg font-medium text-gray-900">
-                            {editFilters.from || 'Откуда'}
+                            {editFilters.from ? cleanCityName(editFilters.from) : 'Откуда'}
                           </div>
                         </div>
                       </div>
@@ -508,7 +514,7 @@ const SearchRides = () => {
                         <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0" />
                         <div className="flex-1">
                           <div className="text-lg font-medium text-gray-900">
-                            {editFilters.to || 'Куда'}
+                            {editFilters.to ? cleanCityName(editFilters.to) : 'Куда'}
                           </div>
                         </div>
                       </div>
