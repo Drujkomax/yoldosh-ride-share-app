@@ -85,7 +85,12 @@ const MapSelectionPage = ({
       initializeMap();
     } else {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68&libraries=places&language=ru`;
+      const apiKey = localStorage.getItem('google_maps_api_key');
+      if (!apiKey) {
+        console.error('Google Maps API key not found');
+        return;
+      }
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
       script.onload = initializeMap;
       document.head.appendChild(script);
     }

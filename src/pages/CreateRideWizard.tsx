@@ -117,14 +117,12 @@ const CreateRideWizard = () => {
     intermediate_stops: []
   });
 
-  // Автоматически устанавливаем API ключ при загрузке
+  // API keys are now managed securely - no hardcoded keys
   useEffect(() => {
-    const apiKey = 'AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68';
     const savedKey = localStorage.getItem('google_maps_api_key');
     
     if (!savedKey) {
-      localStorage.setItem('google_maps_api_key', apiKey);
-      console.log('Google Maps API ключ автоматически установлен');
+      console.warn('Google Maps API key not configured. Please set up API keys in settings.');
     }
   }, []);
 
@@ -276,7 +274,7 @@ const CreateRideWizard = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <GoogleMapsApiKeyInput autoSetKey="AIzaSyCJSjDFNJvtX9BS2UGQ1QAFq7yLiid7d68" />
+            <GoogleMapsApiKeyInput />
             <div className="text-center space-y-4">
               <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto">
                 <Car className="h-10 w-10 text-white" />

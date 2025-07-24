@@ -297,7 +297,6 @@ export type Database = {
           name: string
           notification_settings: Json | null
           onboarding_completed: boolean | null
-          password_hash: string | null
           phone: string
           privacy_consent: boolean | null
           privacy_settings: Json | null
@@ -321,7 +320,6 @@ export type Database = {
           name: string
           notification_settings?: Json | null
           onboarding_completed?: boolean | null
-          password_hash?: string | null
           phone: string
           privacy_consent?: boolean | null
           privacy_settings?: Json | null
@@ -345,7 +343,6 @@ export type Database = {
           name?: string
           notification_settings?: Json | null
           onboarding_completed?: boolean | null
-          password_hash?: string | null
           phone?: string
           privacy_consent?: boolean | null
           privacy_settings?: Json | null

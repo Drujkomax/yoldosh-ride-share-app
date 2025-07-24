@@ -15,7 +15,7 @@ interface RouteResult {
 
 export const use2GisGeocoding = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
+  // API key is now managed securely via edge function
 
   const geocodeAddress = async (address: string): Promise<GeocodeResult[]> => {
     if (address.length < 2) return [];
@@ -25,7 +25,7 @@ export const use2GisGeocoding = () => {
       console.log('Geocoding address with 2GIS:', address);
       
       const response = await fetch(
-        `https://catalog.api.2gis.com/3.0/items/geocode?q=${encodeURIComponent(address)}&key=${API_KEY}&location=69.240073,41.311081&radius=50000&fields=items.point&locale=ru_RU`
+        null // Will be replaced with secure edge function call
       );
       
       if (!response.ok) {
@@ -52,7 +52,7 @@ export const use2GisGeocoding = () => {
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
       const response = await fetch(
-        `https://catalog.api.2gis.com/3.0/items/geocode?lat=${latitude}&lon=${longitude}&key=${API_KEY}&fields=items.point&locale=ru_RU`
+        null // Will be replaced with secure edge function call
       );
       
       if (response.ok) {

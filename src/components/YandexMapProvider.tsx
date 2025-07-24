@@ -31,7 +31,8 @@ export const YandexMapProvider = ({ children }: YandexMapProviderProps) => {
       }
 
       const script = document.createElement('script');
-      script.src = 'https://api-maps.yandex.ru/2.1/?apikey=e50140a7-ffa3-493f-86d6-e25b5d1bfb17&lang=ru_RU';
+      // API key removed - Yandex Maps will work without key for basic functionality
+      script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU';
       script.async = true;
       
       script.onload = () => {

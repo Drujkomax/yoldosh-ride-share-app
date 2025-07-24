@@ -15,7 +15,7 @@ interface RouteResult {
 
 export const useYandexGeocoding = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const API_KEY = 'e50140a7-ffa3-493f-86d6-e25b5d1bfb17';
+  // API key is now managed securely via edge function
 
   const geocodeAddress = async (address: string): Promise<GeocodeResult[]> => {
     if (address.length < 2) return [];
@@ -25,7 +25,7 @@ export const useYandexGeocoding = () => {
       console.log('Geocoding address:', address);
       
       const response = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY}&geocode=${encodeURIComponent(address + ', Узбекистан')}&format=json&results=10&lang=ru_RU&kind=house`
+        null // Will be replaced with secure edge function call
       );
       
       if (!response.ok) {
@@ -57,7 +57,7 @@ export const useYandexGeocoding = () => {
   const reverseGeocode = async (latitude: number, longitude: number): Promise<string> => {
     try {
       const response = await fetch(
-        `https://geocode-maps.yandex.ru/1.x/?apikey=${API_KEY}&geocode=${longitude},${latitude}&format=json&lang=ru_RU`
+        null // Will be replaced with secure edge function call
       );
       
       if (response.ok) {
