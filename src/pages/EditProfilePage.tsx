@@ -104,7 +104,37 @@ const EditProfilePage = () => {
 
   const handleEmailVerificationSuccess = async () => {
     try {
-      await saveProfile();
+      // Обновляем formData с подтвержденным email
+      setFormData(prev => ({
+        ...prev,
+        email: pendingEmail
+      }));
+      
+      // Сохраняем профиль с новым email
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      
+      // Обновляем профиль в БД
+      await updateProfile({
+        name: fullName,
+        date_of_birth: formData.dateOfBirth,
+        email: pendingEmail, // Используем подтвержденный email
+        phone: formData.phone
+      });
+      
+      // Обновляем данные пользователя в контексте
+      if (user) {
+        const updatedUser = {
+          ...user,
+          name: fullName,
+          email: pendingEmail, // Используем подтвержденный email
+          phone: formData.phone
+        };
+        
+        setUser(updatedUser);
+      }
+      
+      toast.success('Email подтвержден и профиль обновлен');
+      navigate('/profile');
     } catch (error) {
       console.error('Ошибка при сохранении профиля после верификации email:', error);
       toast.error('Ошибка при сохранении данных');
