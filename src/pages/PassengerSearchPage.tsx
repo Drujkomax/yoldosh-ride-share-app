@@ -7,6 +7,7 @@ import { MapPin, Calendar, Users, ArrowRight, Clock } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { supabase } from '@/integrations/supabase/client';
 import { standardizeCityName } from '@/lib/cityNormalizer';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 
@@ -200,10 +201,27 @@ const PassengerSearchPage = () => {
 
       {/* Header with Illustration */}
       <div className="px-4 pt-12 pb-4">
-        <div className="text-center mb-4">
-          <h1 className="text-xl font-bold text-white mb-1">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-xl font-bold text-white">
             Поездки на ваш выбор
           </h1>
+          <Button
+            onClick={async () => {
+              try {
+                console.log('Выход из системы...');
+                await supabase.auth.signOut();
+                // Переходим на страницу входа
+                navigate('/login', { replace: true });
+              } catch (error) {
+                console.error('Logout error:', error);
+              }
+            }}
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-white/20"
+          >
+            Выйти
+          </Button>
         </div>
         
         {/* Transportation Illustration - Compact */}
