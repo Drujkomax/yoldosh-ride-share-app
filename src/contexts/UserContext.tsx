@@ -98,8 +98,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             avatarUrl: profile.avatar_url
           };
           
-          setUser(completeUser);
-          localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
+          // Если пользователь уже существует, обновляем только данные из БД (включая avatarUrl)
+          setUser(prev => {
+            if (prev) {
+              const updatedUser = {
+                ...prev,
+                ...completeUser // Перезаписываем всеми данными из БД, включая avatarUrl
+              };
+              localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
+              return updatedUser;
+            } else {
+              localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
+              return completeUser;
+            }
+          });
         } else {
           console.error('UserContext - Ошибка загрузки профиля:', profileError);
           setUser(null);
@@ -202,7 +214,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             phone: updatedUser.phone,
             is_verified: updatedUser.isVerified,
             total_rides: updatedUser.totalRides,
-            rating: updatedUser.rating || 0.0
+            rating: updatedUser.rating || 0.0,
+            avatar_url: updatedUser.avatarUrl // Добавляем avatar_url в обновление
           }]);
 
         if (error) {
