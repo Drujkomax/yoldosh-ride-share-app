@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield, Loader2, Plus, CheckCircle, ChevronRight, Mail, MessageSquare, Users, Bell, Moon, Lock, CreditCard, Wallet, HelpCircle, Gift, Zap } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -12,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import BottomNavigation from '@/components/BottomNavigation';
 import PhotoUploadFlow from '@/components/PhotoUploadFlow';
 import UserAvatar from '@/components/UserAvatar';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -21,9 +23,15 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('about');
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      console.log('Выход из системы...');
+      await supabase.auth.signOut();
+      setUser(null);
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const handlePhotoUploadComplete = (uploaded: boolean) => {
@@ -314,14 +322,31 @@ const ProfilePage = () => {
 
             {/* Logout Button */}
             <div className="pt-2">
-              <Button 
-                variant="outline" 
-                className="w-full h-10 justify-start text-red-600 border-red-200 hover:bg-red-50 text-sm"
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Выйти из аккаунта
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-10 justify-start text-red-600 border-red-200 hover:bg-red-50 text-sm"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Выйти из аккаунта
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Выйти из аккаунта?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Вы уверены, что хотите выйти из аккаунта? Вам потребуется войти заново для доступа к вашему профилю.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Отмена</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700">
+                      Выйти
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         )}
