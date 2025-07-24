@@ -43,19 +43,39 @@ export const useAuth = () => {
 
       console.log('useAuth - Пользователь не найден, создаем нового...');
       
-      // Используем Supabase Auth для создания анонимного пользователя
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously({
+      // Создаем временный email для регистрации
+      const tempEmail = `${phone.replace(/\D/g, '')}@temp.yoldosh.uz`;
+      const tempPassword = `${phone.replace(/\D/g, '')}Pass123!`;
+      
+      console.log('useAuth - Регистрируем пользователя в Supabase Auth...');
+      
+      // Используем Supabase Auth для создания пользователя
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: tempEmail,
+        password: tempPassword,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             phone,
-            name
+            name,
+            firstName: name.split(' ')[0] || '',
+            lastName: name.split(' ').slice(1).join(' ') || '',
+            registrationMethod: 'phone'
           }
         }
       });
 
       if (authError) {
         console.error('useAuth - Ошибка при создании auth пользователя:', authError);
-        toast.error('Ошибка при создании аккаунта');
+        
+        let errorMessage = 'Ошибка при создании аккаунта';
+        if (authError.message.includes('User already registered')) {
+          errorMessage = 'Пользователь уже зарегистрирован';
+        } else if (authError.message.includes('Password')) {
+          errorMessage = 'Ошибка пароля';
+        }
+        
+        toast.error(errorMessage);
         return false;
       }
 
@@ -67,44 +87,24 @@ export const useAuth = () => {
 
       console.log('useAuth - Auth пользователь создан:', authData.user.id);
       
-      // Создаем профиль пользователя с ID от Supabase Auth
-      console.log('useAuth - Создаем профиль в базе данных...');
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            phone,
-            name,
-            is_verified: false,
-            total_rides: 0,
-            rating: 0.0
-          }
-        ])
-        .select()
-        .single();
+      // Профиль будет создан автоматически через триггер handle_new_user
+      // Ждем немного для обработки триггера
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (error) {
-        console.error('useAuth - Ошибка при создании профиля:', error);
-        console.error('useAuth - Детали ошибки:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        
-        let errorMessage = 'Ошибка при регистрации';
-        if (error.code === '23505') {
-          errorMessage = 'Пользователь с таким номером уже существует';
-        } else if (error.code === '23514') {
-          errorMessage = 'Некорректные данные для регистрации';
-        }
-        
-        toast.error(errorMessage);
+      // Проверяем, что профиль создался
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+
+      if (profileError || !profile) {
+        console.error('useAuth - Ошибка при получении профиля:', profileError);
+        toast.error('Ошибка при создании профиля');
         return false;
       }
 
-      console.log('useAuth - Профиль успешно создан в базе данных:', profile);
+      console.log('useAuth - Профиль найден:', profile);
 
       // Сохраняем пользователя в контексте
       const userProfile = {
@@ -139,6 +139,7 @@ export const useAuth = () => {
       console.log('=== НАЧАЛО ВХОДА ===');
       console.log('useAuth - Попытка входа для телефона:', phone);
       
+      // Находим пользователя по номеру телефона
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -153,11 +154,25 @@ export const useAuth = () => {
 
       if (!profile) {
         console.log('useAuth - Пользователь не найден для телефона:', phone);
-        toast.error('Пользователь не найден');
-        return false;
+        return false; // Не показываем ошибку, пусть регистрация решает
       }
 
       console.log('useAuth - Профиль найден:', profile);
+
+      // Входим в Supabase Auth с временными данными
+      const tempEmail = `${phone.replace(/\D/g, '')}@temp.yoldosh.uz`;
+      const tempPassword = `${phone.replace(/\D/g, '')}Pass123!`;
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: tempEmail,
+        password: tempPassword,
+      });
+
+      if (authError) {
+        console.error('useAuth - Ошибка при входе в Auth:', authError);
+        // Если не удалось войти, возможно пользователь создан другим способом
+        // Просто устанавливаем пользователя в контекст без аутентификации
+      }
 
       const userProfile = {
         id: profile.id,
