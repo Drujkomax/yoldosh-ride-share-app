@@ -104,21 +104,22 @@ const EditProfilePage = () => {
 
   const handleEmailVerificationSuccess = async () => {
     try {
-      // Обновляем formData с подтвержденным email
-      setFormData(prev => ({
-        ...prev,
+      // Сначала обновляем formData с подтвержденным email
+      const updatedFormData = {
+        ...formData,
         email: pendingEmail
-      }));
+      };
+      setFormData(updatedFormData);
       
       // Сохраняем профиль с новым email
-      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+      const fullName = `${updatedFormData.firstName} ${updatedFormData.lastName}`.trim();
       
       // Обновляем профиль в БД
       await updateProfile({
         name: fullName,
-        date_of_birth: formData.dateOfBirth,
+        date_of_birth: updatedFormData.dateOfBirth,
         email: pendingEmail, // Используем подтвержденный email
-        phone: formData.phone
+        phone: updatedFormData.phone
       });
       
       // Обновляем данные пользователя в контексте
@@ -127,7 +128,7 @@ const EditProfilePage = () => {
           ...user,
           name: fullName,
           email: pendingEmail, // Используем подтвержденный email
-          phone: formData.phone
+          phone: updatedFormData.phone
         };
         
         setUser(updatedUser);
