@@ -49,23 +49,8 @@ const ChatsListPage = () => {
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="hover:bg-yoldosh-primary/10 mobile-tap-highlight-transparent"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Назад
-            </Button>
+          <div className="flex items-center justify-center">
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">Входящие сообщения</h1>
-            <div className="flex items-center space-x-2">
-              {role && (
-                <Badge variant="outline" className="text-xs">
-                  {role === 'driver' ? 'Водитель' : 'Пассажир'}
-                </Badge>
-              )}
-            </div>
           </div>
         </div>
       </div>
