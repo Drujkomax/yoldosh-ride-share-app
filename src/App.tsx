@@ -35,6 +35,7 @@ import { PushNotificationsPage } from "./pages/PushNotificationsPage";
 import { EmailNotificationsPage } from "./pages/EmailNotificationsPage";
 import { ThemeSettingsPage } from "./pages/ThemeSettingsPage";
 import { SavedPassengersPage } from "./pages/SavedPassengersPage";
+import AboutMePage from "./pages/AboutMePage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ function App() {
                 <Route path="/chat/:chatId" element={<ChatPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/edit-profile" element={<EditProfilePage />} />
+                <Route path="/about-me" element={<AboutMePage />} />
                 <Route path="/profile/:userId" element={<UserProfile />} />
                 <Route path="/manage-cars" element={<ManageCarsPage />} />
                 <Route path="/create-ride-wizard" element={<CreateRideWizard />} />
