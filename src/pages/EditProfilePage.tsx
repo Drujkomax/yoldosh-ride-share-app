@@ -6,6 +6,7 @@ import { X, Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
+import PhoneVerificationModal from '@/components/PhoneVerificationModal';
 
 const EditProfilePage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ const EditProfilePage = () => {
     phone: profile?.phone || ''
   });
 
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [pendingPhoneNumber, setPendingPhoneNumber] = useState('');
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -31,32 +35,58 @@ const EditProfilePage = () => {
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       
-      // Обновляем профиль в БД
-      await updateProfile({
-        name: fullName,
-        date_of_birth: formData.dateOfBirth,
-        email: formData.email,
-        phone: formData.phone
-      });
+      // Проверяем, изменился ли номер телефона
+      const phoneChanged = formData.phone !== profile?.phone;
       
-      // Обновляем данные пользователя в контексте
-      if (user) {
-        const updatedUser = {
-          ...user,
-          name: fullName,
-          email: formData.email,
-          phone: formData.phone
-        };
-        
-        // setUser из контекста автоматически обновит данные в БД и localStorage
-        setUser(updatedUser);
+      if (phoneChanged) {
+        // Если номер телефона изменился, запускаем процесс верификации
+        setPendingPhoneNumber(formData.phone);
+        setShowPhoneVerification(true);
+        return; // Не сохраняем пока не подтвердим номер
       }
       
-      toast.success('Профиль обновлен');
-      navigate('/profile');
+      // Если номер не изменился, сохраняем остальные данные
+      await saveProfile();
     } catch (error) {
       console.error('Ошибка при обновлении профиля:', error);
       toast.error('Ошибка при обновлении профиля');
+    }
+  };
+
+  const saveProfile = async () => {
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    
+    // Обновляем профиль в БД
+    await updateProfile({
+      name: fullName,
+      date_of_birth: formData.dateOfBirth,
+      email: formData.email,
+      phone: formData.phone
+    });
+    
+    // Обновляем данные пользователя в контексте
+    if (user) {
+      const updatedUser = {
+        ...user,
+        name: fullName,
+        email: formData.email,
+        phone: formData.phone
+      };
+      
+      // setUser из контекста автоматически обновит данные в БД и localStorage
+      setUser(updatedUser);
+    }
+    
+    toast.success('Профиль обновлен');
+    navigate('/profile');
+  };
+
+  const handlePhoneVerificationSuccess = async () => {
+    try {
+      await saveProfile();
+    } catch (error) {
+      console.error('Ошибка при сохранении профиля после верификации:', error);
+      toast.error('Ошибка при сохранении данных');
     }
   };
 
@@ -155,6 +185,14 @@ const EditProfilePage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Phone Verification Modal */}
+      <PhoneVerificationModal
+        isOpen={showPhoneVerification}
+        onClose={() => setShowPhoneVerification(false)}
+        phoneNumber={pendingPhoneNumber}
+        onVerificationSuccess={handlePhoneVerificationSuccess}
+      />
     </div>
   );
 };
