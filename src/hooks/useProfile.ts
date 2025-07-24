@@ -14,6 +14,7 @@ export interface UserProfile {
   total_rides: number;
   rating: number;
   avatar_url?: string;
+  about?: string;
   created_at: string;
   updated_at: string;
 }
