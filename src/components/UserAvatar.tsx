@@ -51,16 +51,6 @@ const UserAvatar = ({
     (!userId ? user?.avatarUrl : null);
   const displayName = name || user?.name;
   
-  console.log('UserAvatar render:', {
-    avatarUrl,
-    userId,
-    userFromContext: user?.id,
-    userAvatarUrl: user?.avatarUrl,
-    displayAvatarUrl,
-    name,
-    displayName
-  });
-  
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12', 
