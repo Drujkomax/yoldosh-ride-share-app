@@ -32,6 +32,8 @@ const LocationStep = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [canContinue, setCanContinue] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
   
   const { geocodeAddress, reverseGeocode } = useGoogleGeocoding();
   const { frequentLocations } = useFrequentLocations();
@@ -46,16 +48,24 @@ const LocationStep = ({
   const searchAddresses = async (searchQuery: string) => {
     if (searchQuery.length < 2) {
       setSuggestions([]);
+      setSearchPerformed(false);
       return;
     }
+
+    setIsSearching(true);
+    setSearchPerformed(false);
 
     try {
       const results = await geocodeAddress(searchQuery);
       setSuggestions(results);
+      setSearchPerformed(true);
       console.log('Результаты поиска:', results);
     } catch (error) {
       console.error('Ошибка поиска адресов:', error);
       setSuggestions([]);
+      setSearchPerformed(true);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -213,32 +223,52 @@ const LocationStep = ({
       <div className="px-6 mb-6">
         {showSuggestions && isFocused ? (
           // Показывать результаты поиска когда пользователь печатает
-          query.length > 0 && suggestions.length > 0 && (
-            <div className="space-y-1">
-              <div className="mb-3">
-                <span className="text-sm font-medium text-gray-600">Результаты поиска</span>
-              </div>
-              {suggestions.map((address, index) => (
-                <Button
-                  key={index}
-                  onClick={() => handleAddressSelect(address)}
-                  className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
-                  variant="outline"
-                >
-                  <div className="flex items-center flex-1 min-w-0">
-                    <div className="p-2 bg-green-100 rounded-full mr-3 flex-shrink-0">
-                      <Search className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-gray-900 truncate">{address.name}</div>
-                      <div className="text-sm text-gray-500 truncate">{address.description}</div>
-                    </div>
+          <div>
+            {query.length >= 2 && (
+              <div className="space-y-1">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Результаты поиска</span>
+                  {isSearching && (
+                    <span className="text-sm text-gray-400">Поиск...</span>
+                  )}
+                </div>
+                
+                {suggestions.length > 0 ? (
+                  suggestions.map((address, index) => (
+                    <Button
+                      key={index}
+                      onClick={() => handleAddressSelect(address)}
+                      className="w-full h-14 bg-white border border-gray-200 rounded-xl flex items-center justify-between px-4 hover:bg-gray-50 text-left"
+                      variant="outline"
+                    >
+                      <div className="flex items-center flex-1 min-w-0">
+                        <div className="p-2 bg-green-100 rounded-full mr-3 flex-shrink-0">
+                          <Search className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 truncate">{address.name}</div>
+                          <div className="text-sm text-gray-500 truncate">{address.description}</div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                    </Button>
+                  ))
+                ) : searchPerformed && !isSearching ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Места не найдены</p>
+                    <p className="text-xs">Попробуйте изменить запрос</p>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                </Button>
-              ))}
-            </div>
-          )
+                ) : null}
+              </div>
+            )}
+            
+            {query.length > 0 && query.length < 2 && (
+              <div className="text-center py-4 text-gray-400">
+                <p className="text-sm">Введите минимум 2 символа для поиска</p>
+              </div>
+            )}
+          </div>
         ) : (
           // Показывать частые локации когда клавиатура не активна
           query.length === 0 && frequentLocations.length > 0 && (
