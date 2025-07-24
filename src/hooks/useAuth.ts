@@ -23,9 +23,6 @@ export const useAuth = () => {
       console.log('=== НАЧАЛО РЕГИСТРАЦИИ ===');
       console.log('useAuth - Данные для регистрации:', { phone, name });
       
-      const userId = generateUUID();
-      console.log('useAuth - Сгенерированный UUID:', userId);
-      
       // Проверяем, не существует ли уже пользователь с таким телефоном
       console.log('useAuth - Проверяем существование пользователя...');
       const { data: existingUser, error: checkError } = await supabase
@@ -46,13 +43,37 @@ export const useAuth = () => {
 
       console.log('useAuth - Пользователь не найден, создаем нового...');
       
-      // Создаем профиль пользователя БЕЗ роли
-      console.log('useAuth - Отправляем данные в Supabase profiles таблицу...');
+      // Используем Supabase Auth для создания анонимного пользователя
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously({
+        options: {
+          data: {
+            phone,
+            name
+          }
+        }
+      });
+
+      if (authError) {
+        console.error('useAuth - Ошибка при создании auth пользователя:', authError);
+        toast.error('Ошибка при создании аккаунта');
+        return false;
+      }
+
+      if (!authData.user) {
+        console.error('useAuth - Не удалось создать пользователя');
+        toast.error('Ошибка при создании аккаунта');
+        return false;
+      }
+
+      console.log('useAuth - Auth пользователь создан:', authData.user.id);
+      
+      // Создаем профиль пользователя с ID от Supabase Auth
+      console.log('useAuth - Создаем профиль в базе данных...');
       const { data: profile, error } = await supabase
         .from('profiles')
         .insert([
           {
-            id: userId,
+            id: authData.user.id,
             phone,
             name,
             is_verified: false,
@@ -85,7 +106,7 @@ export const useAuth = () => {
 
       console.log('useAuth - Профиль успешно создан в базе данных:', profile);
 
-      // Сохраняем пользователя в контексте БЕЗ роли
+      // Сохраняем пользователя в контексте
       const userProfile = {
         id: profile.id,
         phone: profile.phone,
