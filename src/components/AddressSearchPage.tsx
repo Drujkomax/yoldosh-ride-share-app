@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Clock, Search } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Search, Loader2 } from 'lucide-react';
+import { useUzbekistanPlaces } from '@/hooks/useUzbekistanPlaces';
 
 interface AddressSearchPageProps {
   title: string;
@@ -18,101 +19,110 @@ const AddressSearchPage = ({
   previousSelection
 }: AddressSearchPageProps) => {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
-  const geocoder = useRef<google.maps.Geocoder | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  
+  const { predictions, isLoading, searchPlaces, getPlaceDetails, getCurrentLocation } = useUzbekistanPlaces();
+
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    const initializeGoogleServices = () => {
-      if (window.google?.maps?.places?.AutocompleteService) {
-        autocompleteService.current = new window.google.maps.places.AutocompleteService();
-        geocoder.current = new window.google.maps.Geocoder();
+    // Загружаем недавние поиски из localStorage
+    const saved = localStorage.getItem('recent_address_searches');
+    if (saved) {
+      try {
+        setRecentSearches(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error parsing recent searches:', error);
+        setRecentSearches([]);
       }
-    };
-
-    if (window.google) {
-      initializeGoogleServices();
-    } else {
-      const script = document.createElement('script');
-      const apiKey = localStorage.getItem('google_maps_api_key');
-      if (!apiKey) {
-        console.error('Google Maps API key not found');
-        return;
-      }
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=ru`;
-      script.onload = initializeGoogleServices;
-      document.head.appendChild(script);
     }
   }, []);
 
-  const searchPlaces = async (searchQuery: string) => {
-    if (!autocompleteService.current || searchQuery.length < 2) {
-      setSuggestions([]);
-      return;
+  const handleInputChange = (value: string) => {
+    setQuery(value);
+    setError(''); // Clear error when user starts typing
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
 
-    setIsLoading(true);
-    
-    try {
-      autocompleteService.current.getPlacePredictions(
-        {
-          input: searchQuery,
-          componentRestrictions: { country: 'uz' },
-          types: ['(cities)']
-        },
-        (predictions, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-            setSuggestions(predictions);
-          } else {
-            setSuggestions([]);
-          }
-          setIsLoading(false);
-        }
-      );
-    } catch (error) {
-      console.error('Error searching places:', error);
-      setIsLoading(false);
-    }
+    timeoutRef.current = setTimeout(() => {
+      if (value.trim()) {
+        searchPlaces(value);
+      }
+    }, 300);
   };
 
-  const handleSuggestionSelect = async (suggestion: any) => {
-    if (!geocoder.current) return;
-
+  const handleSuggestionSelect = async (prediction: any) => {
+    const address = prediction.description;
+    
     // Check if the selected address is the same as the previous selection
-    if (previousSelection && suggestion.description === previousSelection) {
+    if (previousSelection && address === previousSelection) {
       setError('Нельзя выбрать одинаковые города отправления и прибытия');
       return;
     }
 
     try {
-      geocoder.current.geocode(
-        { placeId: suggestion.place_id },
-        (results, status) => {
-          if (status === 'OK' && results?.[0]) {
-            const location = results[0].geometry.location;
-            const coordinates: [number, number] = [location.lat(), location.lng()];
-            setQuery(''); // Clear the input after successful selection
-            setError(''); // Clear any previous error
-            onAddressSelect(suggestion.description, coordinates);
-          }
-        }
-      );
+      const details = await getPlaceDetails(prediction.place_id);
+      const coordinates: [number, number] = details ? [details.geometry.location.lat, details.geometry.location.lng] : [0, 0];
+      
+      // Сохраняем в недавние поиски
+      const newRecentSearches = [address, ...recentSearches.filter(item => item !== address)].slice(0, 5);
+      setRecentSearches(newRecentSearches);
+      localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
+      
+      setQuery(''); // Clear the input after successful selection
+      setError(''); // Clear any previous error
+      onAddressSelect(address, coordinates);
     } catch (error) {
-      console.error('Error geocoding:', error);
+      console.error('Error getting place details:', error);
+      setError('Ошибка при получении деталей места');
     }
   };
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (query) {
-        searchPlaces(query);
-      }
-    }, 300);
+  const handleCurrentLocation = async () => {
+    const currentLocationText = 'Текущее местоположение';
+    if (previousSelection && currentLocationText === previousSelection) {
+      setError('Нельзя выбрать одинаковые города отправления и прибытия');
+      return;
+    }
+    
+    try {
+      const location = await getCurrentLocation();
+      
+      // Сохраняем текущее местоположение в недавние поиски
+      const newRecentSearches = [location.address, ...recentSearches.filter(item => item !== location.address)].slice(0, 5);
+      setRecentSearches(newRecentSearches);
+      localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
+      
+      setQuery(''); // Clear the input
+      setError(''); // Clear any previous error
+      onAddressSelect(location.address, [location.lat, location.lng]);
+    } catch (error) {
+      console.error('Error getting current location:', error);
+      setError('Ошибка при получении текущего местоположения');
+    }
+  };
 
-    return () => clearTimeout(timeoutId);
-  }, [query]);
+  const handleRecentSelect = (address: string) => {
+    if (previousSelection && address === previousSelection) {
+      setError('Нельзя выбрать одинаковые города отправления и прибытия');
+      return;
+    }
+    
+    setQuery('');
+    setError('');
+    onAddressSelect(address, [0, 0]); // Default coordinates for recent searches
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-white z-50">
@@ -136,10 +146,7 @@ const AddressSearchPage = ({
           <input
             type="text"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setError(''); // Clear error when user starts typing
-            }}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder={placeholder}
             className="block w-full pl-10 pr-3 py-4 border border-gray-300 rounded-2xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-lg"
             autoFocus
@@ -157,25 +164,7 @@ const AddressSearchPage = ({
         <Button
           variant="ghost"
           className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50 mb-4"
-          onClick={() => {
-            const currentLocationText = 'Текущее местоположение';
-            if (previousSelection && currentLocationText === previousSelection) {
-              setError('Нельзя выбрать одинаковые города отправления и прибытия');
-              return;
-            }
-            
-            if ('geolocation' in navigator) {
-              navigator.geolocation.getCurrentPosition(
-                (position) => {
-                  const coords: [number, number] = [position.coords.latitude, position.coords.longitude];
-                  setQuery(''); // Clear the input
-                  setError(''); // Clear any previous error
-                  onAddressSelect(currentLocationText, coords);
-                },
-                (error) => console.error('Error getting location:', error)
-              );
-            }
-          }}
+          onClick={handleCurrentLocation}
         >
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 rounded-full">
@@ -190,16 +179,16 @@ const AddressSearchPage = ({
         {/* Suggestions */}
         {isLoading && (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           </div>
         )}
 
         <div className="space-y-2">
-          {suggestions.map((suggestion, index) => (
+          {predictions.map((prediction) => (
             <Button
-              key={suggestion.place_id}
+              key={prediction.place_id}
               variant="ghost"
-              onClick={() => handleSuggestionSelect(suggestion)}
+              onClick={() => handleSuggestionSelect(prediction)}
               className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
             >
               <div className="flex items-center space-x-3">
@@ -208,35 +197,48 @@ const AddressSearchPage = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-900 truncate">
-                    {suggestion.structured_formatting?.main_text || suggestion.description}
+                    {prediction.structured_formatting?.main_text || prediction.description}
                   </div>
-                  {suggestion.structured_formatting?.secondary_text && (
+                  {prediction.structured_formatting?.secondary_text && (
                     <div className="text-sm text-gray-500 truncate">
-                      {suggestion.structured_formatting.secondary_text}
+                      {prediction.structured_formatting.secondary_text}
                     </div>
                   )}
                 </div>
               </div>
             </Button>
           ))}
+          
+          {/* No results message */}
+          {query.length >= 2 && !isLoading && predictions.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Search className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p className="text-sm">Места не найдены</p>
+              <p className="text-xs">Попробуйте изменить запрос</p>
+            </div>
+          )}
         </div>
 
         {/* Recent Searches */}
-        {query === '' && (
+        {query === '' && recentSearches.length > 0 && (
           <div className="mt-8">
             <h3 className="text-sm font-medium text-gray-600 mb-4">Недавние поиски</h3>
             <div className="space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gray-100 rounded-full">
-                    <Clock className="h-4 w-4 text-gray-500" />
+              {recentSearches.map((address, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  onClick={() => handleRecentSelect(address)}
+                  className="w-full justify-start text-left p-4 h-auto hover:bg-gray-50"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-gray-100 rounded-full">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                    </div>
+                    <span className="text-gray-700 truncate">{address}</span>
                   </div>
-                  <span className="text-gray-700">Аэропорт Ташкент</span>
-                </div>
-              </Button>
+                </Button>
+              ))}
             </div>
           </div>
         )}
