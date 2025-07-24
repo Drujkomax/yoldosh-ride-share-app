@@ -54,11 +54,18 @@ const AddressSearchPage = ({
     }, 300);
   };
 
+  // Функция для очистки названия города от ", Узбекистан" и областей
+  const cleanCityName = (address: string) => {
+    if (!address) return address;
+    return address.replace(/, Узбекистан$/, '').replace(/, Андижанская область$/, '').replace(/, Ташкентская область$/, '').replace(/, [^,]+ская область$/, '');
+  };
+
   const handleSuggestionSelect = async (prediction: any) => {
     const address = prediction.description;
+    const cleanedAddress = cleanCityName(address);
     
     // Check if the selected address is the same as the previous selection
-    if (previousSelection && address === previousSelection) {
+    if (previousSelection && cleanedAddress === previousSelection) {
       setError('Нельзя выбрать одинаковые города отправления и прибытия');
       return;
     }
@@ -67,14 +74,14 @@ const AddressSearchPage = ({
       const details = await getPlaceDetails(prediction.place_id);
       const coordinates: [number, number] = details ? [details.geometry.location.lat, details.geometry.location.lng] : [0, 0];
       
-      // Сохраняем в недавние поиски
-      const newRecentSearches = [address, ...recentSearches.filter(item => item !== address)].slice(0, 5);
+      // Сохраняем в недавние поиски очищенное название
+      const newRecentSearches = [cleanedAddress, ...recentSearches.filter(item => item !== cleanedAddress)].slice(0, 5);
       setRecentSearches(newRecentSearches);
       localStorage.setItem('recent_address_searches', JSON.stringify(newRecentSearches));
       
       setQuery(''); // Clear the input after successful selection
       setError(''); // Clear any previous error
-      onAddressSelect(address, coordinates);
+      onAddressSelect(cleanedAddress, coordinates);
     } catch (error) {
       console.error('Error getting place details:', error);
       setError('Ошибка при получении деталей места');
