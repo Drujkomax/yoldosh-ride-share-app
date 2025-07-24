@@ -281,10 +281,13 @@ const ProfilePage = () => {
               
               <div className="space-y-2">
                 {/* Tell About Yourself */}
-                <div className="flex items-center space-x-2 p-2">
+                <button 
+                  onClick={() => navigate('/about-me')}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+                >
                   <Plus className="h-4 w-4 text-teal-600" />
                   <span className="text-teal-600 font-medium text-sm">Расскажите немного о себе</span>
-                </div>
+                </button>
                 
                 {/* Trip Preferences */}
                 <div className="flex items-center space-x-2 p-2">
