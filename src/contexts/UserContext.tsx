@@ -78,7 +78,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const loadUserProfile = async (userId: string) => {
       try {
-        // Загружаем профиль из таблицы profiles
+        console.log('UserContext - Загрузка профиля пользователя:', userId);
+        
+        // Загружаем профиль из таблицы profiles с принудительным обновлением
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -87,6 +89,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
         if (profile && !profileError) {
           console.log('UserContext - Профиль загружен из БД:', profile);
+          console.log('UserContext - Avatar URL из БД:', profile.avatar_url);
+          
           const completeUser: UserProfile = {
             id: profile.id,
             phone: profile.phone || '',
@@ -95,30 +99,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             isVerified: profile.is_verified || false,
             totalRides: profile.total_rides || 0,
             rating: profile.rating || 0.0,
-            avatarUrl: profile.avatar_url
+            avatarUrl: profile.avatar_url // Всегда используем значение из БД
           };
           
-          // Если пользователь уже существует, обновляем только данные из БД (включая avatarUrl)
-          setUser(prev => {
-            if (prev) {
-              const updatedUser = {
-                ...prev,
-                ...completeUser // Перезаписываем всеми данными из БД, включая avatarUrl
-              };
-              localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
-              return updatedUser;
-            } else {
-              localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
-              return completeUser;
-            }
-          });
+          console.log('UserContext - Создан объект пользователя:', completeUser);
+          
+          // Устанавливаем пользователя ТОЛЬКО из данных БД (убираем localStorage как источник правды)
+          setUser(completeUser);
+          
+          // localStorage используется только для кеширования, не как источник правды
+          localStorage.setItem('yoldosh_user', JSON.stringify(completeUser));
         } else {
           console.error('UserContext - Ошибка загрузки профиля:', profileError);
           setUser(null);
+          localStorage.removeItem('yoldosh_user');
         }
       } catch (error) {
         console.error('UserContext - Ошибка загрузки профиля:', error);
         setUser(null);
+        localStorage.removeItem('yoldosh_user');
       }
     };
 
@@ -160,13 +159,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
         setSession(newSession);
         
-        if (newSession?.user && event === 'SIGNED_IN') {
-          // Пользователь вошел в систему
-          setTimeout(async () => {
-            await loadUserProfile(newSession.user.id);
-          }, 0);
+        if (newSession?.user) {
+          // При любом событии входа загружаем профиль заново
+          console.log('UserContext - Загружаем профиль после события:', event);
+          await loadUserProfile(newSession.user.id);
         } else if (event === 'SIGNED_OUT') {
           // Пользователь вышел из системы
+          console.log('UserContext - Пользователь вышел из системы');
           setUser(null);
           localStorage.removeItem('yoldosh_user');
         }
@@ -181,8 +180,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = async (updatedUser: UserProfile | null) => {
     console.log('UserContext - Обновление пользователя:', updatedUser);
     
+    if (!updatedUser) {
+      setUser(null);
+      localStorage.removeItem('yoldosh_user');
+      return;
+    }
+    
     // Если это новый пользователь без правильного UUID, генерируем новый
-    if (updatedUser && (!updatedUser.id || !isValidUUID(updatedUser.id))) {
+    if (!updatedUser.id || !isValidUUID(updatedUser.id)) {
       updatedUser = {
         ...updatedUser,
         id: generateUUID()
@@ -190,56 +195,79 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       console.log('UserContext - Сгенерирован новый UUID для пользователя:', updatedUser.id);
     }
     
-    // Нормализуем данные пользователя БЕЗ роли
-    if (updatedUser) {
-      updatedUser = {
-        id: updatedUser.id,
-        phone: updatedUser.phone || '',
-        name: updatedUser.name || '',
-        isVerified: updatedUser.isVerified || false,
-        totalRides: updatedUser.totalRides || 0,
-        rating: updatedUser.rating || 0.0,
-        avatarUrl: updatedUser.avatarUrl
+    // Нормализуем данные пользователя
+    const normalizedUser = {
+      id: updatedUser.id,
+      phone: updatedUser.phone || '',
+      name: updatedUser.name || '',
+      isVerified: updatedUser.isVerified || false,
+      totalRides: updatedUser.totalRides || 0,
+      rating: updatedUser.rating || 0.0,
+      avatarUrl: updatedUser.avatarUrl // Сохраняем avatarUrl
+    };
+
+    console.log('UserContext - Нормализованный пользователь:', normalizedUser);
+
+    // Обновляем профиль в Supabase
+    try {
+      const updateData = {
+        id: normalizedUser.id,
+        name: normalizedUser.name,
+        phone: normalizedUser.phone,
+        is_verified: normalizedUser.isVerified,
+        total_rides: normalizedUser.totalRides,
+        rating: normalizedUser.rating,
+        avatar_url: normalizedUser.avatarUrl // Важно: обновляем avatar_url в БД
       };
+      
+      console.log('UserContext - Обновляем БД с данными:', updateData);
 
-      console.log('UserContext - Пользователь обновлен без роли:', updatedUser);
+      const { error } = await supabase
+        .from('profiles')
+        .upsert([updateData]);
 
-      // Обновляем профиль в Supabase и получаем актуальную роль
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .upsert([{
-            id: updatedUser.id,
-            name: updatedUser.name,
-            phone: updatedUser.phone,
-            is_verified: updatedUser.isVerified,
-            total_rides: updatedUser.totalRides,
-            rating: updatedUser.rating || 0.0,
-            avatar_url: updatedUser.avatarUrl // Добавляем avatar_url в обновление
-          }]);
-
-        if (error) {
-          console.error('UserContext - Ошибка обновления профиля:', error);
-        } else {
-          console.log('UserContext - Профиль успешно обновлен в Supabase');
-          // Обновляем роль после изменения профиля
-          await refreshUserRole();
+      if (error) {
+        console.error('UserContext - Ошибка обновления профиля в БД:', error);
+      } else {
+        console.log('UserContext - Профиль успешно обновлен в БД');
+        
+        // После успешного обновления в БД, перезагружаем профиль из БД
+        if (session?.user?.id) {
+          const { data: freshProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (freshProfile) {
+            console.log('UserContext - Обновленный профиль из БД:', freshProfile);
+            const freshUser: UserProfile = {
+              id: freshProfile.id,
+              phone: freshProfile.phone || '',
+              name: freshProfile.name || '',
+              email: freshProfile.email || '',
+              isVerified: freshProfile.is_verified || false,
+              totalRides: freshProfile.total_rides || 0,
+              rating: freshProfile.rating || 0.0,
+              avatarUrl: freshProfile.avatar_url // Используем свежие данные из БД
+            };
+            
+            setUser(freshUser);
+            localStorage.setItem('yoldosh_user', JSON.stringify(freshUser));
+            
+            // Обновляем роль после изменения профиля
+            await refreshUserRole();
+            return;
+          }
         }
-      } catch (error) {
-        console.error('UserContext - Ошибка при работе с Supabase:', error);
       }
+    } catch (error) {
+      console.error('UserContext - Ошибка при работе с Supabase:', error);
     }
     
-    setUser(updatedUser);
-    
-    // Сохраняем в localStorage
-    if (updatedUser) {
-      console.log('UserContext - Сохранение пользователя в localStorage');
-      localStorage.setItem('yoldosh_user', JSON.stringify(updatedUser));
-    } else {
-      console.log('UserContext - Удаление пользователя из localStorage');
-      localStorage.removeItem('yoldosh_user');
-    }
+    // Fallback - устанавливаем локальные данные если БД недоступна
+    setUser(normalizedUser);
+    localStorage.setItem('yoldosh_user', JSON.stringify(normalizedUser));
   };
 
   return (

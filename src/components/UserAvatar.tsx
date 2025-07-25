@@ -21,11 +21,21 @@ const UserAvatar = ({
 }: UserAvatarProps) => {
   const { user } = useUser();
   const [fetchedAvatarUrl, setFetchedAvatarUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
-  // Загружаем аватар пользователя, если передан userId и это не текущий пользователь
+  // Загружаем аватар пользователя с улучшенной логикой
   useEffect(() => {
     const fetchUserAvatar = async () => {
-      if (userId && userId !== user?.id && !avatarUrl) {
+      // Если есть прямо переданный avatarUrl, используем его
+      if (avatarUrl) {
+        console.log('UserAvatar - Используем переданный avatarUrl:', avatarUrl);
+        return;
+      }
+      
+      // Если это текущий пользователь и у него нет аватара в контексте, перезагружаем
+      if (userId === user?.id && !user?.avatarUrl) {
+        console.log('UserAvatar - Перезагружаем аватар текущего пользователя');
+        setLoading(true);
         try {
           const { data: profile } = await supabase
             .from('profiles')
@@ -33,22 +43,62 @@ const UserAvatar = ({
             .eq('id', userId)
             .single();
           
-          if (profile?.avatar_url) {
-            setFetchedAvatarUrl(profile.avatar_url);
-          }
+          console.log('UserAvatar - Загружен аватар из БД:', profile?.avatar_url);
+          setFetchedAvatarUrl(profile?.avatar_url || null);
         } catch (error) {
-          console.error('Ошибка загрузки аватара пользователя:', error);
+          console.error('UserAvatar - Ошибка загрузки аватара текущего пользователя:', error);
+          setFetchedAvatarUrl(null);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+      
+      // Если это другой пользователь, загружаем его аватар
+      if (userId && userId !== user?.id) {
+        console.log('UserAvatar - Загружаем аватар другого пользователя:', userId);
+        setLoading(true);
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', userId)
+            .single();
+          
+          console.log('UserAvatar - Загружен аватар другого пользователя:', profile?.avatar_url);
+          setFetchedAvatarUrl(profile?.avatar_url || null);
+        } catch (error) {
+          console.error('UserAvatar - Ошибка загрузки аватара другого пользователя:', error);
+          setFetchedAvatarUrl(null);
+        } finally {
+          setLoading(false);
         }
       }
     };
 
     fetchUserAvatar();
-  }, [userId, user?.id, avatarUrl]);
+  }, [userId, user?.id, user?.avatarUrl, avatarUrl]);
   
-  // Определяем какой URL использовать для отображения
-  const displayAvatarUrl = avatarUrl || 
-    (userId === user?.id ? user?.avatarUrl : fetchedAvatarUrl) || 
-    (!userId ? user?.avatarUrl : null);
+  // Определяем какой URL использовать для отображения с улучшенной логикой
+  const displayAvatarUrl = (() => {
+    // Приоритет 1: Прямо переданный avatarUrl
+    if (avatarUrl && avatarUrl.trim() !== '') {
+      console.log('UserAvatar - Используем переданный avatarUrl:', avatarUrl);
+      return avatarUrl;
+    }
+    
+    // Приоритет 2: Если это текущий пользователь, используем его avatarUrl из контекста или загруженный
+    if (!userId || userId === user?.id) {
+      const userAvatar = user?.avatarUrl || fetchedAvatarUrl;
+      console.log('UserAvatar - Аватар текущего пользователя:', userAvatar);
+      return userAvatar;
+    }
+    
+    // Приоритет 3: Для других пользователей используем загруженный аватар
+    console.log('UserAvatar - Аватар другого пользователя:', fetchedAvatarUrl);
+    return fetchedAvatarUrl;
+  })();
+  
   const displayName = name || user?.name;
   
   const sizeClasses = {

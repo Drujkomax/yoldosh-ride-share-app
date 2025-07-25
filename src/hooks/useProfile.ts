@@ -25,15 +25,16 @@ export interface CarInfo {
 }
 
 export const useProfile = () => {
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading: profileLoading, error } = useQuery({
-    queryKey: ['profile', user?.id],
+    queryKey: ['profile', user?.id, user?.avatarUrl], // Добавляем avatarUrl как зависимость для автообновления
     queryFn: async () => {
       if (!user?.id) return null;
       
       console.log('useProfile - Загрузка профиля для пользователя:', user.id);
+      console.log('useProfile - Текущий avatarUrl в контексте:', user.avatarUrl);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -47,9 +48,23 @@ export const useProfile = () => {
       }
 
       console.log('useProfile - Профиль загружен:', data);
+      console.log('useProfile - Avatar URL из БД:', data?.avatar_url);
+      
+      // Если avatarUrl в БД отличается от контекста, обновляем контекст
+      if (data && data.avatar_url !== user.avatarUrl) {
+        console.log('useProfile - Обнаружено расхождение в avatarUrl, обновляем контекст');
+        const updatedUser = {
+          ...user,
+          avatarUrl: data.avatar_url
+        };
+        setUser(updatedUser);
+      }
+      
       return data as UserProfile;
     },
     enabled: !!user?.id,
+    staleTime: 30000, // 30 секунд до обновления
+    refetchOnWindowFocus: true, // Обновляем при фокусе окна
   });
 
   const updateProfileMutation = useMutation({
@@ -70,10 +85,22 @@ export const useProfile = () => {
         throw error;
       }
 
+      console.log('useProfile - Профиль обновлен:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Инвалидируем кеш
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Если обновился avatar_url, синхронизируем с контекстом
+      if (data?.avatar_url !== user?.avatarUrl) {
+        console.log('useProfile - Синхронизируем avatarUrl с контекстом:', data.avatar_url);
+        const updatedUser = {
+          ...user,
+          avatarUrl: data.avatar_url
+        };
+        setUser(updatedUser);
+      }
     },
   });
 
