@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +18,20 @@ import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews, isLoading: reviewsLoading } = useReviews();
+  const [activeTab, setActiveTab] = useState('about');
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+
+  // Принудительно обновляем данные профиля при заходе на страницу
+  useEffect(() => {
+    if (user?.id) {
+      console.log('ProfilePage - Принудительное обновление данных профиля');
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    }
+  }, [user?.id, queryClient]);
   
   // Используем данные из профиля, а если их нет - из контекста пользователя
   const displayProfile = profile || {
@@ -29,8 +41,6 @@ const ProfilePage = () => {
     phone: user?.phone || '',
     avatar_url: user?.avatarUrl || ''
   };
-  const [activeTab, setActiveTab] = useState('about');
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -228,7 +238,7 @@ const ProfilePage = () => {
 
             {/* Add Photo */}
             <div className="flex items-center space-x-3 py-2">
-              {user?.avatarUrl ? (
+              {displayProfile?.avatar_url ? (
                 <button 
                   onClick={() => setShowPhotoUpload(true)}
                   className="flex items-center space-x-2 text-teal-600 font-medium text-sm"
@@ -263,10 +273,10 @@ const ProfilePage = () => {
                 
                 {/* Email */}
                 <div className="flex items-center space-x-2 p-2">
-                  {user?.email ? (
+                  {displayProfile?.email ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-teal-600" />
-                      <span className="text-gray-700 text-sm">{user.email}</span>
+                      <span className="text-gray-700 text-sm">{displayProfile.email}</span>
                     </>
                   ) : (
                     <>
