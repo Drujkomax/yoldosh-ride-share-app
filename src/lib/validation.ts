@@ -30,11 +30,16 @@ export const emailSchema = z.string()
   .max(254, 'Email too long')
   .transform(sanitizeInput);
 
-// Password validation
+// Enhanced password validation with special characters and leaked password protection
 export const passwordSchema = z.string()
-  .min(8, 'Password must be at least 8 characters')
+  .min(12, 'Password must be at least 12 characters')
   .max(128, 'Password too long')
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one lowercase letter, one uppercase letter, and one number');
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (@$!%*?&)')
+  .refine((password) => {
+    // Check against common weak passwords
+    const weakPasswords = ['password123', 'admin123', '123456789', 'qwerty123'];
+    return !weakPasswords.some(weak => password.toLowerCase().includes(weak.toLowerCase()));
+  }, 'Password contains common weak patterns');
 
 // Name validation
 export const nameSchema = z.string()
@@ -122,23 +127,60 @@ export const reviewSchema = z.object({
   comment: descriptionSchema.optional(),
 });
 
-// Rate limiting utilities
-const requestCounts = new Map<string, { count: number; resetTime: number }>();
+// Enhanced rate limiting utilities with progressive blocking
+const requestCounts = new Map<string, { 
+  count: number; 
+  resetTime: number; 
+  attempts: number[];
+  blocked: boolean;
+  blockExpiry: number;
+}>();
 
-export const checkRateLimit = (identifier: string, maxRequests: number, windowMs: number): boolean => {
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of requestCounts.entries()) {
+    if (now > value.resetTime && (!value.blocked || now > value.blockExpiry)) {
+      requestCounts.delete(key);
+    }
+  }
+}, 5 * 60 * 1000); // Cleanup every 5 minutes
+
+export const checkRateLimit = (
+  identifier: string, 
+  maxRequests: number = 3, // Reduced for security
+  windowMs: number = 15 * 60 * 1000, // 15 minutes
+  blockDuration: number = 60 * 60 * 1000 // 1 hour block
+): boolean => {
   const now = Date.now();
   const record = requestCounts.get(identifier);
   
-  if (!record || now > record.resetTime) {
-    requestCounts.set(identifier, { count: 1, resetTime: now + windowMs });
+  if (!record || (now > record.resetTime && (!record.blocked || now > record.blockExpiry))) {
+    requestCounts.set(identifier, { 
+      count: 1, 
+      resetTime: now + windowMs,
+      attempts: [now],
+      blocked: false,
+      blockExpiry: 0
+    });
     return true;
   }
   
+  // Check if currently blocked
+  if (record.blocked && now < record.blockExpiry) {
+    return false;
+  }
+  
   if (record.count >= maxRequests) {
+    // Block user after too many attempts
+    record.blocked = true;
+    record.blockExpiry = now + blockDuration;
+    record.attempts.push(now);
     return false;
   }
   
   record.count++;
+  record.attempts.push(now);
   return true;
 };
 
@@ -156,14 +198,27 @@ export const validateInputLength = (input: string, maxLength: number): boolean =
   return input.length <= maxLength;
 };
 
-// XSS protection utilities
+// Enhanced XSS protection utilities
 export const escapeHtml = (unsafe: string): string => {
   return unsafe
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/javascript:/gi, '') // Remove javascript: URLs
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .replace(/data:/gi, '') // Remove data URLs
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/'/g, "&#039;")
+    .replace(/\//g, "&#x2F;");
+};
+
+// Server-side UUID generation (for security)
+export const generateSecureUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  throw new Error('Secure UUID generation not available. Use server-side generation.');
 };
 
 // Secure random string generation

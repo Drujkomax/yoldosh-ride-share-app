@@ -67,6 +67,9 @@ secure_nonce = true
 [functions.secure-geocoding]
 verify_jwt = false
 
+[functions.secure-maps-api]
+verify_jwt = true
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083

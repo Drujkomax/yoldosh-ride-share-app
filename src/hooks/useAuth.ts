@@ -4,16 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 
-// Функция для генерации UUID v4
-const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-};
+// DEPRECATED: This auth hook has security vulnerabilities
+// Use useSecureAuth instead for all authentication operations
+const DEPRECATED_WARNING = "useAuth is deprecated due to security vulnerabilities. Use useSecureAuth instead.";
 
 export const useAuth = () => {
+  console.warn(DEPRECATED_WARNING);
   const { setUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 

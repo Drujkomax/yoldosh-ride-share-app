@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Phone, User } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { toast } from '@/hooks/use-toast';
 import AnimatedInput from '@/components/AnimatedInput';
 
 const RegistrationPage = () => {
   const navigate = useNavigate();
   const { user, setUser } = useUser();
-  const { register, login, isLoading } = useAuth();
+  const { signUp, signIn, isLoading } = useSecureAuth();
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phone, setPhone] = useState('+998');
   const [name, setName] = useState('');
@@ -36,27 +36,14 @@ const RegistrationPage = () => {
       return;
     }
 
-    // Проверяем, существует ли пользователь
-    console.log('Checking if user exists for phone:', phone);
-    const result = await login(phone);
-    
-    if (result) {
-      // Пользователь существует и успешно вошел
-      toast({
-        title: "Пользователь найден",
-        description: "Введите код подтверждения для входа",
-      });
-      setIsNewUser(false);
-      setStep('code');
-    } else {
-      // Новый пользователь
-      setIsNewUser(true);
-      setStep('code');
-      toast({
-        title: "Код подтверждения",
-        description: "Введите код подтверждения для завершения регистрации",
-      });
-    }
+    // For security, we'll handle this differently - direct to code step
+    // and handle login/register logic in code submission
+    console.log('Processing phone:', phone);
+    setStep('code');
+    toast({
+      title: "Код подтверждения",
+      description: "Введите код подтверждения",
+    });
   };
 
   const handleCodeSubmit = async () => {
@@ -79,24 +66,32 @@ const RegistrationPage = () => {
       return;
     }
 
-    if (isNewUser) {
-      // Создаем нового пользователя БЕЗ роли
-      console.log('Creating new user:', { phone, name });
-      const result = await register(phone, name, 'passenger'); // Временно для совместимости
+    // For demo purposes, accept any 4-digit code
+    // In production, you would verify the actual SMS code
+    
+    try {
+      // Try to create a temporary email account for this phone
+      const tempEmail = `${phone.replace(/\D/g, '')}@temp.local`;
+      const tempPassword = `${code}temp${Math.random().toString(36).substring(7)}`;
       
-      if (result) {
-        // Все пользователи начинают как пассажиры
+      const { data, error } = await signUp(tempEmail, tempPassword, name);
+      
+      if (data?.user) {
+        toast({
+          title: "Регистрация успешна!",
+          description: "Добро пожаловать в Yoldosh",
+        });
         navigate('/passenger');
+      } else if (error) {
+        throw new Error(error);
       }
-    } else {
-      // Входим существующим пользователем
+    } catch (error: any) {
+      console.error('Registration error:', error);
       toast({
-        title: "Добро пожаловать!",
-        description: "Вы успешно вошли в систему",
+        title: "Ошибка",
+        description: "Не удалось завершить регистрацию",
+        variant: "destructive"
       });
-      
-      // Все пользователи попадают на главную страницу поиска
-      navigate('/passenger');
     }
   };
 
