@@ -53,11 +53,9 @@ export const useProfile = () => {
       // Если avatarUrl в БД отличается от контекста, обновляем контекст
       if (data && data.avatar_url !== user.avatarUrl) {
         console.log('useProfile - Обнаружено расхождение в avatarUrl, обновляем контекст');
-        const updatedUser = {
-          ...user,
-          avatarUrl: data.avatar_url
-        };
-        setUser(updatedUser);
+        // НЕ ВЫЗЫВАЕМ setUser, так как это перезаписывает все данные пользователя
+        // Вместо этого React Query автоматически обновит UI через return data
+        console.log('useProfile - Данные из БД будут использованы напрямую');
       }
       
       return data as UserProfile;
