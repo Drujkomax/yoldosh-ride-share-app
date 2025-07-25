@@ -103,18 +103,24 @@ const PhotoUploadFlow = ({ onComplete, onBack }: PhotoUploadFlowProps) => {
         throw new Error('Не удалось получить URL изображения');
       }
 
-      // Обновляем профиль пользователя
-      const { error: updateError } = await supabase
+      // Обновляем профиль пользователя с детальным логированием
+      console.log('PhotoUploadFlow - Обновляем профиль пользователя:', {
+        userId: user.id,
+        avatarUrl: publicUrl
+      });
+
+      const { data: updateData, error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (updateError) {
-        console.error('Profile update error:', updateError);
+        console.error('PhotoUploadFlow - Ошибка обновления профиля:', updateError);
         throw new Error(`Ошибка обновления профиля: ${updateError.message}`);
       }
 
-      console.log('Profile updated successfully with new avatar URL');
+      console.log('PhotoUploadFlow - Профиль успешно обновлен:', updateData);
 
       // Обновляем контекст пользователя с новым avatar URL через updateUser
       const updatedUser = {
