@@ -208,7 +208,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     console.log('UserContext - Нормализованный пользователь:', normalizedUser);
 
-    // Обновляем профиль в Supabase
+    // Обновляем профиль в Supabase ТОЛЬКО если есть изменения
     try {
       const updateData = {
         id: normalizedUser.id,
@@ -217,7 +217,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         is_verified: normalizedUser.isVerified,
         total_rides: normalizedUser.totalRides,
         rating: normalizedUser.rating,
-        avatar_url: normalizedUser.avatarUrl // Важно: обновляем avatar_url в БД
+        // КРИТИЧЕСКИ ВАЖНО: включаем avatar_url только если он есть
+        ...(normalizedUser.avatarUrl && { avatar_url: normalizedUser.avatarUrl })
       };
       
       console.log('UserContext - Обновляем БД с данными:', updateData);
