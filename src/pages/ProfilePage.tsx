@@ -20,6 +20,15 @@ const ProfilePage = () => {
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews, isLoading: reviewsLoading } = useReviews();
+  
+  // Используем данные из профиля, а если их нет - из контекста пользователя
+  const displayProfile = profile || {
+    ...user,
+    first_name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    avatar_url: user?.avatarUrl || ''
+  };
   const [activeTab, setActiveTab] = useState('about');
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
@@ -55,7 +64,7 @@ const ProfilePage = () => {
 
   const averageRating = reviews.length > 0 
     ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
-    : profile?.rating || 0;
+    : displayProfile?.rating || 0;
 
   if (showPhotoUpload) {
     return (
@@ -77,7 +86,7 @@ const ProfilePage = () => {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 flex items-center justify-center pb-20">
         <Card className="p-6">
@@ -267,10 +276,10 @@ const ProfilePage = () => {
                   )}
                 </div>
                 
-                {/* Phone Verified */}
+                 {/* Phone Verified */}
                 <div className="flex items-center space-x-2 p-2">
                   <CheckCircle className="h-4 w-4 text-teal-600" />
-                  <span className="text-gray-700 text-sm">{profile?.phone}</span>
+                  <span className="text-gray-700 text-sm">{displayProfile?.phone}</span>
                 </div>
               </div>
             </div>

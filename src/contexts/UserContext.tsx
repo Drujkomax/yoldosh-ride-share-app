@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
 
 export type UserRole = 'driver' | 'passenger';
 
@@ -47,6 +48,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Функция для обновления роли пользователя
   const refreshUserRole = async () => {
@@ -255,6 +257,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             
             setUser(freshUser);
             localStorage.setItem('yoldosh_user', JSON.stringify(freshUser));
+            
+            // Инвалидируем кеш профиля чтобы данные обновились
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
             
             // Обновляем роль после изменения профиля
             await refreshUserRole();
