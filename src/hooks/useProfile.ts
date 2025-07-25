@@ -29,7 +29,7 @@ export const useProfile = () => {
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading: profileLoading, error } = useQuery({
-    queryKey: ['profile', user?.id, user?.avatarUrl], // Добавляем avatarUrl как зависимость для автообновления
+    queryKey: ['profile', user?.id], // Убираем avatarUrl из зависимостей, чтобы избежать бесконечных циклов
     queryFn: async () => {
       if (!user?.id) return null;
       
@@ -63,8 +63,9 @@ export const useProfile = () => {
       return data as UserProfile;
     },
     enabled: !!user?.id,
-    staleTime: 30000, // 30 секунд до обновления
+    staleTime: 0, // Устанавливаем в 0 для немедленного обновления данных
     refetchOnWindowFocus: true, // Обновляем при фокусе окна
+    refetchOnMount: true, // Обновляем при каждом монтировании
   });
 
   const updateProfileMutation = useMutation({
