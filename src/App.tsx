@@ -36,6 +36,7 @@ import { EmailNotificationsPage } from "./pages/EmailNotificationsPage";
 import { ThemeSettingsPage } from "./pages/ThemeSettingsPage";
 import { SavedPassengersPage } from "./pages/SavedPassengersPage";
 import AboutMePage from "./pages/AboutMePage";
+import MyReviewsPage from "./pages/MyReviewsPage";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ function App() {
                 <Route path="/settings/notifications/email" element={<EmailNotificationsPage />} />
                 <Route path="/settings/theme" element={<ThemeSettingsPage />} />
                 <Route path="/settings/saved-passengers" element={<SavedPassengersPage />} />
+                <Route path="/my-reviews" element={<MyReviewsPage />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
