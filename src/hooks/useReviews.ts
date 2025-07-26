@@ -17,10 +17,12 @@ export interface Review {
   reviewer?: {
     name: string;
     phone: string;
+    avatar_url?: string;
   };
   reviewed_user?: {
     name: string;
     phone: string;
+    avatar_url?: string;
   };
   booking?: {
     ride: {
@@ -37,27 +39,29 @@ export const useReviews = (userId?: string) => {
 
   const targetUserId = userId || user?.id;
 
-  const { data: reviews = [], isLoading } = useQuery({
-    queryKey: ['reviews', targetUserId],
+  // Получение отзывов, которые получил пользователь (Received)
+  const { data: receivedReviews = [], isLoading: isLoadingReceived } = useQuery({
+    queryKey: ['received-reviews', targetUserId],
     queryFn: async () => {
-      console.log('useReviews - Загрузка отзывов для пользователя:', targetUserId);
+      console.log('useReviews - Загрузка полученных отзывов для пользователя:', targetUserId);
       
       if (!targetUserId) {
         return [];
       }
 
-      // Using type assertion to work around missing 'reviews' table in types
       const { data, error } = await (supabase as any)
         .from('reviews')
         .select(`
           *,
           reviewer:profiles!reviews_reviewer_id_fkey (
             name,
-            phone
+            phone,
+            avatar_url
           ),
           reviewed_user:profiles!reviews_reviewed_user_id_fkey (
             name,
-            phone
+            phone,
+            avatar_url
           ),
           booking:bookings (
             ride:rides (
@@ -71,15 +75,65 @@ export const useReviews = (userId?: string) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('useReviews - Ошибка загрузки отзывов:', error);
+        console.error('useReviews - Ошибка загрузки полученных отзывов:', error);
         throw error;
       }
 
-      console.log('useReviews - Загружено отзывов:', data?.length || 0);
+      console.log('useReviews - Загружено полученных отзывов:', data?.length || 0);
       return data as Review[];
     },
     enabled: !!targetUserId,
   });
+
+  // Получение отзывов, которые оставил пользователь (Given)
+  const { data: givenReviews = [], isLoading: isLoadingGiven } = useQuery({
+    queryKey: ['given-reviews', targetUserId],
+    queryFn: async () => {
+      console.log('useReviews - Загрузка данных отзывов для пользователя:', targetUserId);
+      
+      if (!targetUserId) {
+        return [];
+      }
+
+      const { data, error } = await (supabase as any)
+        .from('reviews')
+        .select(`
+          *,
+          reviewer:profiles!reviews_reviewer_id_fkey (
+            name,
+            phone,
+            avatar_url
+          ),
+          reviewed_user:profiles!reviews_reviewed_user_id_fkey (
+            name,
+            phone,
+            avatar_url
+          ),
+          booking:bookings (
+            ride:rides (
+              from_city,
+              to_city,
+              departure_date
+            )
+          )
+        `)
+        .eq('reviewer_id', targetUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('useReviews - Ошибка загрузки данных отзывов:', error);
+        throw error;
+      }
+
+      console.log('useReviews - Загружено данных отзывов:', data?.length || 0);
+      return data as Review[];
+    },
+    enabled: !!targetUserId,
+  });
+
+  // Для обратной совместимости - reviews теперь это receivedReviews
+  const reviews = receivedReviews;
+  const isLoading = isLoadingReceived;
 
   const createReviewMutation = useMutation({
     mutationFn: async (newReview: {
@@ -215,8 +269,12 @@ export const useReviews = (userId?: string) => {
   });
 
   return {
-    reviews,
-    isLoading,
+    reviews, // для обратной совместимости
+    receivedReviews,
+    givenReviews,
+    isLoading, // для обратной совместимости  
+    isLoadingReceived,
+    isLoadingGiven,
     createReview: createReviewMutation.mutateAsync,
     isCreating: createReviewMutation.isPending,
     pendingReviews,

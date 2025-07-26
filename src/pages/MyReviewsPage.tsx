@@ -1,121 +1,211 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Star, User } from 'lucide-react';
+import { useReviews } from '@/hooks/useReviews';
+import { format } from 'date-fns';
+import { ru } from 'date-fns/locale';
+import emptyReviewsImage from '@/assets/empty-reviews.png';
 
 const MyReviewsPage = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('received');
+  const { receivedReviews, givenReviews, isLoadingReceived, isLoadingGiven } = useReviews();
 
-  const reviews = [
-    {
-      id: 1,
-      reviewer: 'Шерзод Исламов',
-      rating: 5,
-      comment: 'Отличный пассажир! Пунктуальный, вежливый. Рекомендую!',
-      date: '20 декабря 2024',
-      trip: 'Ташкент → Самарканд'
-    },
-    {
-      id: 2,
-      reviewer: 'Азиз Каримов',
-      rating: 4,
-      comment: 'Хороший попутчик, приятно было ехать вместе.',
-      date: '18 декабря 2024',
-      trip: 'Самарканд → Бухара'
-    },
-    {
-      id: 3,
-      reviewer: 'Дильшод Рахимов',
-      rating: 5,
-      comment: 'Очень культурный и общительный человек. Время в дороге пролетело незаметно!',
-      date: '10 декабря 2024',
-      trip: 'Ташкент → Наманган'
-    }
-  ];
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'd MMMM yyyy', { locale: ru });
+  };
 
-  const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  const renderStars = (rating: number) => {
+    return [...Array(5)].map((_, i) => (
+      <Star
+        key={i}
+        className={`h-4 w-4 ${
+          i < rating ? 'text-yellow-400 fill-current' : 'text-muted-foreground'
+        }`}
+      />
+    ));
+  };
+
+  const calculateAverageRating = (reviews: any[]) => {
+    if (reviews.length === 0) return 0;
+    return reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  };
+
+  const averageRating = calculateAverageRating(receivedReviews);
+
+  const EmptyState = ({ type }: { type: 'received' | 'given' }) => (
+    <div className="flex flex-col items-center justify-center py-16 px-6">
+      <img 
+        src={emptyReviewsImage} 
+        alt="No reviews" 
+        className="w-64 h-48 object-contain mb-6 opacity-80"
+      />
+      <h3 className="text-xl font-semibold text-muted-foreground mb-2">
+        {type === 'received' 
+          ? "You haven't received any ratings yet" 
+          : "You haven't given any ratings yet"
+        }
+      </h3>
+      <p className="text-muted-foreground text-center max-w-md">
+        {type === 'received'
+          ? "Start using our service and receive your first rating from other users"
+          : "Complete trips and rate your experience with other users"
+        }
+      </p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-white/20">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+      <div className="bg-card border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="rounded-xl hover:bg-yoldosh-primary/10 p-3"
+              className="mr-4 p-2"
             >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Назад
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Мои отзывы
-            </h1>
-            <div className="w-16"></div>
+            <h1 className="text-2xl font-semibold">Ratings</h1>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Rating Summary */}
-        <Card className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl mb-8">
-          <CardContent className="p-6">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-yoldosh-primary mb-2">
-                {averageRating.toFixed(1)}
+      <div className="container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="received">Received</TabsTrigger>
+            <TabsTrigger value="given">Given</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="received" className="mt-0">
+            {isLoadingReceived ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-              <div className="flex items-center justify-center mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-6 w-6 ${
-                      i < Math.floor(averageRating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                    }`}
-                  />
+            ) : receivedReviews.length === 0 ? (
+              <EmptyState type="received" />
+            ) : (
+              <>
+                {/* Rating Summary for Received Reviews */}
+                {receivedReviews.length > 0 && (
+                  <Card className="mb-6">
+                    <CardContent className="p-6">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-primary mb-2">
+                          {averageRating.toFixed(1)}
+                        </div>
+                        <div className="flex items-center justify-center mb-2">
+                          {renderStars(Math.floor(averageRating))}
+                        </div>
+                        <p className="text-muted-foreground">Based on {receivedReviews.length} reviews</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Reviews List */}
+                <div className="space-y-4">
+                  {receivedReviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            {review.reviewer?.avatar_url ? (
+                              <img 
+                                src={review.reviewer.avatar_url} 
+                                alt={review.reviewer.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="font-medium">{review.reviewer?.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {review.booking?.ride?.from_city} → {review.booking?.ride?.to_city}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="flex items-center mb-1">
+                              {renderStars(review.rating)}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDate(review.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-foreground leading-relaxed">{review.comment}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="given" className="mt-0">
+            {isLoadingGiven ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : givenReviews.length === 0 ? (
+              <EmptyState type="given" />
+            ) : (
+              <div className="space-y-4">
+                {givenReviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          {review.reviewed_user?.avatar_url ? (
+                            <img 
+                              src={review.reviewed_user.avatar_url} 
+                              alt={review.reviewed_user.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-medium">{review.reviewed_user?.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {review.booking?.ride?.from_city} → {review.booking?.ride?.to_city}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center mb-1">
+                            {renderStars(review.rating)}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDate(review.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-foreground leading-relaxed">{review.comment}</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-              <p className="text-slate-600">Основано на {reviews.length} отзывах</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Reviews List */}
-        <div className="space-y-6">
-          {reviews.map((review) => (
-            <Card key={review.id} className="bg-white/80 backdrop-blur-lg border-0 rounded-3xl shadow-xl">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{review.reviewer}</h3>
-                      <p className="text-sm text-slate-600">{review.trip}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center mb-1">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-slate-500">{review.date}</p>
-                  </div>
-                </div>
-                <p className="text-slate-700 leading-relaxed">{review.comment}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
