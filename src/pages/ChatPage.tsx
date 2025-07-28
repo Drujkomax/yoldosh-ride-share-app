@@ -80,6 +80,21 @@ const ChatPage = () => {
     loadChat();
   }, [chatId, user?.id]);
 
+  // Принудительно перезагружаем данные при возвращении на страницу
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && chatId) {
+        console.log('Страница стала видимой, перезагружаем чат:', chatId);
+        // Перезагружаем чат
+        setChat(null);
+        setChatLoading(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [chatId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
