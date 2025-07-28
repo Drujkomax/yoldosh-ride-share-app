@@ -137,7 +137,7 @@ const ProfilePage = () => {
     {
       icon: Lock,
       title: "Пароль",
-      onClick: () => console.log('Пароль')
+      onClick: () => navigate('/settings/password')
     },
     {
       icon: Mail,
