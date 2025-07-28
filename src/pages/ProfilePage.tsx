@@ -14,6 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import BottomNavigation from '@/components/BottomNavigation';
 import PhotoUploadFlow from '@/components/PhotoUploadFlow';
 import UserAvatar from '@/components/UserAvatar';
+import { NotificationButtons } from '@/components/NotificationButtons';
 import { supabase } from '@/integrations/supabase/client';
 
 const ProfilePage = () => {
@@ -334,6 +335,9 @@ const ProfilePage = () => {
 
         {activeTab === 'account' && (
           <div className="space-y-4">
+            {/* Notification Settings */}
+            <NotificationButtons />
+            
             {/* Account Settings Menu */}
             <div className="bg-white rounded-lg divide-y divide-gray-100">
               {accountMenuItems.map((item, index) => (

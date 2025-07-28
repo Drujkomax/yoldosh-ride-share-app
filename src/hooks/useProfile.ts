@@ -15,6 +15,8 @@ export interface UserProfile {
   rating: number;
   avatar_url?: string;
   about?: string;
+  marketing_consent?: boolean;
+  privacy_consent?: boolean;
   created_at: string;
   updated_at: string;
 }

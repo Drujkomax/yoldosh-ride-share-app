@@ -46,6 +46,13 @@ export const useNotificationPreferences = () => {
       if (data) {
         setPreferences(data);
       } else {
+        // Get marketing consent from profile to sync with notification preferences
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('marketing_consent')
+          .eq('id', user.id)
+          .single();
+
         // Create default preferences if none exist
         const defaultPreferences = {
           user_id: user.id,
@@ -63,7 +70,7 @@ export const useNotificationPreferences = () => {
           sms_important_only: true,
           calls_enabled: false,
           calls_urgent_only: true,
-          marketing_enabled: false,
+          marketing_enabled: profileData?.marketing_consent ?? false,
         };
         
         const { data: newData, error: createError } = await supabase
@@ -87,6 +94,7 @@ export const useNotificationPreferences = () => {
     if (!user?.id || !preferences) return false;
 
     try {
+      // Обновляем настройки уведомлений
       const { error } = await supabase
         .from('user_notification_preferences')
         .update(updates)
@@ -96,6 +104,18 @@ export const useNotificationPreferences = () => {
         console.error('Error updating notification preferences:', error);
         toast.error('Ошибка при сохранении настроек');
         return false;
+      }
+
+      // Если обновляем маркетинговые настройки, синхронизируем их с профилем
+      if ('marketing_enabled' in updates) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ marketing_consent: updates.marketing_enabled })
+          .eq('id', user.id);
+
+        if (profileError) {
+          console.error('Error syncing marketing consent to profile:', profileError);
+        }
       }
 
       setPreferences(prev => prev ? { ...prev, ...updates } : null);
