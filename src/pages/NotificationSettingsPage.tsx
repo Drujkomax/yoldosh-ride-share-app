@@ -3,13 +3,16 @@ import { SettingsLayout } from '@/components/ui/settings-layout';
 import { Card } from '@/components/ui/card';
 import { NotificationToggle } from '@/components/ui/notification-toggle';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
+import { useProfile } from '@/hooks/useProfile';
 import { ChevronRight, Bell, Mail, MessageSquare, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 export const NotificationSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { preferences, isLoading, updatePreferences } = useNotificationPreferences();
+  const { profile } = useProfile();
 
   if (isLoading) {
     return (
@@ -38,30 +41,81 @@ export const NotificationSettingsPage: React.FC = () => {
     );
   }
 
+  // Синхронизация маркетинговых уведомлений между профилем и настройками уведомлений
+  const handleMarketingToggle = async (enabled: boolean) => {
+    try {
+      // Обновляем настройки уведомлений
+      const success = await updatePreferences({ marketing_enabled: enabled });
+      
+      if (success && profile) {
+        // Синхронизация уже происходит в updatePreferences
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении маркетинговых настроек:', error);
+      toast.error('Ошибка при сохранении настроек');
+    }
+  };
+
+  const handlePushToggle = async (enabled: boolean) => {
+    if (enabled && 'Notification' in window) {
+      // Запрашиваем разрешение на push-уведомления
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast.error('Разрешение на уведомления отклонено');
+        return;
+      }
+    }
+    
+    await updatePreferences({ push_enabled: enabled });
+  };
+
+  const handleEmailToggle = async (enabled: boolean) => {
+    if (enabled && !profile?.email) {
+      toast.error('Для email-уведомлений необходимо указать email в профиле');
+      return;
+    }
+    
+    await updatePreferences({ email_enabled: enabled });
+  };
+
+  const handleSmsToggle = async (enabled: boolean) => {
+    if (enabled && !profile?.phone) {
+      toast.error('Для SMS-уведомлений необходимо указать номер телефона в профиле');
+      return;
+    }
+    
+    await updatePreferences({ sms_enabled: enabled });
+  };
+
+  // Используем маркетинговые настройки из профиля (приоритет) или из настроек уведомлений
+  const marketingEnabled = profile?.marketing_consent ?? preferences.marketing_enabled;
+
   const notificationCategories = [
     {
       icon: Bell,
       title: 'Push-уведомления',
-      description: 'Уведомления на экране устройства',
+      description: 'Мгновенные уведомления о сообщениях и поездках',
       enabled: preferences.push_enabled,
       path: '/settings/notifications/push',
-      onToggle: (value: boolean) => updatePreferences({ push_enabled: value }),
+      onToggle: handlePushToggle,
     },
     {
       icon: Mail,
       title: 'Email уведомления',
-      description: 'Уведомления на электронную почту',
+      description: 'Дублирование уведомлений на почту',
       enabled: preferences.email_enabled,
       path: '/settings/notifications/email',
-      onToggle: (value: boolean) => updatePreferences({ email_enabled: value }),
+      onToggle: handleEmailToggle,
+      disabled: !profile?.email,
     },
     {
       icon: MessageSquare,
       title: 'SMS уведомления',
-      description: 'Текстовые сообщения',
+      description: 'Дублирование уведомлений по SMS',
       enabled: preferences.sms_enabled,
       path: '/settings/notifications/sms',
-      onToggle: (value: boolean) => updatePreferences({ sms_enabled: value }),
+      onToggle: handleSmsToggle,
+      disabled: !profile?.phone,
     },
     {
       icon: Phone,
@@ -80,9 +134,9 @@ export const NotificationSettingsPage: React.FC = () => {
         <Card>
           <NotificationToggle
             label="Маркетинговые уведомления"
-            description="Получать предложения и акции"
-            value={preferences.marketing_enabled}
-            onChange={(value) => updatePreferences({ marketing_enabled: value })}
+            description="Получать уведомления о скидках и новостях"
+            value={marketingEnabled}
+            onChange={handleMarketingToggle}
           />
         </Card>
 
@@ -99,6 +153,7 @@ export const NotificationSettingsPage: React.FC = () => {
                       description={category.description}
                       value={category.enabled}
                       onChange={category.onToggle}
+                      disabled={category.disabled}
                     />
                   </div>
                   <button
