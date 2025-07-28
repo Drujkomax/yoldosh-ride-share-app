@@ -165,18 +165,8 @@ const LoginPage = () => {
         // Successfully logged in
         toast.success('Добро пожаловать!');
         
-        // Set user in context
-        const contextUser = {
-          id: userProfile.id,
-          phone: userProfile.phone || '',
-          name: userProfile.name || '',
-          email: userProfile.email || '',
-          isVerified: userProfile.is_verified || false,
-          totalRides: userProfile.total_rides || 0,
-          rating: userProfile.rating || 0.0
-        };
-
-        setUser(contextUser);
+        // UserContext will automatically load the profile via onAuthStateChange
+        // No need to manually set user here
         navigate('/passenger-search');
       }
     } catch (error) {
