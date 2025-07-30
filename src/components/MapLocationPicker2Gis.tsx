@@ -124,7 +124,7 @@ const MapLocationPicker2Gis = ({
     return (
       <div className="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-inner">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-teal-200 border-t-teal-600 mx-auto mb-4"></div>
           <div className="text-gray-600 font-medium">Загрузка карты 2GIS...</div>
         </div>
       </div>

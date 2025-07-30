@@ -23,9 +23,9 @@ const Index = () => {
 
   // Показываем индикатор загрузки пока проверяем авторизацию
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-16 h-16 mx-auto mb-4 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin"></div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Yoldosh</h1>
         <p className="text-gray-600">Загрузка...</p>
       </div>

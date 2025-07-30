@@ -133,7 +133,7 @@ const ManageCarsPage = () => {
       <div className="container mx-auto px-6 py-6">
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
             <p className="text-slate-500 mt-2">Загрузка автомобилей...</p>
           </div>
         ) : (
