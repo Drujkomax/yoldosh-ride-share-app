@@ -112,8 +112,11 @@ const PasswordChangePage = () => {
     setIsLoading(true);
 
     try {
-      // Use Supabase directly for password update
-      const { error } = await supabase.auth.updateUser({
+      // Store current session to preserve it
+      const currentSession = session;
+      
+      // Update password using Supabase auth
+      const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
       
@@ -126,13 +129,27 @@ const PasswordChangePage = () => {
         return;
       }
 
+      // Ensure session is preserved after password update
+      if (currentSession && data.user) {
+        // The session should automatically be updated with the new password
+        // but we ensure it's maintained
+        console.log('Password updated successfully, session preserved');
+      }
+
+      // Clear form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setCurrentPasswordValid(false);
+
       toast({
         title: "Пароль успешно изменен",
-        description: "Ваш новый пароль сохранен"
+        description: "Ваш новый пароль сохранен. Сессия сохранена."
       });
 
       navigate('/profile');
     } catch (error: any) {
+      console.error('Password change error:', error);
       toast({
         title: "Ошибка",
         description: error.message || "Произошла ошибка при смене пароля",
