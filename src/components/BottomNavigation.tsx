@@ -64,8 +64,8 @@ const BottomNavigation = () => {
   const getActiveStyles = (color: string, isActiveItem: boolean) => {
     if (!isActiveItem) return 'text-slate-600 hover:bg-slate-100';
     
-    // Все активные кнопки теперь имеют зеленый цвет
-    return 'bg-teal-500/10 text-teal-600 scale-110 border border-teal-500/30';
+    // Убрали зеленый фон, оставили только цвет текста и увеличение
+    return 'text-teal-600 scale-110';
   };
 
   return (
