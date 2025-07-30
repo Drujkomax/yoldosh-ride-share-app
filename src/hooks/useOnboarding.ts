@@ -101,24 +101,20 @@ export const useOnboarding = () => {
           // Не фейлим регистрацию из-за ошибки обновления профиля
         }
 
-        // Сохраняем пользователя в контексте
-        const userProfile = {
-          id: authData.user.id,
-          phone: onboardingData.phone,
-          name: `${onboardingData.firstName} ${onboardingData.lastName}`,
-          email: userEmail,
-          isVerified: false,
-          totalRides: 0,
-          rating: 0.0,
-        };
-
-        setUser(userProfile);
+        // Останавливаем загрузку ПЕРЕД навигацией
+        setIsLoading(false);
         
         toast.success('Регистрация завершена успешно!');
-        navigate('/passenger-search');
+        
+        // Даем время для обновления состояния и навигации
+        setTimeout(() => {
+          navigate('/passenger-search');
+        }, 100);
+        
         return true;
       }
 
+      setIsLoading(false);
       return false;
     } catch (error) {
       console.error('Unexpected registration error:', error);
