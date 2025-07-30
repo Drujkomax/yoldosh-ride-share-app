@@ -105,14 +105,14 @@ export const useOnboarding = () => {
 
         console.log('Registration completed successfully, user authenticated:', authData.user.id);
         
-        // Останавливаем загрузку
-        setIsLoading(false);
-        
         toast.success('Регистрация завершена успешно!');
         
-        // Навигация на главную страницу - Index.tsx сам определит куда перенаправить
-        console.log('Navigating to root page for authenticated user');
-        navigate('/');
+        // Прямое перенаправление на страницу поиска пассажира
+        console.log('Navigating to passenger search page');
+        navigate('/passenger-search');
+        
+        // Останавливаем загрузку после навигации
+        setIsLoading(false);
         
         return true;
       }
