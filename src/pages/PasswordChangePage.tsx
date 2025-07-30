@@ -102,12 +102,15 @@ const PasswordChangePage = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await updatePassword(newPassword);
+      // Use Supabase directly for password update
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
       
       if (error) {
         toast({
           title: "Ошибка смены пароля",
-          description: error,
+          description: error.message,
           variant: "destructive"
         });
         return;
@@ -119,10 +122,10 @@ const PasswordChangePage = () => {
       });
 
       navigate('/profile');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Ошибка",
-        description: "Произошла ошибка при смене пароля",
+        description: error.message || "Произошла ошибка при смене пароля",
         variant: "destructive"
       });
     } finally {
