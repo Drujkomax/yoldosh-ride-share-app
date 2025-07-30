@@ -27,11 +27,11 @@ const PasswordChangePage = () => {
 
   const getPasswordStrength = (password: string) => {
     let strength = 0;
-    if (password.length >= 12) strength++;
+    if (password.length >= 8) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
-    if (/[@$!%*?&]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
     return strength;
   };
 
@@ -75,14 +75,7 @@ const PasswordChangePage = () => {
 
   const passwordStrength = getPasswordStrength(newPassword);
   const passwordsMatch = newPassword === confirmPassword && newPassword.length > 0;
-  
-  let isNewPasswordValid = false;
-  try {
-    passwordSchema.parse(newPassword);
-    isNewPasswordValid = true;
-  } catch (error) {
-    isNewPasswordValid = false;
-  }
+  const isNewPasswordValid = passwordStrength >= 3;
 
   const isFormValid = currentPasswordValid && isNewPasswordValid && passwordsMatch;
 
@@ -240,8 +233,8 @@ const PasswordChangePage = () => {
                   </div>
                   <div className="text-xs">
                     <div className="grid grid-cols-2 gap-1">
-                      <span className={newPassword.length >= 12 ? 'text-green-600' : 'text-muted-foreground'}>
-                        ✓ Минимум 12 символов
+                      <span className={newPassword.length >= 8 ? 'text-green-600' : 'text-muted-foreground'}>
+                        ✓ Минимум 8 символов
                       </span>
                       <span className={/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-muted-foreground'}>
                         ✓ Заглавная буква
@@ -251,9 +244,6 @@ const PasswordChangePage = () => {
                       </span>
                       <span className={/[0-9]/.test(newPassword) ? 'text-green-600' : 'text-muted-foreground'}>
                         ✓ Цифра
-                      </span>
-                      <span className={/[@$!%*?&]/.test(newPassword) ? 'text-green-600' : 'text-muted-foreground'}>
-                        ✓ Спец. символ (@$!%*?&)
                       </span>
                     </div>
                   </div>
