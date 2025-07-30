@@ -110,7 +110,35 @@ const PasswordChangePage = () => {
     console.log('handlePasswordChange called', { isFormValid, isLoading });
     
     if (!isFormValid) {
-      console.log('Form is not valid, aborting');
+      console.log('Form is not valid, aborting. Validation state:', {
+        currentPasswordValid,
+        isNewPasswordValid,
+        passwordsMatch,
+        passwordStrength,
+        newPasswordLength: newPassword.length,
+        confirmPasswordLength: confirmPassword.length
+      });
+      
+      // Показываем пользователю конкретную ошибку
+      if (!currentPasswordValid) {
+        toast({
+          title: "Ошибка валидации",
+          description: "Введите правильный текущий пароль",
+          variant: "destructive"
+        });
+      } else if (!isNewPasswordValid) {
+        toast({
+          title: "Ошибка валидации", 
+          description: "Новый пароль должен содержать минимум 8 символов и соответствовать требованиям безопасности",
+          variant: "destructive"
+        });
+      } else if (!passwordsMatch) {
+        toast({
+          title: "Ошибка валидации",
+          description: "Пароли не совпадают. Проверьте поле подтверждения пароля",
+          variant: "destructive"
+        });
+      }
       return;
     }
 
@@ -165,11 +193,6 @@ const PasswordChangePage = () => {
         return;
       }
 
-      // Ensure session is preserved after password update
-      if (currentSession && data.user) {
-        console.log('Password updated successfully, session preserved');
-      }
-
       // Clear form
       setCurrentPassword('');
       setNewPassword('');
@@ -178,10 +201,13 @@ const PasswordChangePage = () => {
 
       toast({
         title: "Пароль успешно изменен",
-        description: "Ваш новый пароль сохранен. Сессия сохранена."
+        description: "Ваш новый пароль сохранен"
       });
 
+      // Redirect to profile page
+      console.log('Redirecting to profile page');
       navigate('/profile');
+      
     } catch (error: any) {
       console.error('Password change error:', error);
       toast({
