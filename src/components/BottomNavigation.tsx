@@ -44,13 +44,13 @@ const BottomNavigation = () => {
       path: '/my-trips',
       icon: FileText,
       label: 'Ваши поездки',
-      color: 'purple'
+      color: 'green'
     },
     {
       path: '/chats',
       icon: MessageCircle,
       label: 'Входящие',
-      color: 'orange',
+      color: 'green',
       badge: totalUnreadCount > 0 ? totalUnreadCount : undefined
     },
     {
