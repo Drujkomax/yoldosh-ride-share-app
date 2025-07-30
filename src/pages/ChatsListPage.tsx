@@ -44,12 +44,12 @@ const ChatsListPage = () => {
   };
 
   return (
-    <MobilePageLayout className="bg-gradient-to-br from-slate-50 to-purple-50 dark:from-slate-900 dark:to-purple-900">
+    <MobilePageLayout className="bg-gray-50">
       {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/20">
+      <div className="bg-white shadow-lg border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-center">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">Входящие сообщения</h1>
+            <h1 className="text-xl font-bold text-teal-900">Входящие сообщения</h1>
           </div>
         </div>
       </div>
@@ -63,7 +63,7 @@ const ChatsListPage = () => {
               placeholder="Поиск по сообщениям..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-slate-200 dark:border-slate-700 mobile-tap-highlight-transparent"
+              className="pl-10 bg-white border-gray-200"
             />
           </div>
         </div>
@@ -71,20 +71,20 @@ const ChatsListPage = () => {
         {/* Chats List */}
         <div className="space-y-4">
           <div className="flex items-center mb-6">
-            <MessageCircle className="h-6 w-6 mr-3 text-yoldosh-primary" />
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+            <MessageCircle className="h-6 w-6 mr-3 text-teal-600" />
+            <h2 className="text-lg font-bold text-teal-900">
               Активные чаты ({filteredChats.length})
             </h2>
           </div>
           
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yoldosh-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
             </div>
           ) : filteredChats.length === 0 ? (
             <div className="text-center py-16">
-              <MessageCircle className="h-12 w-12 mx-auto text-slate-400 mb-4" />
-              <p className="text-slate-600 dark:text-slate-400">
+              <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-600">
                 {searchQuery ? 'Чаты по запросу не найдены' : 'У вас пока нет сообщений'}
               </p>
             </div>
@@ -99,7 +99,7 @@ const ChatsListPage = () => {
                   <div
                     key={chat.id}
                     onClick={() => navigate(`/chat/${chat.id}`)}
-                    className="p-4 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200 dark:border-slate-600 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02] mobile-tap-highlight-transparent"
+                    className="p-4 rounded-2xl bg-white border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02]"
                   >
                     <div className="flex items-start space-x-4">
                        <UserAvatar 
@@ -111,11 +111,11 @@ const ChatsListPage = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center space-x-2">
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                            <h3 className="font-bold text-gray-900 truncate">
                               {otherParticipant?.name || 'Пользователь'}
                             </h3>
                             {otherParticipant?.is_verified && (
-                              <Shield className="h-4 w-4 text-yoldosh-success" />
+                              <Shield className="h-4 w-4 text-teal-600" />
                             )}
                             {chat.unreadCount > 0 && (
                               <Badge className="bg-red-500 text-white text-xs">
@@ -123,17 +123,17 @@ const ChatsListPage = () => {
                               </Badge>
                             )}
                           </div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
                             {formatTime(chat.last_message_at)}
                           </span>
                         </div>
                         
-                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
+                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                           {lastMessagePreview}
                         </p>
                         
                         {chat.ride && (
-                          <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <div className="flex items-center space-x-1">
                               <MapPin className="h-3 w-3" />
                               <span className="truncate">

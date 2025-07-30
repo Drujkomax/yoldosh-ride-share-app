@@ -191,9 +191,9 @@ const MyTripsPage = () => {
           <div className="mb-4">
             <div className="flex items-center space-x-3">
               <div className="flex flex-col items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <div className="w-0.5 h-8 bg-blue-500 opacity-30"></div>
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
+                <div className="w-0.5 h-8 bg-teal-600 opacity-30"></div>
+                <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
@@ -276,7 +276,7 @@ const MyTripsPage = () => {
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-center">
-            <h1 className="text-xl font-bold text-gray-900">Мои поездки</h1>
+            <h1 className="text-xl font-bold text-teal-900">Мои поездки</h1>
           </div>
         </div>
       </div>
@@ -290,7 +290,7 @@ const MyTripsPage = () => {
             </div>
             <Button 
               onClick={() => navigate('/passenger')}
-              className="bg-blue-500 hover:bg-blue-600 rounded-xl"
+              className="bg-teal-600 hover:bg-teal-700 rounded-xl"
             >
               Найти поездку
             </Button>
