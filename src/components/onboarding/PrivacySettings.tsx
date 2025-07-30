@@ -44,7 +44,7 @@ const PrivacySettings = ({
                 id="privacy"
                 checked={privacyConsent}
                 onCheckedChange={onPrivacyChange}
-                className="pointer-events-none"
+                className="pointer-events-none data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
               />
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900">
@@ -65,7 +65,7 @@ const PrivacySettings = ({
                 id="marketing"
                 checked={marketingConsent}
                 onCheckedChange={onMarketingChange}
-                className="pointer-events-none"
+                className="pointer-events-none data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
               />
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900">
