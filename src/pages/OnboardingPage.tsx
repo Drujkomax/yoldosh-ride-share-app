@@ -2,7 +2,6 @@
 import React from 'react';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import PrivacySettings from '@/components/onboarding/PrivacySettings';
-import WelcomeScreens from '@/components/onboarding/WelcomeScreens';
 import RegistrationMethod from '@/components/onboarding/RegistrationMethod';
 import EmailRegistration from '@/components/onboarding/EmailRegistration';
 import DeviceVerification from '@/components/onboarding/DeviceVerification';
@@ -35,9 +34,6 @@ const OnboardingPage = () => {
         );
       
       case 1:
-        return <WelcomeScreens onNext={nextStep} />;
-      
-      case 2:
         return (
           <RegistrationMethod
             selectedMethod={onboardingData.registrationMethod}
@@ -46,7 +42,7 @@ const OnboardingPage = () => {
           />
         );
       
-      case 3:
+      case 2:
         return (
           <EmailRegistration
             email={onboardingData.email || ''}
@@ -57,7 +53,7 @@ const OnboardingPage = () => {
           />
         );
       
-      case 4:
+      case 3:
         return (
           <DeviceVerification
             phone={onboardingData.phone}
@@ -66,7 +62,7 @@ const OnboardingPage = () => {
           />
         );
       
-      case 5:
+      case 4:
         return (
           <PersonalInfo
             firstName={onboardingData.firstName}
@@ -77,7 +73,7 @@ const OnboardingPage = () => {
           />
         );
       
-      case 6:
+      case 5:
         return (
           <PasswordCreation
             password={onboardingData.password || ''}
@@ -88,7 +84,7 @@ const OnboardingPage = () => {
           />
         );
       
-      case 7:
+      case 6:
         return (
           <DateOfBirth
             dateOfBirth={onboardingData.dateOfBirth}
@@ -99,7 +95,15 @@ const OnboardingPage = () => {
         );
       
       default:
-        return <WelcomeScreens onNext={nextStep} />;
+        return (
+          <PrivacySettings
+            privacyConsent={onboardingData.privacyConsent}
+            marketingConsent={onboardingData.marketingConsent}
+            onPrivacyChange={(checked) => updateOnboardingData({ privacyConsent: checked })}
+            onMarketingChange={(checked) => updateOnboardingData({ marketingConsent: checked })}
+            onNext={nextStep}
+          />
+        );
     }
   };
 
