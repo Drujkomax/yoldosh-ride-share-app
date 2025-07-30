@@ -21,7 +21,7 @@ const PasswordChangePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentPasswordValid, setCurrentPasswordValid] = useState(false);
 
-  const { signIn, updatePassword, user } = useSecureAuth();
+  const { signIn, updatePassword, user, session } = useSecureAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -39,13 +39,30 @@ const PasswordChangePage = () => {
     if (!password || !user?.email) return;
     
     try {
-      // Use Supabase's signInWithPassword but bypass our validation schema
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Validating password for email:', user.email);
+      
+      // Store current session
+      const currentSession = session;
+      
+      // Try to sign in with the password
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: password,
       });
-      setCurrentPasswordValid(!error);
-    } catch (error) {
+      
+      console.log('Password validation result:', { error: error?.message, success: !error });
+      
+      if (!error) {
+        setCurrentPasswordValid(true);
+        // Restore the original session if it was different
+        if (currentSession && data.session?.access_token !== currentSession.access_token) {
+          await supabase.auth.setSession(currentSession);
+        }
+      } else {
+        setCurrentPasswordValid(false);
+      }
+    } catch (error: any) {
+      console.error('Password validation error:', error);
       setCurrentPasswordValid(false);
     }
   };
