@@ -21,10 +21,10 @@ const PrivacySettings = ({
   onNext
 }: PrivacySettingsProps) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex flex-col justify-center p-6">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Настройки приватности</h1>
@@ -37,7 +37,7 @@ const PrivacySettings = ({
           </CardHeader>
           <CardContent className="space-y-6">
             <div 
-              className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+              className="flex items-start space-x-4 p-4 bg-teal-50 rounded-lg cursor-pointer hover:bg-teal-100 transition-colors"
               onClick={() => onPrivacyChange(!privacyConsent)}
             >
               <Checkbox
@@ -54,7 +54,7 @@ const PrivacySettings = ({
                   Обязательно для использования сервиса
                 </p>
               </div>
-              <Eye className="h-5 w-5 text-blue-600" />
+              <Eye className="h-5 w-5 text-teal-600" />
             </div>
 
             <div 
@@ -75,7 +75,7 @@ const PrivacySettings = ({
                   Получать уведомления о скидках и новостях
                 </p>
               </div>
-              <Bell className={`h-5 w-5 ${marketingConsent ? 'text-blue-600' : 'text-gray-400'}`} />
+              <Bell className={`h-5 w-5 ${marketingConsent ? 'text-teal-600' : 'text-gray-400'}`} />
             </div>
 
             <Button 
@@ -83,7 +83,7 @@ const PrivacySettings = ({
               disabled={!privacyConsent}
               className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                 privacyConsent 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl' 
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
@@ -92,8 +92,8 @@ const PrivacySettings = ({
             
             <p className="text-xs text-gray-500 text-center leading-relaxed">
               Нажимая "Продолжить", вы соглашаетесь с нашими{' '}
-              <span className="text-blue-600 underline">Условиями использования</span> и{' '}
-              <span className="text-blue-600 underline">Политикой конфиденциальности</span>
+              <span className="text-teal-600 underline">Условиями использования</span> и{' '}
+              <span className="text-teal-600 underline">Политикой конфиденциальности</span>
             </p>
           </CardContent>
         </Card>
