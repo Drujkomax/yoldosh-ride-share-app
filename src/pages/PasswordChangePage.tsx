@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { passwordSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/validation';
+import { supabase } from '@/integrations/supabase/client';
 
 const PasswordChangePage = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -38,7 +39,11 @@ const PasswordChangePage = () => {
     if (!password || !user?.email) return;
     
     try {
-      const { error } = await signIn(user.email, password);
+      // Use Supabase's signInWithPassword but bypass our validation schema
+      const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: password,
+      });
       setCurrentPasswordValid(!error);
     } catch (error) {
       setCurrentPasswordValid(false);
