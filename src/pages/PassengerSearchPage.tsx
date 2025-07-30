@@ -341,7 +341,7 @@ const PassengerSearchPage = () => {
         <Button
           onClick={handleSearch}
           disabled={!fromCity || !toCity || isSearching}
-          className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+          className="w-full h-12 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-semibold"
         >
           {isSearching ? 'Поиск...' : 'Поиск'}
         </Button>
