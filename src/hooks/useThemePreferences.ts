@@ -4,7 +4,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark';
 
 export interface ThemePreferences {
   id?: string;
@@ -35,8 +35,8 @@ export const useThemePreferences = () => {
 
       if (data) {
         setPreferences(data as ThemePreferences);
-        // Sync with theme context if different (only for light/dark, not system)
-        if (data.theme_mode !== 'system' && data.theme_mode !== theme) {
+        // Sync with theme context if different
+        if (data.theme_mode !== theme) {
           setTheme(data.theme_mode as 'light' | 'dark');
         }
       } else {
@@ -67,10 +67,8 @@ export const useThemePreferences = () => {
     if (!user?.id) return false;
 
     try {
-      // Update theme context immediately for better UX (only for light/dark)
-      if (themeMode !== 'system') {
-        setTheme(themeMode as 'light' | 'dark');
-      }
+      // Update theme context immediately for better UX
+      setTheme(themeMode as 'light' | 'dark');
 
       if (preferences) {
         // Update existing preferences
@@ -81,10 +79,8 @@ export const useThemePreferences = () => {
 
         if (error) {
           console.error('Error updating theme preferences:', error);
-          // Revert theme if update failed (only for light/dark)
-          if (preferences.theme_mode !== 'system') {
-            setTheme(preferences.theme_mode as 'light' | 'dark');
-          }
+          // Revert theme if update failed
+          setTheme(preferences.theme_mode as 'light' | 'dark');
           toast.error('Ошибка при сохранении темы');
           return false;
         }

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ArrowLeft, User, Star, Car, Phone, Settings, LogOut, Shield, Loader2, Plus, CheckCircle, ChevronRight, Mail, MessageSquare, Users, Bell, Moon, Lock, CreditCard, Wallet, HelpCircle, Gift, Zap } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useReviews } from '@/hooks/useReviews';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -21,6 +22,7 @@ const ProfilePage = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const { user, setUser } = useUser();
+  const { theme } = useTheme();
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews, isLoading: reviewsLoading } = useReviews();
   
@@ -135,8 +137,9 @@ const ProfilePage = () => {
     },
     {
       icon: Moon,
-      title: "Тема приложения",
-      onClick: () => navigate('/settings/theme?backTo=account')
+      title: "Темная тема",
+      onClick: () => navigate('/settings/theme?backTo=account'),
+      status: theme === 'dark' ? 'Включена' : 'Выключена',
     },
     {
       icon: Lock,
@@ -350,7 +353,10 @@ const ProfilePage = () => {
                     <item.icon className="h-4 w-4 text-teal-600" />
                     <span className="text-gray-900 font-medium text-sm">{item.title}</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    {item.status && <span className="text-xs text-gray-500">{item.status}</span>}
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  </div>
                 </button>
               ))}
             </div>

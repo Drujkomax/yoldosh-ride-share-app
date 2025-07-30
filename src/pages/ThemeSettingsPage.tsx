@@ -3,7 +3,7 @@ import { SettingsLayout } from '@/components/ui/settings-layout';
 import { Card } from '@/components/ui/card';
 import { useThemePreferences } from '@/hooks/useThemePreferences';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Check, Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 export const ThemeSettingsPage: React.FC = () => {
@@ -16,14 +16,12 @@ export const ThemeSettingsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <SettingsLayout title="Тема приложения" backTo={backUrl}>
+      <SettingsLayout title="Темная тема" backTo={backUrl}>
         <div className="p-4 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="p-4">
-              <Skeleton className="h-4 w-3/4 mb-2" />
-              <Skeleton className="h-3 w-1/2" />
-            </Card>
-          ))}
+          <Card className="p-4">
+            <Skeleton className="h-4 w-3/4 mb-2" />
+            <Skeleton className="h-3 w-1/2" />
+          </Card>
         </div>
       </SettingsLayout>
     );
@@ -32,30 +30,40 @@ export const ThemeSettingsPage: React.FC = () => {
   const themeOptions = [
     {
       id: 'light' as const,
-      title: 'Светлая тема',
-      description: 'Всегда светлая тема',
+      title: 'Выключена',
+      description: 'Светлая тема',
       icon: Sun,
     },
     {
       id: 'dark' as const,
-      title: 'Темная тема',
-      description: 'Всегда темная тема',
+      title: 'Включена',
+      description: 'Темная тема',
       icon: Moon,
-    },
-    {
-      id: 'system' as const,
-      title: 'Системная',
-      description: 'Следовать настройкам устройства',
-      icon: Monitor,
     },
   ];
 
-  const currentMode = preferences?.theme_mode || 'system';
+  const currentMode = preferences?.theme_mode === 'dark' ? 'dark' : 'light';
 
   return (
-    <SettingsLayout title="Тема приложения" backTo={backUrl}>
+    <SettingsLayout title="Темная тема" backTo={backUrl}>
       <div className="p-4">
-        <div className="space-y-2">
+        {/* Theme illustration */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 via-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 flex items-center justify-center transition-all duration-300">
+                {currentMode === 'dark' ? (
+                  <Moon className="h-8 w-8 text-slate-300" />
+                ) : (
+                  <Sun className="h-8 w-8 text-yellow-300" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Theme options */}
+        <div className="space-y-3">
           {themeOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = currentMode === option.id;
@@ -65,8 +73,8 @@ export const ThemeSettingsPage: React.FC = () => {
                 key={option.id}
                 className={`transition-all duration-200 ${
                   isSelected 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-border hover:border-border/80'
+                    ? 'border-teal-600 bg-teal-50' 
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <button
@@ -75,27 +83,29 @@ export const ThemeSettingsPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                         isSelected 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground'
+                          ? 'border-teal-600 bg-teal-600' 
+                          : 'border-gray-300'
                       }`}>
-                        <Icon className="h-4 w-4" />
+                        {isSelected && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
                       </div>
                       <div>
                         <div className={`font-medium ${
-                          isSelected ? 'text-primary' : 'text-foreground'
+                          isSelected ? 'text-teal-700' : 'text-gray-900'
                         }`}>
                           {option.title}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-gray-500">
                           {option.description}
                         </div>
                       </div>
                     </div>
-                    {isSelected && (
-                      <Check className="h-5 w-5 text-primary" />
-                    )}
+                    <Icon className={`h-5 w-5 ${
+                      isSelected ? 'text-teal-600' : 'text-gray-400'
+                    }`} />
                   </div>
                 </button>
               </Card>
@@ -103,25 +113,14 @@ export const ThemeSettingsPage: React.FC = () => {
           })}
         </div>
 
-        {/* Preview */}
-        <Card className="mt-6 p-4">
-          <div className="text-sm font-medium text-foreground mb-2">
-            Предварительный просмотр
-          </div>
-          <div className="text-xs text-muted-foreground mb-3">
-            Текущая тема: {currentTheme === 'light' ? 'Светлая' : 'Темная'}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-card border border-border">
-              <div className="text-xs font-medium text-card-foreground">Карточка</div>
-              <div className="text-xs text-muted-foreground mt-1">Пример текста</div>
-            </div>
-            <div className="p-3 rounded-lg bg-primary text-primary-foreground">
-              <div className="text-xs font-medium">Кнопка</div>
-              <div className="text-xs opacity-90 mt-1">Активная</div>
-            </div>
-          </div>
-        </Card>
+        {/* Current status */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500">
+            Текущая тема: <span className="font-medium text-gray-700">
+              {currentTheme === 'dark' ? 'Темная' : 'Светлая'}
+            </span>
+          </p>
+        </div>
       </div>
     </SettingsLayout>
   );
