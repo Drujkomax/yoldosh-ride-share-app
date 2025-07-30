@@ -44,10 +44,10 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex flex-col justify-center p-6">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Smartphone className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Верификация</h1>
@@ -57,7 +57,7 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
         <Card className="shadow-xl border-0">
           <CardHeader>
             <CardTitle className="text-lg text-center flex items-center justify-center space-x-2">
-              <Shield className="h-5 w-5 text-green-600" />
+              <Shield className="h-5 w-5 text-teal-600" />
               <span>Безопасность</span>
             </CardTitle>
           </CardHeader>
@@ -80,7 +80,7 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
                   disabled={phone.length < 13}
                   className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                     phone.length >= 13
-                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl' 
+                      ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
@@ -89,11 +89,11 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
               </>
             ) : (
               <>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-700 mb-2">
+                <div className="text-center p-4 bg-teal-50 rounded-lg">
+                  <p className="text-sm text-teal-700 mb-2">
                     Код отправлен на номер:
                   </p>
-                  <p className="font-medium text-green-800">{phone}</p>
+                  <p className="font-medium text-teal-800">{phone}</p>
                 </div>
 
                 <AnimatedInput
@@ -116,7 +116,7 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
                   disabled={verificationCode.length !== 4}
                   className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                     verificationCode.length === 4
-                      ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl' 
+                      ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
@@ -125,7 +125,7 @@ const DeviceVerification = ({ phone, onPhoneChange, onNext }: DeviceVerification
 
                 <button
                   onClick={() => setIsCodeSent(false)}
-                  className="w-full text-green-600 hover:text-green-700 text-sm py-2 hover:underline transition-colors"
+                  className="w-full text-teal-600 hover:text-teal-700 text-sm py-2 hover:underline transition-colors"
                 >
                   Изменить номер
                 </button>

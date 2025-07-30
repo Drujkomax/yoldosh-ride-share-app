@@ -53,15 +53,15 @@ const PasswordCreation = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dark relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 relative overflow-hidden">
       {/* Background elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-yoldosh-primary/10 rounded-full animate-pulse-slow"></div>
-      <div className="absolute bottom-20 left-10 w-24 h-24 bg-yoldosh-secondary/10 rounded-full animate-float"></div>
+      <div className="absolute top-10 right-10 w-32 h-32 bg-teal-600/10 rounded-full animate-pulse-slow"></div>
+      <div className="absolute bottom-20 left-10 w-24 h-24 bg-emerald-600/10 rounded-full animate-float"></div>
       
       <div className="container mx-auto max-w-md px-4 relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-center pt-6 mb-6">
-          <h1 className="text-2xl font-bold text-white">Yoldosh</h1>
+          <h1 className="text-2xl font-bold text-teal-800">Yoldosh</h1>
         </div>
 
         {/* Password Form */}
@@ -168,7 +168,7 @@ const PasswordCreation = ({
               <Button 
                 onClick={onNext}
                 disabled={!isValid}
-                className="w-full h-10 text-sm bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50"
+                className="w-full h-10 text-sm bg-teal-600 hover:bg-teal-700 text-white hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50"
               >
                 Продолжить
               </Button>

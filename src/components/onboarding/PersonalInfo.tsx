@@ -56,10 +56,10 @@ const PersonalInfo = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex flex-col justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex flex-col justify-center p-6">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Как вас зовут?</h1>
@@ -103,8 +103,8 @@ const PersonalInfo = ({
               )}
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-700 text-center">
+            <div className="bg-teal-50 p-4 rounded-lg">
+              <p className="text-sm text-teal-700 text-center">
                 💡 Ваше имя будет видно другим пользователям в поездках
               </p>
             </div>
@@ -114,7 +114,7 @@ const PersonalInfo = ({
               disabled={!firstName.trim() || !!errors.firstName || !!errors.lastName}
               className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                 firstName.trim() && !errors.firstName && !errors.lastName
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl' 
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >

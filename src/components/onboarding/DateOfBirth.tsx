@@ -58,10 +58,10 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex flex-col justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex flex-col justify-center p-6">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Gift className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Дата рождения</h1>
@@ -71,7 +71,7 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
         <Card className="shadow-xl border-0">
           <CardHeader>
             <CardTitle className="text-lg text-center flex items-center justify-center space-x-2">
-              <Calendar className="h-5 w-5 text-pink-600" />
+              <Calendar className="h-5 w-5 text-teal-600" />
               <span>Когда вы родились?</span>
             </CardTitle>
           </CardHeader>
@@ -114,8 +114,8 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
               </div>
             )}
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-blue-700 text-center">
+            <div className="bg-teal-50 p-4 rounded-lg">
+              <p className="text-sm text-teal-700 text-center">
                 🔒 Эта информация поможет нам обеспечить безопасность
               </p>
             </div>
@@ -126,7 +126,7 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
                 disabled={!!error}
                 className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                   !error
-                    ? 'bg-pink-600 hover:bg-pink-700 text-white shadow-lg hover:shadow-xl' 
+                    ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
