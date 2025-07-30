@@ -167,32 +167,41 @@ const PasswordChangePage = () => {
     console.log('Starting password update process');
 
     try {
-      // Store current session to preserve it
-      const currentSession = session;
-      console.log('Current session:', currentSession?.access_token ? 'exists' : 'missing');
+      console.log('Starting password update with Supabase...');
       
       // Update password using Supabase auth
-      console.log('Calling supabase.auth.updateUser...');
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
       
-      console.log('Password update result:', { 
+      console.log('Password update completed:', { 
         success: !error, 
         error: error?.message,
-        userData: data?.user?.id ? 'user updated' : 'no user data'
+        hasUser: !!data?.user
       });
       
       if (error) {
-        console.error('Password update error:', error);
+        console.error('Password update failed:', error);
         toast({
           title: "Ошибка смены пароля",
-          description: error.message,
+          description: error.message || "Не удалось обновить пароль",
           variant: "destructive"
         });
         return;
       }
 
+      if (!data?.user) {
+        console.error('No user data returned after password update');
+        toast({
+          title: "Ошибка",
+          description: "Не удалось подтвердить обновление пароля",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Password successfully updated, clearing form...');
+      
       // Clear form
       setCurrentPassword('');
       setNewPassword('');
@@ -204,15 +213,17 @@ const PasswordChangePage = () => {
         description: "Ваш новый пароль сохранен"
       });
 
-      // Redirect to profile page
-      console.log('Redirecting to profile page');
-      navigate('/profile');
+      // Small delay before redirect to ensure toast is visible
+      setTimeout(() => {
+        console.log('Redirecting to profile page');
+        navigate('/profile');
+      }, 1000);
       
     } catch (error: any) {
-      console.error('Password change error:', error);
+      console.error('Unexpected error during password change:', error);
       toast({
         title: "Ошибка",
-        description: error.message || "Произошла ошибка при смене пароля",
+        description: error?.message || "Произошла неожиданная ошибка при смене пароля",
         variant: "destructive"
       });
     } finally {
