@@ -52,10 +52,10 @@ const EmailRegistration = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-100 flex flex-col justify-center p-6">
       <div className="max-w-md mx-auto w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Mail className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Ваш Email</h1>
@@ -87,7 +87,7 @@ const EmailRegistration = ({
               disabled={!email || !!emailError}
               className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-300 ${
                 email && !emailError
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl' 
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl' 
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
