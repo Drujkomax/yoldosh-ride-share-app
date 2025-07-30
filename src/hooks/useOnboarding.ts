@@ -49,6 +49,7 @@ export const useOnboarding = () => {
       
       if (!onboardingData.password) {
         toast.error('Пароль не указан');
+        setIsLoading(false);
         return false;
       }
 
@@ -71,6 +72,7 @@ export const useOnboarding = () => {
 
       if (authError) {
         console.error('Auth registration error:', authError);
+        setIsLoading(false);
         if (authError.message.includes('User already registered')) {
           toast.error('Пользователь с таким email уже зарегистрирован');
         } else {
@@ -101,15 +103,16 @@ export const useOnboarding = () => {
           // Не фейлим регистрацию из-за ошибки обновления профиля
         }
 
-        // Останавливаем загрузку ПЕРЕД навигацией
+        console.log('Registration completed successfully, user authenticated:', authData.user.id);
+        
+        // Останавливаем загрузку
         setIsLoading(false);
         
         toast.success('Регистрация завершена успешно!');
         
-        // Даем время для обновления состояния и навигации
-        setTimeout(() => {
-          navigate('/passenger-search');
-        }, 100);
+        // Навигация на главную страницу - Index.tsx сам определит куда перенаправить
+        console.log('Navigating to root page for authenticated user');
+        navigate('/');
         
         return true;
       }
@@ -119,9 +122,8 @@ export const useOnboarding = () => {
     } catch (error) {
       console.error('Unexpected registration error:', error);
       toast.error('Произошла неожиданная ошибка при регистрации');
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
