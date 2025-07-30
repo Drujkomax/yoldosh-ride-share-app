@@ -169,7 +169,7 @@ const PassengerSearchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-300 to-sky-200 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-300 to-emerald-200 pb-24">
       {/* Notification Permission Modal */}
       {showNotificationPermission && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
