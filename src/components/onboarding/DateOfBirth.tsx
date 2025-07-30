@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Gift } from 'lucide-react';
-import { WheelPicker } from '@/components/ui/wheel-picker';
 
 interface DateOfBirthProps {
   dateOfBirth?: Date;
@@ -19,15 +18,7 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
   const [year, setYear] = useState(dateOfBirth?.getFullYear() || today.getFullYear() - 18);
   const [error, setError] = useState('');
 
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-
-  const monthNames = [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-  ];
 
   const validateDate = () => {
     const selectedDate = new Date(year, month - 1, day);
@@ -76,34 +67,55 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-3 gap-4 h-64">
+            <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">День</label>
-                <WheelPicker
-                  items={days}
-                  selectedValue={day}
-                  onValueChange={(value) => setDay(value as number)}
-                  className="border-2 border-gray-200 rounded-xl"
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={day}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    setDay(Math.min(Math.max(value, 1), 31));
+                    setError('');
+                  }}
+                  className="w-full h-12 text-center text-lg font-medium border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors bg-white"
+                  placeholder="01"
                 />
               </div>
               
               <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Месяц</label>
-                <WheelPicker
-                  items={months}
-                  selectedValue={month}
-                  onValueChange={(value) => setMonth(value as number)}
-                  className="border-2 border-gray-200 rounded-xl"
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={month}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 1;
+                    setMonth(Math.min(Math.max(value, 1), 12));
+                    setError('');
+                  }}
+                  className="w-full h-12 text-center text-lg font-medium border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors bg-white"
+                  placeholder="01"
                 />
               </div>
               
               <div className="text-center">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Год</label>
-                <WheelPicker
-                  items={years}
-                  selectedValue={year}
-                  onValueChange={(value) => setYear(value as number)}
-                  className="border-2 border-gray-200 rounded-xl"
+                <input
+                  type="number"
+                  min="1924"
+                  max={currentYear}
+                  value={year}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || currentYear - 18;
+                    setYear(Math.min(Math.max(value, 1924), currentYear));
+                    setError('');
+                  }}
+                  className="w-full h-12 text-center text-lg font-medium border-2 border-teal-200 rounded-xl focus:border-teal-500 focus:outline-none transition-colors bg-white"
+                  placeholder="2000"
                 />
               </div>
             </div>
