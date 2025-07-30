@@ -79,6 +79,17 @@ const PasswordChangePage = () => {
 
   const isFormValid = currentPasswordValid && isNewPasswordValid && passwordsMatch;
 
+  // Debug информация
+  console.log('Password validation state:', {
+    currentPasswordValid,
+    isNewPasswordValid,
+    passwordsMatch,
+    passwordStrength,
+    newPasswordLength: newPassword.length,
+    confirmPasswordLength: confirmPassword.length,
+    isFormValid
+  });
+
   const getStrengthColor = (strength: number) => {
     if (strength <= 1) return 'bg-red-500';
     if (strength <= 2) return 'bg-orange-500';
@@ -96,7 +107,22 @@ const PasswordChangePage = () => {
   };
 
   const handlePasswordChange = async () => {
-    if (!isFormValid) return;
+    console.log('handlePasswordChange called', { isFormValid, isLoading });
+    
+    if (!isFormValid) {
+      console.log('Form is not valid, aborting');
+      return;
+    }
+
+    if (!user?.email) {
+      console.log('No user email found');
+      toast({
+        title: "Ошибка",
+        description: "Пользователь не авторизован",
+        variant: "destructive"
+      });
+      return;
+    }
 
     // Rate limiting check
     const rateLimitKey = `password_change_${user?.id}`;
@@ -110,17 +136,27 @@ const PasswordChangePage = () => {
     }
 
     setIsLoading(true);
+    console.log('Starting password update process');
 
     try {
       // Store current session to preserve it
       const currentSession = session;
+      console.log('Current session:', currentSession?.access_token ? 'exists' : 'missing');
       
       // Update password using Supabase auth
+      console.log('Calling supabase.auth.updateUser...');
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
       });
       
+      console.log('Password update result:', { 
+        success: !error, 
+        error: error?.message,
+        userData: data?.user?.id ? 'user updated' : 'no user data'
+      });
+      
       if (error) {
+        console.error('Password update error:', error);
         toast({
           title: "Ошибка смены пароля",
           description: error.message,
@@ -131,8 +167,6 @@ const PasswordChangePage = () => {
 
       // Ensure session is preserved after password update
       if (currentSession && data.user) {
-        // The session should automatically be updated with the new password
-        // but we ensure it's maintained
         console.log('Password updated successfully, session preserved');
       }
 
@@ -157,6 +191,7 @@ const PasswordChangePage = () => {
       });
     } finally {
       setIsLoading(false);
+      console.log('Password change process completed');
     }
   };
 
@@ -309,7 +344,10 @@ const PasswordChangePage = () => {
 
             {/* Save Button */}
             <Button 
-              onClick={handlePasswordChange}
+              onClick={() => {
+                console.log('Save button clicked');
+                handlePasswordChange();
+              }}
               disabled={!isFormValid || isLoading}
               className="w-full h-11 text-sm font-medium disabled:opacity-50"
             >
