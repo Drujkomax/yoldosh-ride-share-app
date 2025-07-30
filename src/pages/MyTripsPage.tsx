@@ -283,20 +283,18 @@ const MyTripsPage = () => {
 
       <div className="px-4 py-6">
         {trips.length === 0 ? (
-          <Card className="bg-white rounded-2xl shadow-sm">
-            <CardContent className="p-12 text-center">
-              <div className="text-gray-400 text-lg mb-2">Поездок пока нет</div>
-              <div className="text-gray-500 text-sm mb-6">
-                Забронируйте свою первую поездку и она появится здесь
-              </div>
-              <Button 
-                onClick={() => navigate('/passenger')}
-                className="bg-blue-500 hover:bg-blue-600 rounded-xl"
-              >
-                Найти поездку
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="text-center py-16">
+            <div className="text-gray-400 text-lg mb-2">Поездок пока нет</div>
+            <div className="text-gray-500 text-sm mb-6">
+              Забронируйте свою первую поездку и она появится здесь
+            </div>
+            <Button 
+              onClick={() => navigate('/passenger')}
+              className="bg-blue-500 hover:bg-blue-600 rounded-xl"
+            >
+              Найти поездку
+            </Button>
+          </div>
         ) : (
           <div className="space-y-6">
             {/* Current Rides */}
