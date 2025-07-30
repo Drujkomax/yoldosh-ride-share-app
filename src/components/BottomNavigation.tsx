@@ -64,15 +64,8 @@ const BottomNavigation = () => {
   const getActiveStyles = (color: string, isActiveItem: boolean) => {
     if (!isActiveItem) return 'text-slate-600 hover:bg-slate-100';
     
-    const colorMap = {
-      blue: 'bg-blue-500/10 text-blue-600 scale-110',
-      green: 'bg-green-500/10 text-green-600 scale-110',
-      purple: 'bg-purple-500/10 text-purple-600 scale-110',
-      orange: 'bg-orange-500/10 text-orange-600 scale-110',
-      slate: 'bg-slate-500/10 text-slate-600 scale-110'
-    };
-    
-    return colorMap[color] || 'bg-blue-500/10 text-blue-600 scale-110';
+    // Все активные кнопки теперь имеют зеленый цвет
+    return 'bg-teal-500/10 text-teal-600 scale-110 border border-teal-500/30';
   };
 
   return (
