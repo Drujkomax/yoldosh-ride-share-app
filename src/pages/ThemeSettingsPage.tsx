@@ -4,13 +4,19 @@ import { Card } from '@/components/ui/card';
 import { useThemePreferences } from '@/hooks/useThemePreferences';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Check, Sun, Moon, Monitor } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 export const ThemeSettingsPage: React.FC = () => {
   const { preferences, isLoading, currentTheme, updateThemeMode } = useThemePreferences();
+  const [searchParams] = useSearchParams();
+  
+  // Check if we should return to account tab
+  const backTo = searchParams.get('backTo');
+  const backUrl = backTo === 'account' ? '/profile?tab=account' : '/profile';
 
   if (isLoading) {
     return (
-      <SettingsLayout title="Тема приложения">
+      <SettingsLayout title="Тема приложения" backTo={backUrl}>
         <div className="p-4 space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="p-4">
@@ -47,7 +53,7 @@ export const ThemeSettingsPage: React.FC = () => {
   const currentMode = preferences?.theme_mode || 'system';
 
   return (
-    <SettingsLayout title="Тема приложения">
+    <SettingsLayout title="Тема приложения" backTo={backUrl}>
       <div className="p-4">
         <div className="space-y-2">
           {themeOptions.map((option) => {

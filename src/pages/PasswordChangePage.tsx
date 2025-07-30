@@ -6,7 +6,7 @@ import { Eye, EyeOff, Lock, AlertCircle, Check } from 'lucide-react';
 import AnimatedInput from '@/components/AnimatedInput';
 import { useSecureAuth } from '@/hooks/useSecureAuth';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { passwordSchema } from '@/lib/validation';
 import { checkRateLimit } from '@/lib/validation';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +24,11 @@ const PasswordChangePage = () => {
   const { signIn, updatePassword, user, session } = useSecureAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Check if we should return to account tab
+  const backTo = searchParams.get('backTo');
+  const backUrl = backTo === 'account' ? '/profile?tab=account' : '/profile';
 
   const getPasswordStrength = (password: string) => {
     let strength = 0;
@@ -215,8 +220,8 @@ const PasswordChangePage = () => {
 
       // Small delay before redirect to ensure toast is visible
       setTimeout(() => {
-        console.log('Redirecting to profile page');
-        navigate('/profile');
+        console.log('Redirecting back to:', backUrl);
+        navigate(backUrl);
       }, 1000);
       
     } catch (error: any) {
@@ -233,7 +238,7 @@ const PasswordChangePage = () => {
   };
 
   return (
-    <SettingsLayout title="Смена пароля" backTo="/profile">
+    <SettingsLayout title="Смена пароля" backTo={backUrl}>
       <div className="p-4">
         <Card className="w-full bg-background border-border">
           <CardHeader>

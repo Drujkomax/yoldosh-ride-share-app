@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,10 +19,14 @@ import { supabase } from '@/integrations/supabase/client';
 const ProfilePage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const { user, setUser } = useUser();
   const { profile, isLoading: profileLoading } = useProfile();
   const { reviews, isLoading: reviewsLoading } = useReviews();
-  const [activeTab, setActiveTab] = useState('about');
+  
+  // Check URL parameter to determine active tab
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabFromUrl === 'account' ? 'account' : 'about');
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
   // Принудительно обновляем данные профиля при заходе на страницу
@@ -117,27 +121,27 @@ const ProfilePage = () => {
     {
       icon: MessageSquare,
       title: "Отзывы",
-      onClick: () => navigate('/my-reviews')
+      onClick: () => navigate('/my-reviews?backTo=account')
     },
     {
       icon: Users,
       title: "Сохраненные пассажиры",
-      onClick: () => navigate('/settings/saved-passengers')
+      onClick: () => navigate('/settings/saved-passengers?backTo=account')
     },
     {
       icon: Bell,
       title: "Настройки уведомлений",
-      onClick: () => navigate('/settings/notifications')
+      onClick: () => navigate('/settings/notifications?backTo=account')
     },
     {
       icon: Moon,
       title: "Тема приложения",
-      onClick: () => navigate('/settings/theme')
+      onClick: () => navigate('/settings/theme?backTo=account')
     },
     {
       icon: Lock,
       title: "Пароль",
-      onClick: () => navigate('/settings/password')
+      onClick: () => navigate('/settings/password?backTo=account')
     },
     {
       icon: Mail,

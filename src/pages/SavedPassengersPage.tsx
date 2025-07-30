@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SettingsLayout } from '@/components/ui/settings-layout';
+import { useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { useSavedPassengers } from '@/hooks/useSavedPassengers';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,10 +13,15 @@ import { Edit2, Trash2, Star, Plus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export const SavedPassengersPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { savedPassengers, isLoading, updateSavedPassenger, removeSavedPassenger } = useSavedPassengers();
   const [editingPassenger, setEditingPassenger] = useState<any>(null);
   const [editNickname, setEditNickname] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  
+  // Check if we should return to account tab
+  const backTo = searchParams.get('backTo');
+  const backUrl = backTo === 'account' ? '/profile?tab=account' : '/profile';
 
   const handleEdit = (passenger: any) => {
     setEditingPassenger(passenger);
@@ -44,7 +50,7 @@ export const SavedPassengersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <SettingsLayout title="Сохраненные пассажиры">
+      <SettingsLayout title="Сохраненные пассажиры" backTo={backUrl}>
         <div className="p-4 space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="p-4">
@@ -63,7 +69,7 @@ export const SavedPassengersPage: React.FC = () => {
   }
 
   return (
-    <SettingsLayout title="Сохраненные пассажиры">
+    <SettingsLayout title="Сохраненные пассажиры" backTo={backUrl}>
       <div className="p-4">
         {savedPassengers.length === 0 ? (
           <Card className="p-8 text-center">

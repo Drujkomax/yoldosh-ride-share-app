@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,8 +12,13 @@ import emptyReviewsImage from '@/assets/empty-reviews.png';
 
 const MyReviewsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('received');
   const { receivedReviews, givenReviews, isLoadingReceived, isLoadingGiven } = useReviews();
+  
+  // Check if we should return to account tab
+  const backTo = searchParams.get('backTo');
+  const backUrl = backTo === 'account' ? '/profile?tab=account' : '/profile';
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'd MMMM yyyy', { locale: ru });
@@ -67,7 +72,7 @@ const MyReviewsPage = () => {
           <div className="flex items-center">
             <Button
               variant="ghost"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(backUrl)}
               className="mr-4 p-2"
             >
               <ArrowLeft className="h-5 w-5" />

@@ -5,18 +5,23 @@ import { NotificationToggle } from '@/components/ui/notification-toggle';
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { useProfile } from '@/hooks/useProfile';
 import { ChevronRight, Bell, Mail, MessageSquare, Phone } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export const NotificationSettingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { preferences, isLoading, updatePreferences } = useNotificationPreferences();
   const { profile } = useProfile();
+  
+  // Check if we should return to account tab
+  const backTo = searchParams.get('backTo');
+  const backUrl = backTo === 'account' ? '/profile?tab=account' : '/profile';
 
   if (isLoading) {
     return (
-      <SettingsLayout title="Уведомления">
+      <SettingsLayout title="Уведомления" backTo={backUrl}>
         <div className="p-4 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="p-4">
@@ -31,7 +36,7 @@ export const NotificationSettingsPage: React.FC = () => {
 
   if (!preferences) {
     return (
-      <SettingsLayout title="Уведомления">
+      <SettingsLayout title="Уведомления" backTo={backUrl}>
         <div className="p-4">
           <Card className="p-6 text-center">
             <p className="text-muted-foreground">Не удалось загрузить настройки уведомлений</p>
@@ -128,7 +133,7 @@ export const NotificationSettingsPage: React.FC = () => {
   ];
 
   return (
-    <SettingsLayout title="Уведомления">
+    <SettingsLayout title="Уведомления" backTo={backUrl}>
       <div className="p-3 space-y-3">
         {/* Global Marketing Toggle */}
         <Card>
