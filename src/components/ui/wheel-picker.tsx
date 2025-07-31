@@ -44,7 +44,8 @@ export const WheelPicker = ({
       if (!containerRef.current) return;
       
       const scrollTop = containerRef.current.scrollTop;
-      const index = Math.round(scrollTop / itemHeight);
+      // Более точный расчет с учетом центра элемента
+      const index = Math.round((scrollTop + itemHeight / 2) / itemHeight);
       const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
       
       // Плавно центрировать выбранный элемент
@@ -58,17 +59,21 @@ export const WheelPicker = ({
       if (items[clampedIndex] !== selectedValue) {
         onValueChange(items[clampedIndex]);
       }
-    }, 150); // Задержка для завершения скролла
+    }, 100); // Уменьшил задержку
   }, [items, selectedValue, onValueChange, itemHeight]);
 
   useEffect(() => {
     const selectedIndex = items.indexOf(selectedValue);
-    if (selectedIndex !== -1) {
+    if (selectedIndex !== -1 && containerRef.current) {
       setIsScrolling(true);
-      scrollToItem(selectedIndex);
+      const targetScrollTop = selectedIndex * itemHeight;
+      containerRef.current.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
       setTimeout(() => setIsScrolling(false), 300);
     }
-  }, [selectedValue, items]);
+  }, [selectedValue, items, itemHeight]);
 
   // Очистка таймаута при размонтировании
   useEffect(() => {
