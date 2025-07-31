@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Users, ArrowRight, Clock, Wifi, WifiOff } from 'lucide-react';
+import { MapPin, Calendar, Users, ArrowRight, Clock, Wifi, WifiOff, Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
