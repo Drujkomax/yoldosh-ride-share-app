@@ -164,14 +164,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (newSession?.user) {
           // При любом событии входа загружаем профиль заново
           console.log('UserContext - Загружаем профиль после события:', event);
-          await loadUserProfile(newSession.user.id);
-          setLoading(false); // Завершаем загрузку после загрузки профиля
+          try {
+            await loadUserProfile(newSession.user.id);
+          } catch (error) {
+            console.error('UserContext - Ошибка загрузки профиля при аутентификации:', error);
+          }
+          setLoading(false); // Всегда завершаем загрузку
         } else if (event === 'SIGNED_OUT') {
           // Пользователь вышел из системы
           console.log('UserContext - Пользователь вышел из системы');
           setUser(null);
           localStorage.removeItem('yoldosh_user');
-          setLoading(false); // Завершаем загрузку при выходе
+          setLoading(false);
+        } else {
+          // Для любых других событий тоже завершаем загрузку
+          setLoading(false);
         }
       }
     );

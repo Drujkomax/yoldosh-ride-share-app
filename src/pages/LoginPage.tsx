@@ -168,8 +168,11 @@ const LoginPage = () => {
         toast.success('Добро пожаловать!');
         
         // UserContext will automatically load the profile via onAuthStateChange
-        // No need to manually set user here
-        navigate('/passenger-search');
+        // No need to manually set user here - let the context handle everything
+        // Just wait a moment for the context to update
+        setTimeout(() => {
+          navigate('/passenger-search');
+        }, 100);
       }
     } catch (error) {
       console.error('Unexpected login error:', error);
