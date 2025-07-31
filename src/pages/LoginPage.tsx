@@ -209,8 +209,15 @@ const LoginPage = () => {
         console.log('LoginPage - Profile ready:', userProfile);
         setDebugInfo('Профиль готов, обновляем контекст...');
 
+        // Transform database profile to UserProfile format
+        const transformedProfile = {
+          ...userProfile,
+          isVerified: userProfile.is_verified,
+          totalRides: userProfile.total_rides
+        };
+        
         // Manually update the user context with the profile data
-        setUser(userProfile);
+        setUser(transformedProfile);
         
         // Wait for context to update before navigating
         setDebugInfo('Ожидаем обновления контекста...');
@@ -299,7 +306,12 @@ const LoginPage = () => {
           });
           
           if (profile) {
-            setUser(profile);
+            const transformedProfile = {
+              ...profile,
+              isVerified: profile.is_verified,
+              totalRides: profile.total_rides
+            };
+            setUser(transformedProfile);
             setTimeout(() => {
               navigate('/passenger-search');
             }, 1000);
