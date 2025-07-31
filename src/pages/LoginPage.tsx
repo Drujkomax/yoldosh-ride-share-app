@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone, Mail, Eye, EyeOff, User, Loader2 } from 'lucide-react';
+import { Phone, Mail, Eye, EyeOff, User, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
@@ -23,11 +23,22 @@ const LoginPage = () => {
   const [userName, setUserName] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
+  const [showDebugModal, setShowDebugModal] = useState(false);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  // Debug logging function
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = `[${timestamp}] ${message}`;
+    console.log('LoginPage -', message);
+    setDebugLogs(prev => [...prev.slice(-20), logEntry]); // Keep last 20 logs
+    setDebugInfo(message);
+  };
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      console.log('LoginPage - User already authenticated, redirecting:', user);
+      addDebugLog(`User already authenticated: ${user.id}, redirecting`);
       navigate('/passenger-search');
     }
   }, [user, navigate]);
@@ -56,9 +67,72 @@ const LoginPage = () => {
     return value;
   };
 
+  // Test Supabase connection
+  const testSupabaseConnection = async () => {
+    try {
+      addDebugLog('Testing Supabase connection...');
+      const { data, error } = await supabase.from('profiles').select('count').limit(1);
+      
+      if (error) {
+        addDebugLog(`Supabase connection error: ${error.message}`);
+        return false;
+      }
+      
+      addDebugLog('Supabase connection successful');
+      return true;
+    } catch (error) {
+      addDebugLog(`Supabase connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  };
+
+  // Test user creation manually
+  const testUserCreation = async () => {
+    try {
+      addDebugLog('Testing user creation...');
+      
+      const testUser = {
+        id: 'test-user-id-' + Date.now(),
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+998901234567',
+        first_name: 'Test',
+        last_name: 'User',
+        is_verified: false,
+        total_rides: 0,
+        rating: 0.0,
+        onboarding_completed: true,
+        privacy_consent: true,
+        marketing_consent: false,
+        registration_method: 'email',
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(testUser)
+        .select()
+        .single();
+
+      if (error) {
+        addDebugLog(`User creation test failed: ${error.message}`);
+        return false;
+      }
+
+      addDebugLog('User creation test successful');
+      
+      // Clean up test user
+      await supabase.from('profiles').delete().eq('id', testUser.id);
+      
+      return true;
+    } catch (error) {
+      addDebugLog(`User creation test error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  };
+
   const getProfileByAuth = async (userId: string) => {
     try {
-      console.log('LoginPage - Getting profile for user ID:', userId);
+      addDebugLog(`Getting profile for user ID: ${userId}`);
       
       const { data, error } = await supabase
         .from('profiles')
@@ -67,21 +141,26 @@ const LoginPage = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('LoginPage - Error getting profile:', error);
+        addDebugLog(`Error getting profile: ${error.message}`);
         return null;
       }
 
-      console.log('LoginPage - Profile found:', data);
+      if (data) {
+        addDebugLog(`Profile found: ${data.name || data.email}`);
+      } else {
+        addDebugLog('No profile found for user');
+      }
+      
       return data;
     } catch (error) {
-      console.error('LoginPage - Unexpected error getting profile:', error);
+      addDebugLog(`Unexpected error getting profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return null;
     }
   };
 
   const createProfileFromAuth = async (authUser: any, additionalData: any = {}) => {
     try {
-      console.log('LoginPage - Creating profile for auth user:', authUser);
+      addDebugLog(`Creating profile for auth user: ${authUser.email}`);
       
       const profile = {
         id: authUser.id,
@@ -99,7 +178,7 @@ const LoginPage = () => {
         registration_method: 'email',
       };
 
-      console.log('LoginPage - Creating profile with data:', profile);
+      addDebugLog(`Creating profile with data: ${JSON.stringify(profile, null, 2)}`);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -108,37 +187,22 @@ const LoginPage = () => {
         .single();
 
       if (error) {
-        console.error('LoginPage - Error creating profile:', error);
+        addDebugLog(`Error creating profile: ${error.message}`);
+        
+        // Check if it's a RLS policy error
+        if (error.message.includes('RLS') || error.message.includes('policy')) {
+          addDebugLog('This might be a Row Level Security policy issue');
+        }
+        
         return null;
       }
 
-      console.log('LoginPage - Profile created successfully:', data);
+      addDebugLog(`Profile created successfully: ${data.name || data.email}`);
       return data;
     } catch (error) {
-      console.error('LoginPage - Unexpected error creating profile:', error);
+      addDebugLog(`Unexpected error creating profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return null;
     }
-  };
-
-  const waitForUserContext = async (expectedUserId: string, maxWaitTime = 5000) => {
-    console.log('LoginPage - Waiting for user context to update...');
-    
-    return new Promise((resolve) => {
-      const startTime = Date.now();
-      const checkInterval = setInterval(() => {
-        const currentTime = Date.now();
-        
-        if (user && user.id === expectedUserId) {
-          console.log('LoginPage - User context updated successfully');
-          clearInterval(checkInterval);
-          resolve(true);
-        } else if (currentTime - startTime > maxWaitTime) {
-          console.log('LoginPage - Timeout waiting for user context');
-          clearInterval(checkInterval);
-          resolve(false);
-        }
-      }, 100);
-    });
   };
 
   const handleLogin = async () => {
@@ -148,31 +212,38 @@ const LoginPage = () => {
     }
 
     setIsLoading(true);
-    setDebugInfo('Начинаем процесс входа...');
+    setDebugLogs([]); // Clear previous logs
+    addDebugLog('=== STARTING LOGIN PROCESS ===');
     
     try {
       const identifier = loginType === 'email' ? email : phone;
       const userEmail = loginType === 'email' ? email : `${phone.replace(/\D/g, '')}@temp.com`;
       
-      console.log('LoginPage - Attempting login with:', { identifier, userEmail, loginType });
-      setDebugInfo(`Попытка входа с ${loginType}: ${identifier}`);
+      addDebugLog(`Login attempt - Type: ${loginType}, Identifier: ${identifier}, Email: ${userEmail}`);
       
-      // First, try to authenticate with Supabase Auth
+      // Test Supabase connection first
+      const connectionOk = await testSupabaseConnection();
+      if (!connectionOk) {
+        toast.error('Проблема с подключением к серверу');
+        return;
+      }
+
+      // Attempt authentication
+      addDebugLog('Attempting Supabase Auth login...');
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: userEmail,
         password
       });
 
       if (authError) {
-        console.error('LoginPage - Auth login error:', authError);
-        setDebugInfo(`Ошибка аутентификации: ${authError.message}`);
+        addDebugLog(`Auth error: ${authError.message}`);
         
         if (authError.message.includes('Invalid login credentials')) {
           toast.error('Неверный email/телефон или пароль');
         } else if (authError.message.includes('Email not confirmed')) {
           toast.error('Подтвердите email для входа');
-        } else if (authError.message.includes('User not found')) {
-          // User might not exist in auth, show registration modal
+        } else if (authError.message.includes('User not found') || authError.message.includes('Invalid')) {
+          addDebugLog('User not found, showing registration modal');
           setShowRegisterModal(true);
         } else {
           toast.error('Ошибка входа: ' + authError.message);
@@ -181,17 +252,18 @@ const LoginPage = () => {
       }
 
       if (authData.user) {
-        console.log('LoginPage - Auth successful, user:', authData.user);
-        setDebugInfo('Аутентификация успешна, проверяем профиль...');
+        addDebugLog(`Auth successful! User ID: ${authData.user.id}, Email: ${authData.user.email}`);
+        addDebugLog(`Auth user metadata: ${JSON.stringify(authData.user.user_metadata, null, 2)}`);
         
-        // User successfully authenticated, now check/create profile
+        // Check current auth session
+        const { data: sessionData } = await supabase.auth.getSession();
+        addDebugLog(`Current session: ${sessionData.session ? 'Active' : 'None'}`);
+
+        // Get or create profile
         let userProfile = await getProfileByAuth(authData.user.id);
         
         if (!userProfile) {
-          // Profile doesn't exist, create it from auth data
-          console.log('LoginPage - Profile not found, creating from auth data');
-          setDebugInfo('Профиль не найден, создаем новый...');
-          
+          addDebugLog('Profile not found, creating new profile...');
           userProfile = await createProfileFromAuth(authData.user, {
             phone: loginType === 'phone' ? phone : '',
             name: authData.user.user_metadata?.name || '',
@@ -200,53 +272,48 @@ const LoginPage = () => {
           });
           
           if (!userProfile) {
+            addDebugLog('Failed to create profile, trying manual approach...');
             toast.error('Ошибка при создании профиля');
-            setDebugInfo('Ошибка создания профиля');
             return;
           }
         }
 
-        console.log('LoginPage - Profile ready:', userProfile);
-        setDebugInfo('Профиль готов, обновляем контекст...');
+        addDebugLog(`Profile ready: ${JSON.stringify(userProfile, null, 2)}`);
 
-        // Transform database profile to UserProfile format
-        const transformedProfile = {
-          ...userProfile,
-          isVerified: userProfile.is_verified,
-          totalRides: userProfile.total_rides
-        };
+        // Update user context
+        addDebugLog('Updating user context...');
         
-        // Manually update the user context with the profile data
-        setUser(transformedProfile);
+        // Force update context
+        setUser(userProfile);
         
-        // Wait for context to update before navigating
-        setDebugInfo('Ожидаем обновления контекста...');
-        const contextUpdated = await waitForUserContext(userProfile.id);
-        
-        if (contextUpdated) {
-          toast.success('Добро пожаловать!');
-          setDebugInfo('Перенаправляем...');
-          navigate('/passenger-search');
-        } else {
-          // Force navigation even if context didn't update in time
-          console.log('LoginPage - Context update timeout, forcing navigation');
-          toast.success('Добро пожаловать!');
-          setDebugInfo('Принудительное перенаправление...');
+        // Verify context update
+        setTimeout(() => {
+          addDebugLog(`Context updated - User in context: ${user ? 'Yes' : 'No'}`);
           
-          // Set user data in localStorage as backup
-          localStorage.setItem('yoldosh_user', JSON.stringify(userProfile));
-          
-          setTimeout(() => {
+          if (user) {
+            addDebugLog('Context update successful, redirecting...');
+            toast.success('Добро пожаловать!');
             navigate('/passenger-search');
-          }, 500);
-        }
+          } else {
+            addDebugLog('Context update failed, trying alternative approach...');
+            
+            // Alternative: store user data and force navigation
+            localStorage.setItem('yoldosh_user_data', JSON.stringify(userProfile));
+            addDebugLog('User data saved to localStorage, forcing navigation...');
+            
+            toast.success('Добро пожаловать!');
+            navigate('/passenger-search');
+          }
+        }, 500);
       }
     } catch (error) {
-      console.error('LoginPage - Unexpected login error:', error);
-      setDebugInfo(`Неожиданная ошибка: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      addDebugLog(`Unexpected login error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Full error object:', error);
       toast.error('Произошла ошибка при входе');
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
 
@@ -257,17 +324,16 @@ const LoginPage = () => {
     }
 
     setIsLoading(true);
-    setDebugInfo('Начинаем регистрацию...');
+    addDebugLog('=== STARTING REGISTRATION PROCESS ===');
     
     try {
       const identifier = loginType === 'email' ? email : phone;
       const userEmail = loginType === 'email' ? email : `${phone.replace(/\D/g, '')}@temp.com`;
       
-      console.log('LoginPage - Attempting registration with:', { identifier, userEmail, userName });
-      setDebugInfo(`Регистрация пользователя: ${userName}`);
+      addDebugLog(`Registration attempt - Name: ${userName}, Email: ${userEmail}`);
       
       // Create Supabase Auth user
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({  
         email: userEmail,
         password,
         options: {
@@ -280,15 +346,13 @@ const LoginPage = () => {
       });
 
       if (error) {
-        console.error('LoginPage - Registration error:', error);
-        setDebugInfo(`Ошибка регистрации: ${error.message}`);
+        addDebugLog(`Registration error: ${error.message}`);
         toast.error('Ошибка при регистрации: ' + error.message);
         return;
       }
 
       if (data.user) {
-        console.log('LoginPage - Registration successful:', data.user);
-        setDebugInfo('Регистрация успешна!');
+        addDebugLog(`Registration successful! User ID: ${data.user.id}`);
         
         toast.success('Регистрация прошла успешно!');
         setShowRegisterModal(false);
@@ -296,22 +360,18 @@ const LoginPage = () => {
         // For email registration, user needs to confirm email first
         if (loginType === 'email') {
           toast.info('Проверьте email для подтверждения аккаунта');
-          setDebugInfo('Ожидаем подтверждение email...');
+          addDebugLog('Email confirmation required');
         } else {
-          // For phone registration, try to create profile immediately
-          setDebugInfo('Создаем профиль...');
+          // For phone registration, create profile immediately
+          addDebugLog('Creating profile for phone registration...');
           const profile = await createProfileFromAuth(data.user, {
             name: userName,
             phone: phone,
           });
           
           if (profile) {
-            const transformedProfile = {
-              ...profile,
-              isVerified: profile.is_verified,
-              totalRides: profile.total_rides
-            };
-            setUser(transformedProfile);
+            setUser(profile);
+            addDebugLog('Profile created, redirecting...');
             setTimeout(() => {
               navigate('/passenger-search');
             }, 1000);
@@ -319,8 +379,7 @@ const LoginPage = () => {
         }
       }
     } catch (error) {
-      console.error('LoginPage - Unexpected registration error:', error);
-      setDebugInfo(`Неожиданная ошибка регистрации: ${error instanceof Error ? error.message : 'Unknown'}`);
+      addDebugLog(`Unexpected registration error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast.error('Произошла ошибка при регистрации');
     } finally {
       setIsLoading(false);
@@ -341,7 +400,7 @@ const LoginPage = () => {
       });
 
       if (error) {
-        console.error('LoginPage - Password reset error:', error);
+        console.error('Password reset error:', error);
         toast.error('Ошибка при отправке письма: ' + error.message);
         return;
       }
@@ -350,7 +409,7 @@ const LoginPage = () => {
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (error) {
-      console.error('LoginPage - Unexpected password reset error:', error);
+      console.error('Unexpected password reset error:', error);
       toast.error('Произошла ошибка при восстановлении пароля');
     } finally {
       setIsLoading(false);
@@ -365,6 +424,25 @@ const LoginPage = () => {
     toast.info('Заполнены тестовые данные');
   };
 
+  const runDiagnostics = async () => {
+    addDebugLog('=== RUNNING DIAGNOSTICS ===');
+    
+    // Test 1: Supabase connection
+    await testSupabaseConnection();
+    
+    // Test 2: User creation
+    await testUserCreation();
+    
+    // Test 3: Current auth state
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    addDebugLog(`Current auth user: ${currentUser ? currentUser.email : 'None'}`);
+    
+    // Test 4: Context state
+    addDebugLog(`User context state: ${user ? user.email || user.id : 'Empty'}`);
+    
+    setShowDebugModal(true);
+  };
+
   const currentInput = loginType === 'email' ? email : phone;
 
   return (
@@ -375,25 +453,34 @@ const LoginPage = () => {
       
       <div className="container mx-auto max-w-md px-4 relative z-10 min-h-screen flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-center pt-6 mb-6">
+        <div className="flex items-center justify-between pt-6 mb-6">
           <h1 className="text-2xl font-bold text-teal-900">Yoldosh</h1>
           {process.env.NODE_ENV === 'development' && (
-            <button
-              onClick={fillTestCredentials}
-              className="ml-4 text-xs bg-orange-500 text-white px-2 py-1 rounded"
-            >
-              Test
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={fillTestCredentials}
+                className="text-xs bg-orange-500 text-white px-2 py-1 rounded"
+              >
+                Test
+              </button>
+              <button
+                onClick={runDiagnostics}
+                className="text-xs bg-purple-500 text-white px-2 py-1 rounded"
+              >
+                Debug
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Debug Info - только в development */}
+        {/* Debug Info */}
         {process.env.NODE_ENV === 'development' && debugInfo && (
           <div className="mb-4 bg-blue-100 border border-blue-300 rounded-lg p-3">
             <p className="text-xs text-blue-800">{debugInfo}</p>
             <div className="text-xs text-gray-600 mt-1">
               <div>User in context: {user ? '✅' : '❌'}</div>
               <div>Current step: {isLoading ? 'Loading...' : 'Ready'}</div>
+              <div>Auth State: <span id="auth-state">Checking...</span></div>
             </div>
           </div>
         )}
@@ -478,6 +565,25 @@ const LoginPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* Debug Modal */}
+      <Dialog open={showDebugModal} onOpenChange={setShowDebugModal}>
+        <DialogContent className="max-w-lg max-h-96 overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5" />
+              <span>Debug Information</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {debugLogs.map((log, index) => (
+              <div key={index} className="text-xs font-mono bg-gray-100 p-2 rounded">
+                {log}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Registration Modal */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
