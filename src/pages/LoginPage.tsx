@@ -19,7 +19,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [userName, setUserName] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -226,28 +228,58 @@ const LoginPage = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!resetEmail.trim()) {
+      toast.error('Введите email для восстановления пароля');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        console.error('Password reset error:', error);
+        toast.error('Ошибка при отправке письма: ' + error.message);
+        return;
+      }
+
+      toast.success('Письмо для восстановления пароля отправлено на ваш email');
+      setShowForgotPassword(false);
+      setResetEmail('');
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error('Произошла ошибка при восстановлении пароля');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const currentInput = loginType === 'email' ? email : phone;
 
   return (
-    <div className="min-h-screen bg-gradient-dark relative overflow-hidden">
+    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
       {/* Background elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-yoldosh-primary/10 rounded-full animate-pulse-slow"></div>
-      <div className="absolute bottom-20 left-10 w-24 h-24 bg-yoldosh-secondary/10 rounded-full animate-float"></div>
+      <div className="absolute top-10 right-10 w-32 h-32 bg-teal-500/10 rounded-full animate-pulse-slow"></div>
+      <div className="absolute bottom-20 left-10 w-24 h-24 bg-teal-600/10 rounded-full animate-float"></div>
       
       <div className="container mx-auto max-w-md px-4 relative z-10 min-h-screen flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-center pt-6 mb-6">
-          <h1 className="text-2xl font-bold text-white">Yoldosh</h1>
+          <h1 className="text-2xl font-bold text-teal-900">Yoldosh</h1>
         </div>
 
         {/* Login Form */}
         <div className="flex-1 flex items-center justify-center pb-6">
           <Card className="w-full animate-slide-up bg-white/95 backdrop-blur-lg border-0 rounded-2xl shadow-2xl">
             <CardHeader className="text-center pb-3">
-              <CardTitle className="text-lg font-bold text-slate-800">
+              <CardTitle className="text-lg font-bold text-teal-900">
                 Вход в аккаунт
               </CardTitle>
-              <p className="text-slate-600 text-sm">
+              <p className="text-gray-600 text-sm">
                 Введите ваши данные для входа
               </p>
             </CardHeader>
@@ -285,15 +317,21 @@ const LoginPage = () => {
               <Button 
                 onClick={handleLogin}
                 disabled={isLoading || !currentInput || !password}
-                className="w-full h-10 text-sm bg-gradient-primary hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50"
+                className="w-full h-10 text-sm bg-teal-600 hover:bg-teal-700 hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50 text-white"
               >
                 {isLoading ? 'Вход...' : 'Войти'}
               </Button>
               
-              <div className="text-center pt-1">
+              <div className="text-center pt-1 space-y-2">
+                <button 
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-teal-600 hover:underline text-xs transition-all duration-200 block w-full"
+                >
+                  Забыли пароль?
+                </button>
                 <button 
                   onClick={() => navigate('/onboarding')}
-                  className="text-yoldosh-primary hover:underline text-xs transition-all duration-200"
+                  className="text-teal-600 hover:underline text-xs transition-all duration-200"
                 >
                   Нет аккаунта? Зарегистрироваться
                 </button>
@@ -336,9 +374,51 @@ const LoginPage = () => {
               <Button
                 onClick={handleRegister}
                 disabled={isLoading || !userName.trim()}
-                className="flex-1 h-10 bg-gradient-primary rounded-xl text-sm"
+                className="flex-1 h-10 bg-teal-600 hover:bg-teal-700 rounded-xl text-sm text-white"
               >
                 {isLoading ? 'Создание...' : 'Создать'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot Password Modal */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader className="text-center">
+            <DialogTitle className="text-lg text-teal-900">Восстановление пароля</DialogTitle>
+            <DialogDescription className="text-sm">
+              Введите ваш email для получения ссылки восстановления пароля
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 pt-3">
+            <AnimatedInput
+              id="resetEmail"
+              label="Email"
+              type="email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              placeholder="example@mail.com"
+              icon={<Mail className="h-4 w-4" />}
+            />
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowForgotPassword(false)}
+                className="flex-1 h-10 rounded-xl text-sm"
+                disabled={isLoading}
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={handleForgotPassword}
+                disabled={isLoading || !resetEmail.trim()}
+                className="flex-1 h-10 bg-teal-600 hover:bg-teal-700 rounded-xl text-sm text-white"
+              >
+                {isLoading ? 'Отправка...' : 'Отправить'}
               </Button>
             </div>
           </div>
