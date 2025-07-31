@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useCanCreateRides } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, AlertTriangle } from 'lucide-react';
+import { Car, AlertTriangle, Loader2 } from 'lucide-react';
 import AddressSearchPage from '@/components/AddressSearchPage';
 import FullScreenCalendar from '@/components/FullScreenCalendar';
 import TimePickerPage from '@/components/TimePickerPage';
@@ -41,6 +41,8 @@ const RideCreationFlow = () => {
   const { createRide, isCreating } = useRides();
   const { user, isAuthenticated } = useUser();
   const canCreateRides = useCanCreateRides();
+  
+  // Состояния компонента
   const [supabaseUser, setSupabaseUser] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepHistory, setStepHistory] = useState<number[]>([]);
@@ -48,6 +50,7 @@ const RideCreationFlow = () => {
   const [userHasPhoto, setUserHasPhoto] = useState(false);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [bypassCheck, setBypassCheck] = useState(false);
+  const [initializationError, setInitializationError] = useState<string>('');
   
   const [rideData, setRideData] = useState<RideFormData>({
     departure_date: '',
@@ -66,46 +69,130 @@ const RideCreationFlow = () => {
     photo_uploaded: false
   });
 
-  // Get current user and check if user has profile photo
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      try {
-        // Проверяем пользователя из контекста
-        if (!user) {
-          console.log('RideCreationFlow - Пользователь не авторизован, редирект на авторизацию');
-          navigate('/onboarding');
-          return;
-        }
-        
-        // Пытаемся получить пользователя из Supabase Auth для полной интеграции
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        setSupabaseUser(authUser);
-        
-        // Проверяем есть ли валидное фото профиля
-        if (user.id) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('avatar_url')
-            .eq('id', user.id)
-            .single();
-          
-          // Check if avatar_url exists and is not empty/null
-          const hasValidPhoto = data?.avatar_url && data.avatar_url.trim() !== '';
-          setUserHasPhoto(hasValidPhoto);
-          console.log('RideCreationFlow - User has photo:', hasValidPhoto, 'Avatar URL:', data?.avatar_url);
-        }
-      } catch (error) {
-        console.error('RideCreationFlow - Ошибка получения пользователя:', error);
-      } finally {
-        setIsUserLoading(false);
-      }
-    };
+  // Мемоизированная функция для получения пользователя
+  const getCurrentUser = useCallback(async () => {
+    console.log('RideCreationFlow - Начало получения пользователя');
     
+    try {
+      setIsUserLoading(true);
+      setInitializationError('');
+
+      // Проверяем контекст пользователя
+      console.log('RideCreationFlow - User from context:', user);
+      console.log('RideCreationFlow - isAuthenticated:', isAuthenticated);
+
+      if (!isAuthenticated || !user) {
+        console.log('RideCreationFlow - Пользователь не авторизован, редирект на onboarding');
+        navigate('/onboarding');
+        return;
+      }
+
+      // Получаем пользователя из Supabase Auth
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('RideCreationFlow - Ошибка получения auth user:', authError);
+        throw new Error('Ошибка авторизации: ' + authError.message);
+      }
+
+      console.log('RideCreationFlow - Auth user:', authUser);
+      setSupabaseUser(authUser);
+
+      // Проверяем фото профиля если есть ID пользователя
+      if (user.id) {
+        console.log('RideCreationFlow - Проверка фото профиля для user ID:', user.id);
+        
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
+          console.error('RideCreationFlow - Ошибка получения профиля:', profileError);
+          // Не блокируем работу из-за ошибки профиля
+        }
+
+        const hasValidPhoto = profileData?.avatar_url && profileData.avatar_url.trim() !== '';
+        setUserHasPhoto(hasValidPhoto);
+        console.log('RideCreationFlow - User has photo:', hasValidPhoto, 'Avatar URL:', profileData?.avatar_url);
+      }
+
+    } catch (error) {
+      console.error('RideCreationFlow - Ошибка инициализации:', error);
+      setInitializationError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
+    } finally {
+      setIsUserLoading(false);
+    }
+  }, [user, isAuthenticated, navigate]);
+
+  // Эффект для инициализации (выполняется только один раз)
+  useEffect(() => {
     getCurrentUser();
-  }, [navigate, user]);
+  }, []); // Пустой массив зависимостей!
+
+  // Отдельный эффект для отслеживания изменений пользователя
+  useEffect(() => {
+    if (!isUserLoading && (!isAuthenticated || !user)) {
+      console.log('RideCreationFlow - Пользователь вышел, редирект');
+      navigate('/onboarding');
+    }
+  }, [isAuthenticated, user, navigate, isUserLoading]);
+
+  // Если есть ошибка инициализации
+  if (initializationError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <CardTitle className="text-xl text-red-600">Ошибка загрузки</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600 text-center">{initializationError}</p>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => {
+                  setInitializationError('');
+                  getCurrentUser();
+                }}
+                className="w-full"
+              >
+                Попробовать снова
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/passenger')}
+                className="w-full"
+              >
+                Назад
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Показываем загрузку пока получаем данные пользователя
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto" />
+          <div>
+            <p className="text-muted-foreground">Загрузка профиля...</p>
+            <p className="text-xs text-gray-400 mt-2">
+              Проверяем данные пользователя
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Проверка прав на создание поездки
-  if (!bypassCheck && !canCreateRides && !isUserLoading) {
+  if (!bypassCheck && canCreateRides === false) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -140,14 +227,16 @@ const RideCreationFlow = () => {
               </Button>
               
               {/* Временная кнопка для тестирования */}
-              <Button 
-                variant="destructive" 
-                onClick={() => setBypassCheck(true)}
-                className="w-full text-xs"
-                size="sm"
-              >
-                🚧 Обойти проверку (для тестирования)
-              </Button>
+              {process.env.NODE_ENV === 'development' && (
+                <Button 
+                  variant="destructive" 
+                  onClick={() => setBypassCheck(true)}
+                  className="w-full text-xs"
+                  size="sm"
+                >
+                  🚧 Обойти проверку (для тестирования)
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -155,7 +244,7 @@ const RideCreationFlow = () => {
     );
   }
 
-  const goToNextStep = () => {
+  const goToNextStep = useCallback(() => {
     setStepHistory(prev => [...prev, currentStep]);
     
     // Skip photo step if user already has a valid photo
@@ -165,17 +254,20 @@ const RideCreationFlow = () => {
     } else {
       setCurrentStep(prev => prev + 1);
     }
-  };
+  }, [currentStep, userHasPhoto]);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (stepHistory.length > 0) {
       const previousStep = stepHistory[stepHistory.length - 1];
       setStepHistory(prev => prev.slice(0, -1));
       setCurrentStep(previousStep);
+    } else {
+      // Если это первый шаг, возвращаемся назад
+      navigate('/passenger');
     }
-  };
+  }, [stepHistory, navigate]);
 
-  const handleAddressSelect = (address: string, coordinates: [number, number]) => {
+  const handleAddressSelect = useCallback((address: string, coordinates: [number, number]) => {
     // Extract city from address
     const cityMatch = address.match(/([^,]+),\s*([^,]+)/);
     const city = cityMatch ? cityMatch[1].trim() : address;
@@ -198,57 +290,57 @@ const RideCreationFlow = () => {
       }));
       goToNextStep();
     }
-  };
+  }, [currentAddressType, goToNextStep]);
 
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = useCallback((date: Date) => {
     setRideData(prev => ({
       ...prev,
       departure_date: date.toISOString().split('T')[0]
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handleTimeSelect = (time: string) => {
+  const handleTimeSelect = useCallback((time: string) => {
     setRideData(prev => ({
       ...prev,
       departure_time: time
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handlePassengerCountSelect = (count: number) => {
+  const handlePassengerCountSelect = useCallback((count: number) => {
     setRideData(prev => ({
       ...prev,
       available_seats: count
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handleInstantBookingSelect = (enabled: boolean) => {
+  const handleInstantBookingSelect = useCallback((enabled: boolean) => {
     setRideData(prev => ({
       ...prev,
       instant_booking_enabled: enabled
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handlePriceSelect = (price: number) => {
+  const handlePriceSelect = useCallback((price: number) => {
     setRideData(prev => ({
       ...prev,
       price_per_seat: price
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handleReturnTripSelect = (returnTripData: RideFormData | null) => {
+  const handleReturnTripSelect = useCallback((returnTripData: RideFormData | null) => {
     setRideData(prev => ({
       ...prev,
       return_trip_data: returnTripData
     }));
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handlePhotoUpload = (uploaded: boolean) => {
+  const handlePhotoUpload = useCallback((uploaded: boolean) => {
     console.log('RideCreationFlow - Photo upload completed:', uploaded);
     setRideData(prev => ({
       ...prev,
@@ -260,17 +352,17 @@ const RideCreationFlow = () => {
     }
     
     goToNextStep();
-  };
+  }, [goToNextStep]);
 
-  const handleCommentsSubmit = (comments: string) => {
+  const handleCommentsSubmit = useCallback((comments: string) => {
     setRideData(prev => ({
       ...prev,
       description: comments
     }));
     createRides();
-  };
+  }, []);
 
-  const createRides = async () => {
+  const createRides = useCallback(async () => {
     console.log('RideCreationFlow - Начало создания поездки, user:', user);
     console.log('RideCreationFlow - Данные поездки:', rideData);
     
@@ -308,11 +400,8 @@ const RideCreationFlow = () => {
 
       console.log('RideCreationFlow - Создание основной поездки:', mainRideData);
 
-      // Используем createRide из useRides hook - он автоматически создаст профиль если нужно
-      createRide(mainRideData);
-
-      // TODO: Добавить поддержку обратной поездки через useRides
-      // Пока что основная поездка создается через надежный hook
+      // Используем createRide из useRides hook
+      await createRide(mainRideData);
       
       navigate('/ride-published');
     } catch (error) {
@@ -323,111 +412,129 @@ const RideCreationFlow = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [user, rideData, createRide, navigate]);
 
   const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <AddressSearchPage
-            title="Откуда вы выезжаете?"
-            onAddressSelect={handleAddressSelect}
-            onBack={goBack}
-            placeholder="Выберите город отправления"
-          />
-        );
-      case 2:
-        return (
-          <AddressSearchPage
-            title="Куда вы едете?"
-            onAddressSelect={handleAddressSelect}
-            onBack={goBack}
-            placeholder="Выберите город назначения"
-            previousSelection={rideData.from_city}
-          />
-        );
-      case 3:
-        return (
-          <FullScreenCalendar
-            selectedDate={rideData.departure_date ? new Date(rideData.departure_date) : undefined}
-            onDateSelect={handleDateSelect}
-            onBack={goBack}
-            title="Когда поездка?"
-          />
-        );
-      case 4:
-        return (
-          <TimePickerPage
-            selectedTime={rideData.departure_time}
-            onTimeSelect={handleTimeSelect}
-            onBack={goBack}
-            title="Во сколько заберете пассажиров?"
-          />
-        );
-      case 5:
-        return (
-          <PassengerCountPage
-            selectedCount={rideData.available_seats}
-            onCountSelect={handlePassengerCountSelect}
-            onBack={goBack}
-            title="Сколько попутчиков возьмете?"
-          />
-        );
-      case 6:
-        return (
-          <InstantBookingPage
-            onSelect={handleInstantBookingSelect}
-            onBack={goBack}
-          />
-        );
-      case 7:
-        return (
-          <PriceSettingPage
-            selectedPrice={rideData.price_per_seat}
-            onPriceSelect={handlePriceSelect}
-            onBack={goBack}
-            title="Установите цену за место"
-          />
-        );
-      case 8:
-        return (
-          <ReturnTripPage
-            originalRideData={rideData}
-            onSelect={handleReturnTripSelect}
-            onBack={goBack}
-          />
-        );
-      case 9:
-        return (
-          <PhotoUploadFlow
-            onComplete={handlePhotoUpload}
-            onBack={goBack}
-          />
-        );
-      case 10:
-        return (
-          <RideCommentsPage
-            initialComments={rideData.description}
-            onSubmit={handleCommentsSubmit}
-            onBack={goBack}
-          />
-        );
-      default:
-        return null;
+    try {
+      switch (currentStep) {
+        case 1:
+          return (
+            <AddressSearchPage
+              title="Откуда вы выезжаете?"
+              onAddressSelect={handleAddressSelect}
+              onBack={goBack}
+              placeholder="Выберите город отправления"
+            />
+          );
+        case 2:
+          return (
+            <AddressSearchPage
+              title="Куда вы едете?"
+              onAddressSelect={handleAddressSelect}
+              onBack={goBack}
+              placeholder="Выберите город назначения"
+              previousSelection={rideData.from_city}
+            />
+          );
+        case 3:
+          return (
+            <FullScreenCalendar
+              selectedDate={rideData.departure_date ? new Date(rideData.departure_date) : undefined}
+              onDateSelect={handleDateSelect}
+              onBack={goBack}
+              title="Когда поездка?"
+            />
+          );
+        case 4:
+          return (
+            <TimePickerPage
+              selectedTime={rideData.departure_time}
+              onTimeSelect={handleTimeSelect}
+              onBack={goBack}
+              title="Во сколько заберете пассажиров?"
+            />
+          );
+        case 5:
+          return (
+            <PassengerCountPage
+              selectedCount={rideData.available_seats}
+              onCountSelect={handlePassengerCountSelect}
+              onBack={goBack}
+              title="Сколько попутчиков возьмете?"
+            />
+          );
+        case 6:
+          return (
+            <InstantBookingPage
+              onSelect={handleInstantBookingSelect}
+              onBack={goBack}
+            />
+          );
+        case 7:
+          return (
+            <PriceSettingPage
+              selectedPrice={rideData.price_per_seat}
+              onPriceSelect={handlePriceSelect}
+              onBack={goBack}
+              title="Установите цену за место"
+            />
+          );
+        case 8:
+          return (
+            <ReturnTripPage
+              originalRideData={rideData}
+              onSelect={handleReturnTripSelect}
+              onBack={goBack}
+            />
+          );
+        case 9:
+          return (
+            <PhotoUploadFlow
+              onComplete={handlePhotoUpload}
+              onBack={goBack}
+            />
+          );
+        case 10:
+          return (
+            <RideCommentsPage
+              initialComments={rideData.description}
+              onSubmit={handleCommentsSubmit}
+              onBack={goBack}
+            />
+          );
+        default:
+          console.error('RideCreationFlow - Неизвестный шаг:', currentStep);
+          return (
+            <div className="min-h-screen bg-background flex items-center justify-center p-4">
+              <Card className="w-full max-w-md">
+                <CardContent className="text-center space-y-4 pt-6">
+                  <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
+                  <p>Ошибка навигации (шаг {currentStep})</p>
+                  <Button onClick={() => setCurrentStep(1)}>
+                    Начать сначала
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          );
+      }
+    } catch (error) {
+      console.error('RideCreationFlow - Ошибка рендера шага:', error);
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="text-center space-y-4 pt-6">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
+              <p>Ошибка отображения страницы</p>
+              <Button onClick={() => window.location.reload()}>
+                Перезагрузить страницу
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
     }
   };
-
-  // Показываем загрузку пока получаем данные пользователя
-  if (isUserLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Загрузка...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -435,6 +542,17 @@ const RideCreationFlow = () => {
       <div className="pb-20">
         <BottomNavigation />
       </div>
+      
+      {/* Debug panel for development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs">
+          <div>Step: {currentStep}</div>
+          <div>User: {user?.id ? '✅' : '❌'}</div>
+          <div>Auth: {isAuthenticated ? '✅' : '❌'}</div>
+          <div>Can Create: {String(canCreateRides)}</div>
+          <div>Loading: {isUserLoading ? '⏳' : '✅'}</div>
+        </div>
+      )}
     </div>
   );
 };
