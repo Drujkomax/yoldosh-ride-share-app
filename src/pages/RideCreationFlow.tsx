@@ -412,7 +412,7 @@ const RideCreationFlow = () => {
         variant: "destructive"
       });
     }
-  }, [user, rideData, createRide, navigate]);
+  }, [user, rideData, createRide, navigate, toast]);
 
   const renderStep = () => {
     try {
