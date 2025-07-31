@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
 interface WheelPickerProps {
@@ -18,6 +18,7 @@ export const WheelPicker = ({
 }: WheelPickerProps) => {
   const [isScrolling, setIsScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const itemHeight = 48; // 3rem height per item
 
   const scrollToItem = (index: number) => {
@@ -30,17 +31,35 @@ export const WheelPicker = ({
     }
   };
 
-  const handleScroll = () => {
-    if (!containerRef.current || isScrolling) return;
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
     
-    const scrollTop = containerRef.current.scrollTop;
-    const index = Math.round(scrollTop / itemHeight);
-    const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
-    
-    if (items[clampedIndex] !== selectedValue) {
-      onValueChange(items[clampedIndex]);
+    // Очистить предыдущий таймаут
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  };
+    
+    // Установить новый таймаут для snap-to-center
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (!containerRef.current) return;
+      
+      const scrollTop = containerRef.current.scrollTop;
+      const index = Math.round(scrollTop / itemHeight);
+      const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+      
+      // Плавно центрировать выбранный элемент
+      const targetScrollTop = clampedIndex * itemHeight;
+      containerRef.current.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+      
+      // Обновить выбранное значение
+      if (items[clampedIndex] !== selectedValue) {
+        onValueChange(items[clampedIndex]);
+      }
+    }, 150); // Задержка для завершения скролла
+  }, [items, selectedValue, onValueChange, itemHeight]);
 
   useEffect(() => {
     const selectedIndex = items.indexOf(selectedValue);
@@ -50,6 +69,15 @@ export const WheelPicker = ({
       setTimeout(() => setIsScrolling(false), 300);
     }
   }, [selectedValue, items]);
+
+  // Очистка таймаута при размонтировании
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className={cn("relative h-48 overflow-hidden", className)}>
@@ -75,6 +103,11 @@ export const WheelPicker = ({
             key={index}
             className="h-12 flex items-center justify-center text-lg font-medium cursor-pointer hover:bg-teal-50 transition-colors"
             onClick={() => {
+              const targetScrollTop = index * itemHeight;
+              containerRef.current?.scrollTo({
+                top: targetScrollTop,
+                behavior: 'smooth'
+              });
               onValueChange(item);
             }}
           >
