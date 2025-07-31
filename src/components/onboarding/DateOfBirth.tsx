@@ -74,6 +74,9 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
       setYear(parseInt(value.toString()));
     }
     setError('');
+  };
+
+  const handlePickerConfirm = () => {
     setShowDatePicker(false);
   };
 
@@ -197,6 +200,14 @@ const DateOfBirth = ({ dateOfBirth, onDateChange, onNext, onSkip }: DateOfBirthP
                 onValueChange={handlePickerSelect}
                 className="mx-auto"
               />
+              <div className="mt-4">
+                <Button 
+                  onClick={handlePickerConfirm}
+                  className="w-full h-10 bg-teal-600 hover:bg-teal-700 text-white rounded-xl"
+                >
+                  Подтвердить
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

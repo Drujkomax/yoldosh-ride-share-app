@@ -39,12 +39,6 @@ export const WheelPicker = ({
     
     if (items[clampedIndex] !== selectedValue) {
       onValueChange(items[clampedIndex]);
-      // Точно центрируем выбранный элемент
-      setTimeout(() => {
-        setIsScrolling(true);
-        scrollToItem(clampedIndex);
-        setTimeout(() => setIsScrolling(false), 200);
-      }, 100);
     }
   };
 
@@ -64,7 +58,7 @@ export const WheelPicker = ({
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
       
       {/* Selection indicator */}
-      <div className="absolute top-1/2 left-0 right-0 h-12 border-t-2 border-b-2 border-teal-300 bg-teal-50/50 z-10 pointer-events-none transform -translate-y-1/2" />
+      <div className="absolute top-1/2 left-0 right-0 h-12 border-t-2 border-b-2 border-teal-300 bg-teal-50/50 z-10 pointer-events-none" style={{ transform: 'translateY(-24px)' }} />
       
       {/* Scrollable container */}
       <div
@@ -82,9 +76,6 @@ export const WheelPicker = ({
             className="h-12 flex items-center justify-center text-lg font-medium cursor-pointer hover:bg-teal-50 transition-colors"
             onClick={() => {
               onValueChange(item);
-              setIsScrolling(true);
-              scrollToItem(index);
-              setTimeout(() => setIsScrolling(false), 200);
             }}
           >
             {item}
