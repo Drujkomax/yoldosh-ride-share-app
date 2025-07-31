@@ -165,11 +165,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           // При любом событии входа загружаем профиль заново
           console.log('UserContext - Загружаем профиль после события:', event);
           await loadUserProfile(newSession.user.id);
+          setLoading(false); // Завершаем загрузку после загрузки профиля
         } else if (event === 'SIGNED_OUT') {
           // Пользователь вышел из системы
           console.log('UserContext - Пользователь вышел из системы');
           setUser(null);
           localStorage.removeItem('yoldosh_user');
+          setLoading(false); // Завершаем загрузку при выходе
         }
       }
     );
