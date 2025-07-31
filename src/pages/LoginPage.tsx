@@ -284,7 +284,11 @@ const LoginPage = () => {
         addDebugLog('Updating user context...');
         
         // Force update context
-        setUser(userProfile);
+        setUser({
+          ...userProfile,
+          isVerified: userProfile.is_verified,
+          totalRides: userProfile.total_rides
+        });
         
         // Verify context update
         setTimeout(() => {
@@ -370,7 +374,11 @@ const LoginPage = () => {
           });
           
           if (profile) {
-            setUser(profile);
+            setUser({
+              ...profile,
+              isVerified: profile.is_verified,
+              totalRides: profile.total_rides
+            });
             addDebugLog('Profile created, redirecting...');
             setTimeout(() => {
               navigate('/passenger-search');
