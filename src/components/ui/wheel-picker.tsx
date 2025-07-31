@@ -44,8 +44,8 @@ export const WheelPicker = ({
       if (!containerRef.current) return;
       
       const scrollTop = containerRef.current.scrollTop;
-      // Более точный расчет с учетом центра элемента
-      const index = Math.round((scrollTop + itemHeight / 2) / itemHeight);
+      // Правильный расчет индекса без смещения
+      const index = Math.round(scrollTop / itemHeight);
       const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
       
       // Плавно центрировать выбранный элемент
