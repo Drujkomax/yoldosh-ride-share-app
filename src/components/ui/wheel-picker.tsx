@@ -85,8 +85,13 @@ export const WheelPicker = ({
       <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
       
-      {/* Selection indicator */}
-      <div className="absolute top-1/2 left-0 right-0 h-12 border-t-2 border-b-2 border-teal-300 bg-teal-50/50 z-10 pointer-events-none" style={{ transform: 'translateY(-24px)' }} />
+      {/* Selection indicator - точно по центру */}
+      <div 
+        className="absolute left-0 right-0 h-12 border-t-2 border-b-2 border-teal-300 bg-teal-50/50 z-10 pointer-events-none" 
+        style={{ 
+          top: `calc(50% - ${itemHeight / 2}px)` 
+        }} 
+      />
       
       {/* Scrollable container */}
       <div
@@ -95,13 +100,18 @@ export const WheelPicker = ({
         onScroll={handleScroll}
         style={{
           paddingTop: `${itemHeight * 2}px`,
-          paddingBottom: `${itemHeight * 2}px`
+          paddingBottom: `${itemHeight * 2}px`,
+          scrollSnapType: 'y mandatory'
         }}
       >
         {items.map((item, index) => (
           <div
             key={index}
             className="h-12 flex items-center justify-center text-lg font-medium cursor-pointer hover:bg-teal-50 transition-colors"
+            style={{ 
+              scrollSnapAlign: 'center',
+              lineHeight: `${itemHeight}px`
+            }}
             onClick={() => {
               const targetScrollTop = index * itemHeight;
               containerRef.current?.scrollTo({
