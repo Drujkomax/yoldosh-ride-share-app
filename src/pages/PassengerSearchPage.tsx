@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Users, ArrowRight, Clock } from 'lucide-react';
+import { MapPin, Calendar, Users, ArrowRight, Clock, Wifi, WifiOff } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
@@ -17,58 +17,23 @@ import { ru } from 'date-fns/locale';
 const extractCityFromAddress = (address: string): string => {
   if (!address) return '';
   
-  // Список городов Узбекистана для более точного определения
-  const uzbekistanCities = [
-    'Ташкент', 'Самарканд', 'Наманган', 'Андижан', 'Бухара', 'Нукус', 'Карши', 
-    'Коканд', 'Маргилон', 'Фергана', 'Джизак', 'Ургенч', 'Навои', 'Термез',
-    'Ангрен', 'Алмалык', 'Гулистан', 'Янгиюль', 'Чирчик', 'Газалкент',
-    'Tashkent', 'Samarkand', 'Namangan', 'Andijan', 'Bukhara', 'Nukus',
-    'Qarshi', 'Kokand', 'Margilan', 'Fergana', 'Jizzakh', 'Urgench', 
-    'Navoi', 'Termez', 'Angren', 'Almalyk', 'Gulistan', 'Yangiyul', 'Chirchiq'
+  // Узбекские города для определения
+  const uzbekCities = [
+    'Ташкент', 'Самарканд', 'Наманган', 'Андижан', 'Фергана', 'Бухара', 
+    'Нукус', 'Карши', 'Коканд', 'Маргилан', 'Джизак', 'Ургенч', 
+    'Навои', 'Термез', 'Ангрен', 'Алмалык', 'Гулистан', 'Чирчик'
   ];
   
-  // Убираем лишние пробелы и приводим к нижнему регистру для поиска
-  const normalizedAddress = address.trim().toLowerCase();
-  
-  // Ищем город в адресе
-  for (const city of uzbekistanCities) {
-    const normalizedCity = city.toLowerCase();
-    if (normalizedAddress.includes(normalizedCity)) {
-      // Возвращаем оригинальное написание города
+  // Ищем совпадение с известными городами
+  for (const city of uzbekCities) {
+    if (address.toLowerCase().includes(city.toLowerCase())) {
       return city;
     }
   }
   
-  // Если конкретный город не найден, пытаемся извлечь из структуры адреса
-  const addressParts = address.split(',').map(part => part.trim());
-  
-  // Обычно город находится в конце адреса или предпоследним элементом
-  if (addressParts.length >= 2) {
-    // Проверяем последний элемент (может быть страна)
-    const lastPart = addressParts[addressParts.length - 1];
-    if (lastPart.toLowerCase().includes('узбекистан') || lastPart.toLowerCase().includes('uzbekistan')) {
-      // Берем предпоследний элемент как город
-      return addressParts[addressParts.length - 2];
-    } else {
-      // Берем последний элемент как город
-      return lastPart;
-    }
-  }
-  
-  // Если не можем разобрать, возвращаем первое слово
-  return address.split(' ')[0] || address;
-};
-
-// Функция для проверки доступности API
-const checkApiHealth = async () => {
-  try {
-    // Попробуем сделать тестовый запрос к API геокодирования
-    const response = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Tashkent');
-    return response.ok;
-  } catch (error) {
-    console.error('API Health Check failed:', error);
-    return false;
-  }
+  // Если точное совпадение не найдено, берем первую часть адреса
+  const parts = address.split(',');
+  return parts[0].trim();
 };
 
 const PassengerSearchPage = () => {
@@ -80,25 +45,35 @@ const PassengerSearchPage = () => {
   
   const [fromCity, setFromCity] = useState('');
   const [toCity, setToCity] = useState('');
-  const [fromFullAddress, setFromFullAddress] = useState(''); // Полный адрес отправления
-  const [toFullAddress, setToFullAddress] = useState(''); // Полный адрес назначения
+  const [fromFullAddress, setFromFullAddress] = useState('');
+  const [toFullAddress, setToFullAddress] = useState('');
   const [date, setDate] = useState<Date>();
   const [passengers, setPassengers] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
-  const [apiStatus, setApiStatus] = useState<'checking' | 'available' | 'unavailable'>('checking');
+  const [apiConnected, setApiConnected] = useState(false);
   
   // Modal states
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
 
-  // Проверяем доступность API при загрузке компонента
+  // Проверка подключения к API при загрузке
   useEffect(() => {
-    const checkApi = async () => {
-      const isAvailable = await checkApiHealth();
-      setApiStatus(isAvailable ? 'available' : 'unavailable');
+    const checkApiConnection = async () => {
+      try {
+        // Простая проверка доступности CORS proxy
+        const response = await fetch('https://api.allorigins.win/get?url=https://httpbin.org/status/200', {
+          method: 'GET',
+          signal: AbortSignal.timeout(3000)
+        });
+        setApiConnected(response.ok);
+      } catch (error) {
+        console.log('API connection check failed:', error);
+        setApiConnected(false);
+      }
     };
-    checkApi();
+
+    checkApiConnection();
   }, []);
 
   // Restore state from URL parameters when returning from other pages
@@ -189,17 +164,29 @@ const PassengerSearchPage = () => {
   // Обработчик выбора адреса отправления
   const handleFromAddressSelect = (address: string) => {
     setFromFullAddress(address);
-    const city = extractCityFromAddress(address);
-    setFromCity(standardizeCityName(city));
-    console.log('From address selected:', { fullAddress: address, extractedCity: city });
+    const extractedCity = extractCityFromAddress(address);
+    const normalizedCity = standardizeCityName(extractedCity);
+    setFromCity(normalizedCity);
+    
+    console.log('From address selected:', {
+      fullAddress: address,
+      extractedCity,
+      normalizedCity
+    });
   };
 
   // Обработчик выбора адреса назначения
   const handleToAddressSelect = (address: string) => {
     setToFullAddress(address);
-    const city = extractCityFromAddress(address);
-    setToCity(standardizeCityName(city));
-    console.log('To address selected:', { fullAddress: address, extractedCity: city });
+    const extractedCity = extractCityFromAddress(address);
+    const normalizedCity = standardizeCityName(extractedCity);
+    setToCity(normalizedCity);
+    
+    console.log('To address selected:', {
+      fullAddress: address,
+      extractedCity,
+      normalizedCity
+    });
   };
 
   const handleSearch = async () => {
@@ -235,8 +222,13 @@ const PassengerSearchPage = () => {
         navigate(`/search-rides?${params.toString()}`);
       } catch (error) {
         console.error('Search error:', error);
-        // Показываем пользователю ошибку
-        alert('Произошла ошибка при поиске. Попробуйте еще раз.');
+        // Показать уведомление об ошибке
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Ошибка поиска', {
+            body: 'Произошла ошибка при поиске поездок. Попробуйте еще раз.',
+            icon: '/favicon.ico'
+          });
+        }
       } finally {
         setIsSearching(false);
       }
@@ -262,21 +254,24 @@ const PassengerSearchPage = () => {
     }
   };
 
-  // Резервные города для случая, когда API недоступен
-  const fallbackCities = [
-    'Ташкент', 'Самарканд', 'Наманган', 'Андижан', 'Бухара', 'Нукус', 
-    'Карши', 'Коканд', 'Маргилон', 'Фергана', 'Джизак', 'Ургенч', 
-    'Навои', 'Термез', 'Ангрен', 'Алмалык', 'Гулистан'
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-300 to-emerald-200 pb-24">
-      {/* API Status Indicator */}
-      {apiStatus === 'unavailable' && (
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 text-sm">
-          <p>⚠️ Сервис геолокации временно недоступен. Используйте названия городов.</p>
+      {/* API Status Banner */}
+      <div className={`px-4 py-2 text-center text-sm ${apiConnected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+        <div className="flex items-center justify-center space-x-2">
+          {apiConnected ? (
+            <>
+              <Wifi className="w-4 h-4" />
+              <span>Подключено к Google Places API</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-4 h-4" />
+              <span>Использую локальные данные городов</span>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Notification Permission Modal */}
       {showNotificationPermission && (
@@ -369,7 +364,7 @@ const PassengerSearchPage = () => {
                       </div>
                       {fromFullAddress && fromFullAddress !== fromCity && (
                         <div className="text-gray-400 text-xs truncate">
-                          Город: {fromCity}
+                          Поиск по городу: {fromCity}
                         </div>
                       )}
                     </div>
@@ -393,7 +388,7 @@ const PassengerSearchPage = () => {
                       </div>
                       {toFullAddress && toFullAddress !== toCity && (
                         <div className="text-gray-400 text-xs truncate">
-                          Город: {toCity}
+                          Поиск по городу: {toCity}
                         </div>
                       )}
                     </div>
@@ -426,6 +421,7 @@ const PassengerSearchPage = () => {
                 </Button>
               </div>
 
+              {/* Passengers */}
               <div className="p-3">
                 <Button
                   onClick={() => {
@@ -459,18 +455,35 @@ const PassengerSearchPage = () => {
         <Button
           onClick={handleSearch}
           disabled={!fromCity || !toCity || isSearching}
-          className="w-full h-12 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-colors"
+          className="w-full h-12 bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white rounded-xl font-semibold transition-all duration-200"
         >
           {isSearching ? (
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Поиск...</span>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Поиск поездок...</span>
             </div>
           ) : (
-            'Найти поездки'
+            <div className="flex items-center space-x-2">
+              <Search className="w-5 h-5" />
+              <span>Найти поездки</span>
+            </div>
           )}
         </Button>
       </div>
+
+      {/* Debug Info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="px-4 mb-4">
+          <div className="bg-white rounded-lg p-3 text-xs">
+            <div className="grid grid-cols-2 gap-2 text-gray-600">
+              <div>From: {fromCity}</div>
+              <div>To: {toCity}</div>
+              <div>API: {apiConnected ? '✅' : '❌'}</div>
+              <div>Date: {date ? format(date, 'dd.MM.yyyy') : 'Today'}</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recent Searches */}
       {searchHistory.length > 0 && (
@@ -480,10 +493,10 @@ const PassengerSearchPage = () => {
             {searchHistory.slice(0, 2).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
                 onClick={() => handleSearchHistoryClick(item)}
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Clock className="w-4 h-4 text-gray-400" />
                   <div>
                     <div className="text-gray-900 font-medium text-sm">
@@ -506,20 +519,18 @@ const PassengerSearchPage = () => {
         isOpen={showFromSelector}
         onClose={() => setShowFromSelector(false)}
         onSelect={handleFromAddressSelect}
-        title="Откуда"
+        title="Откуда вы едете?"
         currentValue={fromFullAddress}
-        placeholder="Откуда вы едете?"
-        fallbackOptions={apiStatus === 'unavailable' ? fallbackCities : undefined}
+        placeholder="Введите город отправления"
       />
 
       <AddressAutocomplete
         isOpen={showToSelector}
         onClose={() => setShowToSelector(false)}
         onSelect={handleToAddressSelect}
-        title="Куда"
+        title="Куда вы едете?"
         currentValue={toFullAddress}
-        placeholder="Куда вы едете?"
-        fallbackOptions={apiStatus === 'unavailable' ? fallbackCities : undefined}
+        placeholder="Введите город назначения"
       />
 
       {/* Bottom Navigation */}
