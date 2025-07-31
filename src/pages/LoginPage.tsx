@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone, Mail, Eye, EyeOff, User } from 'lucide-react';
+import { Phone, Mail, Eye, EyeOff, User, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 import { toast } from 'sonner';
@@ -22,10 +22,12 @@ const LoginPage = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [userName, setUserName] = useState('');
   const [resetEmail, setResetEmail] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
+      console.log('LoginPage - User already authenticated, redirecting:', user);
       navigate('/passenger-search');
     }
   }, [user, navigate]);
@@ -56,6 +58,8 @@ const LoginPage = () => {
 
   const getProfileByAuth = async (userId: string) => {
     try {
+      console.log('LoginPage - Getting profile for user ID:', userId);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -63,19 +67,22 @@ const LoginPage = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error getting profile:', error);
+        console.error('LoginPage - Error getting profile:', error);
         return null;
       }
 
+      console.log('LoginPage - Profile found:', data);
       return data;
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('LoginPage - Unexpected error getting profile:', error);
       return null;
     }
   };
 
   const createProfileFromAuth = async (authUser: any, additionalData: any = {}) => {
     try {
+      console.log('LoginPage - Creating profile for auth user:', authUser);
+      
       const profile = {
         id: authUser.id,
         email: authUser.email,
@@ -92,6 +99,8 @@ const LoginPage = () => {
         registration_method: 'email',
       };
 
+      console.log('LoginPage - Creating profile with data:', profile);
+
       const { data, error } = await supabase
         .from('profiles')
         .insert(profile)
@@ -99,15 +108,37 @@ const LoginPage = () => {
         .single();
 
       if (error) {
-        console.error('Error creating profile:', error);
+        console.error('LoginPage - Error creating profile:', error);
         return null;
       }
 
+      console.log('LoginPage - Profile created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Unexpected error creating profile:', error);
+      console.error('LoginPage - Unexpected error creating profile:', error);
       return null;
     }
+  };
+
+  const waitForUserContext = async (expectedUserId: string, maxWaitTime = 5000) => {
+    console.log('LoginPage - Waiting for user context to update...');
+    
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const checkInterval = setInterval(() => {
+        const currentTime = Date.now();
+        
+        if (user && user.id === expectedUserId) {
+          console.log('LoginPage - User context updated successfully');
+          clearInterval(checkInterval);
+          resolve(true);
+        } else if (currentTime - startTime > maxWaitTime) {
+          console.log('LoginPage - Timeout waiting for user context');
+          clearInterval(checkInterval);
+          resolve(false);
+        }
+      }, 100);
+    });
   };
 
   const handleLogin = async () => {
@@ -117,12 +148,14 @@ const LoginPage = () => {
     }
 
     setIsLoading(true);
+    setDebugInfo('Начинаем процесс входа...');
     
     try {
       const identifier = loginType === 'email' ? email : phone;
       const userEmail = loginType === 'email' ? email : `${phone.replace(/\D/g, '')}@temp.com`;
       
-      console.log('Attempting login with:', userEmail);
+      console.log('LoginPage - Attempting login with:', { identifier, userEmail, loginType });
+      setDebugInfo(`Попытка входа с ${loginType}: ${identifier}`);
       
       // First, try to authenticate with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -131,26 +164,34 @@ const LoginPage = () => {
       });
 
       if (authError) {
-        console.error('Auth login error:', authError);
+        console.error('LoginPage - Auth login error:', authError);
+        setDebugInfo(`Ошибка аутентификации: ${authError.message}`);
         
         if (authError.message.includes('Invalid login credentials')) {
           toast.error('Неверный email/телефон или пароль');
         } else if (authError.message.includes('Email not confirmed')) {
           toast.error('Подтвердите email для входа');
-        } else {
+        } else if (authError.message.includes('User not found')) {
           // User might not exist in auth, show registration modal
           setShowRegisterModal(true);
+        } else {
+          toast.error('Ошибка входа: ' + authError.message);
         }
         return;
       }
 
       if (authData.user) {
+        console.log('LoginPage - Auth successful, user:', authData.user);
+        setDebugInfo('Аутентификация успешна, проверяем профиль...');
+        
         // User successfully authenticated, now check/create profile
         let userProfile = await getProfileByAuth(authData.user.id);
         
         if (!userProfile) {
           // Profile doesn't exist, create it from auth data
-          console.log('Profile not found, creating from auth data');
+          console.log('LoginPage - Profile not found, creating from auth data');
+          setDebugInfo('Профиль не найден, создаем новый...');
+          
           userProfile = await createProfileFromAuth(authData.user, {
             phone: loginType === 'phone' ? phone : '',
             name: authData.user.user_metadata?.name || '',
@@ -160,22 +201,42 @@ const LoginPage = () => {
           
           if (!userProfile) {
             toast.error('Ошибка при создании профиля');
+            setDebugInfo('Ошибка создания профиля');
             return;
           }
         }
 
-        // Successfully logged in
-        toast.success('Добро пожаловать!');
+        console.log('LoginPage - Profile ready:', userProfile);
+        setDebugInfo('Профиль готов, обновляем контекст...');
+
+        // Manually update the user context with the profile data
+        setUser(userProfile);
         
-        // UserContext will automatically load the profile via onAuthStateChange
-        // No need to manually set user here - let the context handle everything
-        // Just wait a moment for the context to update
-        setTimeout(() => {
+        // Wait for context to update before navigating
+        setDebugInfo('Ожидаем обновления контекста...');
+        const contextUpdated = await waitForUserContext(userProfile.id);
+        
+        if (contextUpdated) {
+          toast.success('Добро пожаловать!');
+          setDebugInfo('Перенаправляем...');
           navigate('/passenger-search');
-        }, 100);
+        } else {
+          // Force navigation even if context didn't update in time
+          console.log('LoginPage - Context update timeout, forcing navigation');
+          toast.success('Добро пожаловать!');
+          setDebugInfo('Принудительное перенаправление...');
+          
+          // Set user data in localStorage as backup
+          localStorage.setItem('yoldosh_user', JSON.stringify(userProfile));
+          
+          setTimeout(() => {
+            navigate('/passenger-search');
+          }, 500);
+        }
       }
     } catch (error) {
-      console.error('Unexpected login error:', error);
+      console.error('LoginPage - Unexpected login error:', error);
+      setDebugInfo(`Неожиданная ошибка: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast.error('Произошла ошибка при входе');
     } finally {
       setIsLoading(false);
@@ -189,10 +250,14 @@ const LoginPage = () => {
     }
 
     setIsLoading(true);
+    setDebugInfo('Начинаем регистрацию...');
     
     try {
       const identifier = loginType === 'email' ? email : phone;
       const userEmail = loginType === 'email' ? email : `${phone.replace(/\D/g, '')}@temp.com`;
+      
+      console.log('LoginPage - Attempting registration with:', { identifier, userEmail, userName });
+      setDebugInfo(`Регистрация пользователя: ${userName}`);
       
       // Create Supabase Auth user
       const { data, error } = await supabase.auth.signUp({
@@ -208,23 +273,42 @@ const LoginPage = () => {
       });
 
       if (error) {
-        console.error('Registration error:', error);
+        console.error('LoginPage - Registration error:', error);
+        setDebugInfo(`Ошибка регистрации: ${error.message}`);
         toast.error('Ошибка при регистрации: ' + error.message);
         return;
       }
 
       if (data.user) {
+        console.log('LoginPage - Registration successful:', data.user);
+        setDebugInfo('Регистрация успешна!');
+        
         toast.success('Регистрация прошла успешно!');
         setShowRegisterModal(false);
         
-        // The trigger will automatically create the profile
-        // Wait a bit for the trigger to execute
-        setTimeout(() => {
-          navigate('/passenger-search');
-        }, 1000);
+        // For email registration, user needs to confirm email first
+        if (loginType === 'email') {
+          toast.info('Проверьте email для подтверждения аккаунта');
+          setDebugInfo('Ожидаем подтверждение email...');
+        } else {
+          // For phone registration, try to create profile immediately
+          setDebugInfo('Создаем профиль...');
+          const profile = await createProfileFromAuth(data.user, {
+            name: userName,
+            phone: phone,
+          });
+          
+          if (profile) {
+            setUser(profile);
+            setTimeout(() => {
+              navigate('/passenger-search');
+            }, 1000);
+          }
+        }
       }
     } catch (error) {
-      console.error('Unexpected registration error:', error);
+      console.error('LoginPage - Unexpected registration error:', error);
+      setDebugInfo(`Неожиданная ошибка регистрации: ${error instanceof Error ? error.message : 'Unknown'}`);
       toast.error('Произошла ошибка при регистрации');
     } finally {
       setIsLoading(false);
@@ -245,7 +329,7 @@ const LoginPage = () => {
       });
 
       if (error) {
-        console.error('Password reset error:', error);
+        console.error('LoginPage - Password reset error:', error);
         toast.error('Ошибка при отправке письма: ' + error.message);
         return;
       }
@@ -254,11 +338,19 @@ const LoginPage = () => {
       setShowForgotPassword(false);
       setResetEmail('');
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('LoginPage - Unexpected password reset error:', error);
       toast.error('Произошла ошибка при восстановлении пароля');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Test credentials for development
+  const fillTestCredentials = () => {
+    setEmail('test@example.com');
+    setPassword('test123456');
+    setLoginType('email');
+    toast.info('Заполнены тестовые данные');
   };
 
   const currentInput = loginType === 'email' ? email : phone;
@@ -273,7 +365,26 @@ const LoginPage = () => {
         {/* Header */}
         <div className="flex items-center justify-center pt-6 mb-6">
           <h1 className="text-2xl font-bold text-teal-900">Yoldosh</h1>
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={fillTestCredentials}
+              className="ml-4 text-xs bg-orange-500 text-white px-2 py-1 rounded"
+            >
+              Test
+            </button>
+          )}
         </div>
+
+        {/* Debug Info - только в development */}
+        {process.env.NODE_ENV === 'development' && debugInfo && (
+          <div className="mb-4 bg-blue-100 border border-blue-300 rounded-lg p-3">
+            <p className="text-xs text-blue-800">{debugInfo}</p>
+            <div className="text-xs text-gray-600 mt-1">
+              <div>User in context: {user ? '✅' : '❌'}</div>
+              <div>Current step: {isLoading ? 'Loading...' : 'Ready'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Login Form */}
         <div className="flex-1 flex items-center justify-center pb-6">
@@ -297,6 +408,7 @@ const LoginPage = () => {
                 placeholder={loginType === 'email' ? 'example@mail.com' : '+998 (XX) XXX-XX-XX'}
                 maxLength={loginType === 'phone' ? 19 : undefined}
                 icon={loginType === 'email' ? <Mail className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                disabled={isLoading}
               />
               
               <div className="relative">
@@ -307,11 +419,13 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Введите пароль"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -322,19 +436,28 @@ const LoginPage = () => {
                 disabled={isLoading || !currentInput || !password}
                 className="w-full h-10 text-sm bg-teal-600 hover:bg-teal-700 hover:scale-105 transition-all duration-300 rounded-xl shadow-lg disabled:opacity-50 text-white"
               >
-                {isLoading ? 'Вход...' : 'Войти'}
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Вход...</span>
+                  </div>
+                ) : (
+                  'Войти'
+                )}
               </Button>
               
               <div className="text-center pt-1 space-y-2">
                 <button 
                   onClick={() => setShowForgotPassword(true)}
                   className="text-teal-600 hover:underline text-xs transition-all duration-200 block w-full"
+                  disabled={isLoading}
                 >
                   Забыли пароль?
                 </button>
                 <button 
                   onClick={() => navigate('/onboarding')}
                   className="text-teal-600 hover:underline text-xs transition-all duration-200"
+                  disabled={isLoading}
                 >
                   Нет аккаунта? Зарегистрироваться
                 </button>
@@ -363,6 +486,7 @@ const LoginPage = () => {
               onChange={(e) => setUserName(e.target.value)}
               placeholder="Введите ваше имя"
               icon={<User className="h-4 w-4" />}
+              disabled={isLoading}
             />
             
             <div className="flex gap-2">
@@ -379,7 +503,14 @@ const LoginPage = () => {
                 disabled={isLoading || !userName.trim()}
                 className="flex-1 h-10 bg-teal-600 hover:bg-teal-700 rounded-xl text-sm text-white"
               >
-                {isLoading ? 'Создание...' : 'Создать'}
+                {isLoading ? (
+                  <div className="flex items-center space-x-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Создание...</span>
+                  </div>
+                ) : (
+                  'Создать'
+                )}
               </Button>
             </div>
           </div>
@@ -405,6 +536,7 @@ const LoginPage = () => {
               onChange={(e) => setResetEmail(e.target.value)}
               placeholder="example@mail.com"
               icon={<Mail className="h-4 w-4" />}
+              disabled={isLoading}
             />
             
             <div className="flex gap-2">
@@ -421,7 +553,14 @@ const LoginPage = () => {
                 disabled={isLoading || !resetEmail.trim()}
                 className="flex-1 h-10 bg-teal-600 hover:bg-teal-700 rounded-xl text-sm text-white"
               >
-                {isLoading ? 'Отправка...' : 'Отправить'}
+                {isLoading ? (
+                  <div className="flex items-center space-x-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Отправка...</span>
+                  </div>
+                ) : (
+                  'Отправить'
+                )}
               </Button>
             </div>
           </div>
