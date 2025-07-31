@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Calendar, Users, ArrowRight, Clock, Wifi, WifiOff, Search } from 'lucide-react';
+import { MapPin, Calendar, Users, ArrowRight, Clock, Search } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useRides } from '@/hooks/useRides';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
@@ -50,31 +50,11 @@ const PassengerSearchPage = () => {
   const [date, setDate] = useState<Date>();
   const [passengers, setPassengers] = useState(1);
   const [isSearching, setIsSearching] = useState(false);
-  const [apiConnected, setApiConnected] = useState(false);
   
   // Modal states
   const [showFromSelector, setShowFromSelector] = useState(false);
   const [showToSelector, setShowToSelector] = useState(false);
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
-
-  // Проверка подключения к API при загрузке
-  useEffect(() => {
-    const checkApiConnection = async () => {
-      try {
-        // Простая проверка доступности CORS proxy
-        const response = await fetch('https://api.allorigins.win/get?url=https://httpbin.org/status/200', {
-          method: 'GET',
-          signal: AbortSignal.timeout(3000)
-        });
-        setApiConnected(response.ok);
-      } catch (error) {
-        console.log('API connection check failed:', error);
-        setApiConnected(false);
-      }
-    };
-
-    checkApiConnection();
-  }, []);
 
   // Restore state from URL parameters when returning from other pages
   useEffect(() => {
@@ -256,23 +236,6 @@ const PassengerSearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-300 to-emerald-200 pb-24">
-      {/* API Status Banner */}
-      <div className={`px-4 py-2 text-center text-sm ${apiConnected ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-        <div className="flex items-center justify-center space-x-2">
-          {apiConnected ? (
-            <>
-              <Wifi className="w-4 h-4" />
-              <span>Подключено к Google Places API</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="w-4 h-4" />
-              <span>Использую локальные данные городов</span>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Notification Permission Modal */}
       {showNotificationPermission && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -360,13 +323,8 @@ const PassengerSearchPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="text-gray-500 text-xs">Откуда</div>
                       <div className="text-gray-900 font-medium truncate text-sm">
-                        {fromFullAddress || fromCity || 'Выберите место отправления'}
+                        {fromCity || 'Выберите место отправления'}
                       </div>
-                      {fromFullAddress && fromFullAddress !== fromCity && (
-                        <div className="text-gray-400 text-xs truncate">
-                          Поиск по городу: {fromCity}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Button>
@@ -384,13 +342,8 @@ const PassengerSearchPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="text-gray-500 text-xs">Куда</div>
                       <div className="text-gray-900 font-medium truncate text-sm">
-                        {toFullAddress || toCity || 'Выберите место назначения'}
+                        {toCity || 'Выберите место назначения'}
                       </div>
-                      {toFullAddress && toFullAddress !== toCity && (
-                        <div className="text-gray-400 text-xs truncate">
-                          Поиск по городу: {toCity}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Button>
@@ -471,43 +424,43 @@ const PassengerSearchPage = () => {
         </Button>
       </div>
 
-      {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="px-4 mb-4">
-          <div className="bg-white rounded-lg p-3 text-xs">
-            <div className="grid grid-cols-2 gap-2 text-gray-600">
-              <div>From: {fromCity}</div>
-              <div>To: {toCity}</div>
-              <div>API: {apiConnected ? '✅' : '❌'}</div>
-              <div>Date: {date ? format(date, 'dd.MM.yyyy') : 'Today'}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recent Searches */}
+      {/* Recent Searches - отображаем последние 4 поиска */}
       {searchHistory.length > 0 && (
         <div className="px-4 mb-4">
-          <h3 className="text-white font-medium mb-2 text-sm">Недавние поиски</h3>
+          <h3 className="text-white font-medium mb-3 text-sm">Недавние поиски</h3>
           <div className="space-y-2">
-            {searchHistory.slice(0, 2).map((item) => (
+            {searchHistory.slice(0, 4).map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
+                className="flex items-center justify-between p-4 bg-white rounded-xl cursor-pointer hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
                 onClick={() => handleSearchHistoryClick(item)}
               >
                 <div className="flex items-center space-x-3">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <div className="text-gray-900 font-medium text-sm">
+                  <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-teal-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-gray-900 font-semibold text-sm mb-1">
                       {item.from_city} → {item.to_city}
                     </div>
-                    <div className="text-gray-500 text-xs">
-                      {item.departure_date ? format(new Date(item.departure_date), 'dd MMM', { locale: ru }) : ''} • {item.passengers_count || 1} пас.
+                    <div className="flex items-center space-x-3 text-gray-500 text-xs">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>
+                          {item.departure_date 
+                            ? format(new Date(item.departure_date), 'dd MMM yyyy', { locale: ru })
+                            : 'Дата не указана'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Users className="w-3 h-3" />
+                        <span>{item.passengers_count || 1} пас.</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-5 h-5 text-gray-400" />
               </div>
             ))}
           </div>
