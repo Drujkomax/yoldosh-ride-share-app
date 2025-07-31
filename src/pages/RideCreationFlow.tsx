@@ -69,67 +69,66 @@ const RideCreationFlow = () => {
     photo_uploaded: false
   });
 
-  // Мемоизированная функция для получения пользователя
-  const getCurrentUser = useCallback(async () => {
-    console.log('RideCreationFlow - Начало получения пользователя');
-    
-    try {
-      setIsUserLoading(true);
-      setInitializationError('');
-
-      // Проверяем контекст пользователя
-      console.log('RideCreationFlow - User from context:', user);
-      console.log('RideCreationFlow - isAuthenticated:', isAuthenticated);
-
-      if (!isAuthenticated || !user) {
-        console.log('RideCreationFlow - Пользователь не авторизован, редирект на onboarding');
-        navigate('/onboarding');
-        return;
-      }
-
-      // Получаем пользователя из Supabase Auth
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+  // Эффект для инициализации
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      console.log('RideCreationFlow - Начало получения пользователя');
       
-      if (authError) {
-        console.error('RideCreationFlow - Ошибка получения auth user:', authError);
-        throw new Error('Ошибка авторизации: ' + authError.message);
-      }
+      try {
+        setIsUserLoading(true);
+        setInitializationError('');
 
-      console.log('RideCreationFlow - Auth user:', authUser);
-      setSupabaseUser(authUser);
+        // Проверяем контекст пользователя
+        console.log('RideCreationFlow - User from context:', user);
+        console.log('RideCreationFlow - isAuthenticated:', isAuthenticated);
 
-      // Проверяем фото профиля если есть ID пользователя
-      if (user.id) {
-        console.log('RideCreationFlow - Проверка фото профиля для user ID:', user.id);
-        
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('avatar_url')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
-          console.error('RideCreationFlow - Ошибка получения профиля:', profileError);
-          // Не блокируем работу из-за ошибки профиля
+        if (!isAuthenticated || !user) {
+          console.log('RideCreationFlow - Пользователь не авторизован, редирект на onboarding');
+          navigate('/onboarding');
+          return;
         }
 
-        const hasValidPhoto = profileData?.avatar_url && profileData.avatar_url.trim() !== '';
-        setUserHasPhoto(hasValidPhoto);
-        console.log('RideCreationFlow - User has photo:', hasValidPhoto, 'Avatar URL:', profileData?.avatar_url);
+        // Получаем пользователя из Supabase Auth
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('RideCreationFlow - Ошибка получения auth user:', authError);
+          throw new Error('Ошибка авторизации: ' + authError.message);
+        }
+
+        console.log('RideCreationFlow - Auth user:', authUser);
+        setSupabaseUser(authUser);
+
+        // Проверяем фото профиля если есть ID пользователя
+        if (user.id) {
+          console.log('RideCreationFlow - Проверка фото профиля для user ID:', user.id);
+          
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') { // PGRST116 = not found
+            console.error('RideCreationFlow - Ошибка получения профиля:', profileError);
+            // Не блокируем работу из-за ошибки профиля
+          }
+
+          const hasValidPhoto = profileData?.avatar_url && profileData.avatar_url.trim() !== '';
+          setUserHasPhoto(hasValidPhoto);
+          console.log('RideCreationFlow - User has photo:', hasValidPhoto, 'Avatar URL:', profileData?.avatar_url);
+        }
+
+      } catch (error) {
+        console.error('RideCreationFlow - Ошибка инициализации:', error);
+        setInitializationError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
+      } finally {
+        setIsUserLoading(false);
       }
+    };
 
-    } catch (error) {
-      console.error('RideCreationFlow - Ошибка инициализации:', error);
-      setInitializationError(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
-    } finally {
-      setIsUserLoading(false);
-    }
-  }, [user, isAuthenticated, navigate]);
-
-  // Эффект для инициализации (выполняется только один раз)
-  useEffect(() => {
     getCurrentUser();
-  }, []); // Пустой массив зависимостей!
+  }, [user, isAuthenticated, navigate]);
 
   // Отдельный эффект для отслеживания изменений пользователя
   useEffect(() => {
@@ -154,7 +153,7 @@ const RideCreationFlow = () => {
               <Button 
                 onClick={() => {
                   setInitializationError('');
-                  getCurrentUser();
+                  window.location.reload();
                 }}
                 className="w-full"
               >
