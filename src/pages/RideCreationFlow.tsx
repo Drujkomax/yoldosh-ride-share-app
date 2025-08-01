@@ -353,14 +353,6 @@ const RideCreationFlow = () => {
     goToNextStep();
   }, [goToNextStep]);
 
-  const handleCommentsSubmit = useCallback((comments: string) => {
-    setRideData(prev => ({
-      ...prev,
-      description: comments
-    }));
-    createRides();
-  }, []);
-
   const createRides = useCallback(async () => {
     console.log('RideCreationFlow - Начало создания поездки, user:', user);
     console.log('RideCreationFlow - Данные поездки:', rideData);
@@ -412,6 +404,14 @@ const RideCreationFlow = () => {
       });
     }
   }, [user, rideData, createRide, navigate, toast]);
+
+  const handleCommentsSubmit = useCallback((comments: string) => {
+    setRideData(prev => ({
+      ...prev,
+      description: comments
+    }));
+    createRides();
+  }, [createRides]);
 
   const renderStep = () => {
     try {
