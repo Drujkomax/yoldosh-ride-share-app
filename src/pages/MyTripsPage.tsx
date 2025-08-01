@@ -18,6 +18,13 @@ const MyTripsPage = () => {
   const { trips, activeTrips, completedTrips, isLoading, error } = useMyTrips();
   const [selectedTrip, setSelectedTrip] = useState<string | null>(null);
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('MyTripsPage - trips:', trips);
+    console.log('MyTripsPage - isLoading:', isLoading);
+    console.log('MyTripsPage - error:', error);
+  }, [trips, isLoading, error]);
+
   // Redirect to registration if not authenticated
   React.useEffect(() => {
     if (!userLoading && !isAuthenticated) {
@@ -262,7 +269,7 @@ const MyTripsPage = () => {
               </span>
             </div>
             <div className="text-sm text-gray-500">
-              {trip.seats_count} место{trip.seats_count > 1 ? (trip.seats_count > 4 ? '' : 'а') : ''}
+              {trip.seats_count ? `${trip.seats_count} место${trip.seats_count > 1 ? (trip.seats_count > 4 ? '' : 'а') : ''}` : 'Без пассажиров'}
             </div>
           </div>
         </CardContent>
