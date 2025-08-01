@@ -69,6 +69,177 @@ const RideCreationFlow = () => {
     photo_uploaded: false
   });
 
+  // ALL CALLBACKS - moved to top to ensure consistent hook order
+  const goToNextStep = useCallback(() => {
+    setStepHistory(prev => [...prev, currentStep]);
+    
+    // Skip photo step if user already has a valid photo
+    if (currentStep === 8 && userHasPhoto) {
+      console.log('RideCreationFlow - Skipping photo step, user already has photo');
+      setCurrentStep(10); // Skip to comments
+    } else {
+      setCurrentStep(prev => prev + 1);
+    }
+  }, [currentStep, userHasPhoto]);
+
+  const goBack = useCallback(() => {
+    if (stepHistory.length > 0) {
+      const previousStep = stepHistory[stepHistory.length - 1];
+      setStepHistory(prev => prev.slice(0, -1));
+      setCurrentStep(previousStep);
+    } else {
+      // Если это первый шаг, возвращаемся назад
+      navigate('/passenger');
+    }
+  }, [stepHistory, navigate]);
+
+  const handleAddressSelect = useCallback((address: string, coordinates: [number, number]) => {
+    // Extract city from address
+    const cityMatch = address.match(/([^,]+),\s*([^,]+)/);
+    const city = cityMatch ? cityMatch[1].trim() : address;
+    
+    if (currentAddressType === 'from') {
+      setRideData(prev => ({
+        ...prev,
+        from_city: city,
+        pickup_coordinates: coordinates,
+        pickup_address: address
+      }));
+      setCurrentAddressType('to');
+      setCurrentStep(2);
+    } else {
+      setRideData(prev => ({
+        ...prev,
+        to_city: city,
+        dropoff_coordinates: coordinates,
+        dropoff_address: address
+      }));
+      goToNextStep();
+    }
+  }, [currentAddressType, goToNextStep]);
+
+  const handleDateSelect = useCallback((date: Date) => {
+    setRideData(prev => ({
+      ...prev,
+      departure_date: date.toISOString().split('T')[0]
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handleTimeSelect = useCallback((time: string) => {
+    setRideData(prev => ({
+      ...prev,
+      departure_time: time
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handlePassengerCountSelect = useCallback((count: number) => {
+    setRideData(prev => ({
+      ...prev,
+      available_seats: count
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handleInstantBookingSelect = useCallback((enabled: boolean) => {
+    setRideData(prev => ({
+      ...prev,
+      instant_booking_enabled: enabled
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handlePriceSelect = useCallback((price: number) => {
+    setRideData(prev => ({
+      ...prev,
+      price_per_seat: price
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handleReturnTripSelect = useCallback((returnTripData: RideFormData | null) => {
+    setRideData(prev => ({
+      ...prev,
+      return_trip_data: returnTripData
+    }));
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const handlePhotoUpload = useCallback((uploaded: boolean) => {
+    console.log('RideCreationFlow - Photo upload completed:', uploaded);
+    setRideData(prev => ({
+      ...prev,
+      photo_uploaded: uploaded
+    }));
+    
+    if (uploaded) {
+      setUserHasPhoto(true);
+    }
+    
+    goToNextStep();
+  }, [goToNextStep]);
+
+  const createRides = useCallback(async () => {
+    console.log('RideCreationFlow - Начало создания поездки, user:', user);
+    console.log('RideCreationFlow - Данные поездки:', rideData);
+    
+    if (!user?.id) {
+      console.error('RideCreationFlow - Пользователь не найден');
+      toast({
+        title: "Ошибка авторизации",
+        description: "Необходимо войти в систему",
+        variant: "destructive"
+      });
+      navigate('/onboarding');
+      return;
+    }
+
+    try {
+      // Создаем основную поездку через useRides hook
+      const mainRideData = {
+        driver_id: user.id,
+        departure_date: rideData.departure_date,
+        departure_time: rideData.departure_time,
+        from_city: rideData.from_city,
+        to_city: rideData.to_city,
+        available_seats: rideData.available_seats,
+        price_per_seat: rideData.price_per_seat,
+        description: rideData.description,
+        pickup_address: rideData.pickup_address,
+        dropoff_address: rideData.dropoff_address,
+        pickup_latitude: rideData.pickup_coordinates[0],
+        pickup_longitude: rideData.pickup_coordinates[1],
+        dropoff_latitude: rideData.dropoff_coordinates[0],
+        dropoff_longitude: rideData.dropoff_coordinates[1],
+        instant_booking_enabled: rideData.instant_booking_enabled,
+        status: 'active' as const
+      };
+
+      console.log('RideCreationFlow - Создание основной поездки:', mainRideData);
+
+      // Используем createRide из useRides hook
+      await createRide(mainRideData);
+      
+      navigate('/ride-published');
+    } catch (error) {
+      console.error('RideCreationFlow - Ошибка создания поездки:', error);
+      toast({
+        title: "Ошибка при создании поездки",
+        description: "Попробуйте еще раз",
+        variant: "destructive"
+      });
+    }
+  }, [user, rideData, createRide, navigate]);
+
+  const handleCommentsSubmit = useCallback((comments: string) => {
+    setRideData(prev => ({
+      ...prev,
+      description: comments
+    }));
+    createRides();
+  }, [createRides]);
+
   // Эффект для инициализации
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -242,176 +413,6 @@ const RideCreationFlow = () => {
       </div>
     );
   }
-
-  const goToNextStep = useCallback(() => {
-    setStepHistory(prev => [...prev, currentStep]);
-    
-    // Skip photo step if user already has a valid photo
-    if (currentStep === 8 && userHasPhoto) {
-      console.log('RideCreationFlow - Skipping photo step, user already has photo');
-      setCurrentStep(10); // Skip to comments
-    } else {
-      setCurrentStep(prev => prev + 1);
-    }
-  }, [currentStep, userHasPhoto]);
-
-  const goBack = useCallback(() => {
-    if (stepHistory.length > 0) {
-      const previousStep = stepHistory[stepHistory.length - 1];
-      setStepHistory(prev => prev.slice(0, -1));
-      setCurrentStep(previousStep);
-    } else {
-      // Если это первый шаг, возвращаемся назад
-      navigate('/passenger');
-    }
-  }, [stepHistory, navigate]);
-
-  const handleAddressSelect = useCallback((address: string, coordinates: [number, number]) => {
-    // Extract city from address
-    const cityMatch = address.match(/([^,]+),\s*([^,]+)/);
-    const city = cityMatch ? cityMatch[1].trim() : address;
-    
-    if (currentAddressType === 'from') {
-      setRideData(prev => ({
-        ...prev,
-        from_city: city,
-        pickup_coordinates: coordinates,
-        pickup_address: address
-      }));
-      setCurrentAddressType('to');
-      setCurrentStep(2);
-    } else {
-      setRideData(prev => ({
-        ...prev,
-        to_city: city,
-        dropoff_coordinates: coordinates,
-        dropoff_address: address
-      }));
-      goToNextStep();
-    }
-  }, [currentAddressType, goToNextStep]);
-
-  const handleDateSelect = useCallback((date: Date) => {
-    setRideData(prev => ({
-      ...prev,
-      departure_date: date.toISOString().split('T')[0]
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handleTimeSelect = useCallback((time: string) => {
-    setRideData(prev => ({
-      ...prev,
-      departure_time: time
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handlePassengerCountSelect = useCallback((count: number) => {
-    setRideData(prev => ({
-      ...prev,
-      available_seats: count
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handleInstantBookingSelect = useCallback((enabled: boolean) => {
-    setRideData(prev => ({
-      ...prev,
-      instant_booking_enabled: enabled
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handlePriceSelect = useCallback((price: number) => {
-    setRideData(prev => ({
-      ...prev,
-      price_per_seat: price
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handleReturnTripSelect = useCallback((returnTripData: RideFormData | null) => {
-    setRideData(prev => ({
-      ...prev,
-      return_trip_data: returnTripData
-    }));
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const handlePhotoUpload = useCallback((uploaded: boolean) => {
-    console.log('RideCreationFlow - Photo upload completed:', uploaded);
-    setRideData(prev => ({
-      ...prev,
-      photo_uploaded: uploaded
-    }));
-    
-    if (uploaded) {
-      setUserHasPhoto(true);
-    }
-    
-    goToNextStep();
-  }, [goToNextStep]);
-
-  const createRides = useCallback(async () => {
-    console.log('RideCreationFlow - Начало создания поездки, user:', user);
-    console.log('RideCreationFlow - Данные поездки:', rideData);
-    
-    if (!user?.id) {
-      console.error('RideCreationFlow - Пользователь не найден');
-      toast({
-        title: "Ошибка авторизации",
-        description: "Необходимо войти в систему",
-        variant: "destructive"
-      });
-      navigate('/onboarding');
-      return;
-    }
-
-    try {
-      // Создаем основную поездку через useRides hook
-      const mainRideData = {
-        driver_id: user.id,
-        departure_date: rideData.departure_date,
-        departure_time: rideData.departure_time,
-        from_city: rideData.from_city,
-        to_city: rideData.to_city,
-        available_seats: rideData.available_seats,
-        price_per_seat: rideData.price_per_seat,
-        description: rideData.description,
-        pickup_address: rideData.pickup_address,
-        dropoff_address: rideData.dropoff_address,
-        pickup_latitude: rideData.pickup_coordinates[0],
-        pickup_longitude: rideData.pickup_coordinates[1],
-        dropoff_latitude: rideData.dropoff_coordinates[0],
-        dropoff_longitude: rideData.dropoff_coordinates[1],
-        instant_booking_enabled: rideData.instant_booking_enabled,
-        status: 'active' as const
-      };
-
-      console.log('RideCreationFlow - Создание основной поездки:', mainRideData);
-
-      // Используем createRide из useRides hook
-      await createRide(mainRideData);
-      
-      navigate('/ride-published');
-    } catch (error) {
-      console.error('RideCreationFlow - Ошибка создания поездки:', error);
-      toast({
-        title: "Ошибка при создании поездки",
-        description: "Попробуйте еще раз",
-        variant: "destructive"
-      });
-    }
-  }, [user, rideData, createRide, navigate, toast]);
-
-  const handleCommentsSubmit = useCallback((comments: string) => {
-    setRideData(prev => ({
-      ...prev,
-      description: comments
-    }));
-    createRides();
-  }, [createRides]);
 
   const renderStep = () => {
     try {
