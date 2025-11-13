@@ -248,18 +248,25 @@ const ChatPage = () => {
 
   if (isLoading || chatLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Загрузка чата...</p>
+      <div className="min-h-screen bg-gradient-to-br from-yoldosh-brand-light via-background to-secondary flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mb-4"></div>
+          <p className="text-muted-foreground">Загрузка чата...</p>
+        </div>
       </div>
     );
   }
 
   if (!chat) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">Чат не найден</p>
-          <Button onClick={handleBackClick}>
+      <div className="min-h-screen bg-gradient-to-br from-yoldosh-brand-light via-background to-secondary flex items-center justify-center">
+        <div className="text-center bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-8">
+          <div className="bg-destructive/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Чат не найден</h3>
+          <p className="text-muted-foreground mb-4">Этот чат больше не доступен</p>
+          <Button onClick={handleBackClick} className="bg-primary hover:bg-primary/90">
             Вернуться назад
           </Button>
         </div>
@@ -274,40 +281,48 @@ const ChatPage = () => {
   const otherParticipantRole = getParticipantRole(otherParticipant?.id || '');
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gradient-to-br from-yoldosh-brand-light via-background to-secondary flex flex-col">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-primary to-yoldosh-brand shadow-lg">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               onClick={handleBackClick}
+              className="text-white hover:bg-white/20"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
               <div 
-                className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                className="flex items-center gap-3 cursor-pointer hover:bg-white/10 p-2 rounded-xl transition-all active:scale-95"
                 onClick={() => navigate(`/profile/${otherParticipant?.id}`)}
               >
-                <UserAvatar 
-                  size="md" 
-                  userId={otherParticipant?.id}
-                  name={otherParticipant?.name}
-                  avatarUrl={otherParticipant?.avatar_url}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <h1 className="text-lg font-semibold">{otherParticipant?.name || 'Пользователь'}</h1>
-                    <Badge className={getRoleBadgeColor(otherParticipantRole)}>
-                      {otherParticipantRole === 'driver' ? 'Водитель' : 'Пассажир'}
+                <div className="relative">
+                  <UserAvatar 
+                    size="md" 
+                    userId={otherParticipant?.id}
+                    name={otherParticipant?.name}
+                    avatarUrl={otherParticipant?.avatar_url}
+                  />
+                  {otherParticipant?.is_verified && (
+                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-base font-bold text-white truncate">{otherParticipant?.name || 'Пользователь'}</h1>
+                    <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                      {otherParticipantRole === 'driver' ? '🚗 Водитель' : '👤 Пассажир'}
                     </Badge>
-                    {otherParticipant?.is_verified && (
-                      <Badge className="bg-green-100 text-green-700 border-0 text-xs">
-                        ✓
-                      </Badge>
-                    )}
                   </div>
+                  {otherParticipant?.rating && (
+                    <p className="text-xs text-white/80">
+                      ⭐ {otherParticipant.rating.toFixed(1)} • {otherParticipant.total_rides} поездок
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -317,7 +332,7 @@ const ChatPage = () => {
 
       {/* Ride Info */}
       {chat.ride && (
-        <div className="bg-white border-b px-4 py-2">
+        <div className="bg-white/60 backdrop-blur-sm border-b border-primary/10 px-4 py-3">
           <ChatRideInfo
             rideId={chat.ride.id}
             fromCity={chat.ride.from_city}
@@ -330,10 +345,18 @@ const ChatPage = () => {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <p>Начните общение с вашим попутчиком</p>
+          <div className="text-center mt-16">
+            <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 inline-block">
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Send className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Начните общение</h3>
+              <p className="text-sm text-muted-foreground">
+                Напишите первое сообщение вашему попутчику
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((message) => {
@@ -346,36 +369,36 @@ const ChatPage = () => {
             return (
               <div
                 key={message.id}
-                className={`flex ${isSystemMessage ? 'justify-center' : isMyMessage ? 'justify-end' : 'justify-start'}`}
+                className={`flex animate-fade-in ${isSystemMessage ? 'justify-center' : isMyMessage ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[70%] p-3 rounded-lg ${
+                  className={`max-w-[80%] rounded-2xl shadow-sm ${
                     isSystemMessage
-                      ? 'bg-orange-100 text-orange-800 border border-orange-200'
+                      ? 'bg-accent/10 text-accent-foreground border border-accent/20 px-4 py-3'
                       : isMyMessage
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white text-gray-900 border'
+                        ? 'bg-gradient-to-br from-primary to-yoldosh-brand text-white px-4 py-3'
+                        : 'bg-white/80 backdrop-blur-sm text-foreground border border-primary/10 px-4 py-3'
                   }`}
                 >
                   {/* Заголовок для системных сообщений */}
                   {isSystemMessage && (
-                    <div className="flex items-center mb-2">
-                      <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center mr-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
                         <span className="text-xs text-white font-bold">Y</span>
                       </div>
-                      <span className="text-xs font-semibold">Команда Yoldosh</span>
+                      <span className="text-sm font-bold">Команда Yoldosh</span>
                     </div>
                   )}
                   
-                  <p className="text-sm">{message.content}</p>
+                  <p className="text-sm leading-relaxed">{message.content}</p>
                   
                   {/* Кнопки подтверждения/отклонения для водителей */}
                   {isDriverAndCanRespond && (
-                    <div className="flex space-x-2 mt-3">
+                    <div className="flex gap-2 mt-3">
                       <Button
                         size="sm"
                         onClick={() => handleBookingResponse(message.id, message.booking_request_id!, 'accept')}
-                        className="bg-green-500 hover:bg-green-600 text-white"
+                        className="bg-yoldosh-success hover:bg-yoldosh-success/90 text-white flex-1"
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Подтвердить
@@ -384,7 +407,7 @@ const ChatPage = () => {
                         size="sm"
                         variant="outline"
                         onClick={() => handleBookingResponse(message.id, message.booking_request_id!, 'reject')}
-                        className="border-red-500 text-red-500 hover:bg-red-50"
+                        className="border-destructive text-destructive hover:bg-destructive/10 flex-1"
                       >
                         <XCircle className="h-4 w-4 mr-1" />
                         Отклонить
@@ -392,25 +415,25 @@ const ChatPage = () => {
                     </div>
                   )}
                   
-                  <div className={`flex items-center justify-between mt-1`}>
+                  <div className="flex items-center justify-between gap-2 mt-2">
                     <p
                       className={`text-xs ${
                         isSystemMessage 
-                          ? 'text-orange-600'
+                          ? 'text-accent-foreground/70'
                           : isMyMessage 
-                            ? 'text-blue-100' 
-                            : 'text-gray-500'
+                            ? 'text-white/80' 
+                            : 'text-muted-foreground'
                       }`}
                     >
                       {formatTime(message.created_at)}
                     </p>
                     {/* Галочки только для моих сообщений */}
                     {isMyMessage && !isSystemMessage && (
-                      <div className="ml-2">
+                      <div>
                         {message.read_at ? (
-                          <CheckCheck className="h-3 w-3 text-blue-200" />
+                          <CheckCheck className="h-3.5 w-3.5 text-white/90" />
                         ) : (
-                          <Check className="h-3 w-3 text-blue-200" />
+                          <Check className="h-3.5 w-3.5 text-white/70" />
                         )}
                       </div>
                     )}
@@ -424,23 +447,25 @@ const ChatPage = () => {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t p-4">
-        <div className="flex space-x-2">
+      <div className="bg-white/80 backdrop-blur-sm border-t border-primary/10 p-4 safe-bottom">
+        <div className="flex gap-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Напишите сообщение..."
-            className="flex-1"
+            className="flex-1 h-12 bg-white/80 border-primary/20 rounded-2xl px-4 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            disabled={isSending}
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={!newMessage.trim() || isSending}
+            className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-yoldosh-brand hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
           >
             {isSending ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             )}
           </Button>
         </div>
