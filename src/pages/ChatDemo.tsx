@@ -133,36 +133,36 @@ const ChatDemo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header with minimal brand color */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-muted/30 flex flex-col">
+      {/* Header with brand color gradient for contrast */}
+      <div className="bg-gradient-to-r from-primary to-yoldosh-brand shadow-md">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="hover:bg-muted"
+              className="text-white hover:bg-white/20"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
-              <div className="flex items-center gap-3 p-2 rounded-xl">
+              <div className="flex items-center gap-3 p-2">
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground font-bold">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary font-bold shadow-sm">
                     АК
                   </div>
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                    <CheckCircle className="h-4 w-4 text-primary" />
+                  <div className="absolute -bottom-1 -right-1 bg-yoldosh-success rounded-full p-0.5">
+                    <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-base font-bold text-foreground truncate">{demoParticipant.name}</h1>
-                    <Badge variant="secondary" className="text-xs">
+                    <h1 className="text-base font-bold text-white truncate">{demoParticipant.name}</h1>
+                    <Badge className="bg-white/20 text-white border-0 text-xs">
                       🚗 Водитель
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-white/90">
                     ⭐ {demoParticipant.rating.toFixed(1)} • {demoParticipant.total_rides} поездок
                   </p>
                 </div>
@@ -172,43 +172,43 @@ const ChatDemo = () => {
         </div>
       </div>
 
-      {/* Ride Info */}
+      {/* Ride Info - White card on gray background */}
       <div className="bg-muted/30 border-b px-4 py-3">
-        <div className="bg-white border border-border rounded-xl p-4 shadow-sm">
+        <div className="bg-white border-2 border-primary/30 rounded-xl p-4 shadow-md">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <MapPin className="h-4 w-4 text-primary" />
+            <div className="bg-gradient-to-br from-primary to-yoldosh-brand p-2.5 rounded-xl shadow-sm">
+              <MapPin className="h-4 w-4 text-white" />
             </div>
             <span className="font-bold text-foreground text-base">
               {demoRide.from_city} → {demoRide.to_city}
             </span>
           </div>
           
-          <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center justify-between text-sm bg-muted/40 rounded-lg p-2">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-foreground font-medium">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
                 <span>{formatDate(demoRide.departure_date)}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-foreground font-medium">
+                <Clock className="h-3.5 w-3.5 text-primary" />
                 <span>{demoRide.departure_time}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-lg">
-              <Users className="h-3.5 w-3.5 text-primary" />
-              <span className="text-primary font-semibold">{demoRide.available_seats}</span>
+            <div className="flex items-center gap-1.5 bg-primary px-3 py-1.5 rounded-lg shadow-sm">
+              <Users className="h-3.5 w-3.5 text-white" />
+              <span className="text-white font-bold">{demoRide.available_seats}</span>
             </div>
           </div>
           
-          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1 bg-accent/10 px-2 py-1 rounded w-fit">
             ✨ Демо-поездка для тестирования
           </div>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 bg-muted/20">
+      {/* Messages - Different colors for contrast */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
         {messages.map((message) => {
           const isMyMessage = message.sender_id === 'me';
           const isSystemMessage = message.sender_type === 'system';
@@ -221,21 +221,21 @@ const ChatDemo = () => {
               className={`flex animate-fade-in ${isSystemMessage ? 'justify-center' : isMyMessage ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl shadow-sm ${
+                className={`max-w-[80%] rounded-2xl shadow-md ${
                   isSystemMessage
-                    ? 'bg-accent/10 text-accent-foreground border border-accent/20 px-4 py-3'
+                    ? 'bg-gradient-to-br from-accent/20 to-accent/10 text-foreground border-2 border-accent/40 px-4 py-3'
                     : isMyMessage
-                      ? 'bg-primary text-primary-foreground px-4 py-3'
-                      : 'bg-white text-foreground border border-border px-4 py-3'
+                      ? 'bg-gradient-to-br from-primary to-primary/80 text-white px-4 py-3'
+                      : 'bg-white text-foreground border-2 border-muted px-4 py-3'
                 }`}
               >
                 {/* Заголовок для системных сообщений */}
                 {isSystemMessage && (
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
+                    <div className="w-7 h-7 bg-gradient-to-br from-primary to-yoldosh-brand rounded-full flex items-center justify-center shadow-sm">
                       <span className="text-xs text-white font-bold">Y</span>
                     </div>
-                    <span className="text-sm font-bold">Команда Yoldosh</span>
+                    <span className="text-sm font-bold text-foreground">Команда Yoldosh</span>
                   </div>
                 )}
                 
@@ -246,15 +246,14 @@ const ChatDemo = () => {
                   <div className="flex gap-2 mt-3">
                     <Button
                       size="sm"
-                      className="bg-yoldosh-success hover:bg-yoldosh-success/90 text-white flex-1"
+                      className="bg-yoldosh-success hover:bg-yoldosh-success/90 text-white flex-1 shadow-sm"
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
                       Подтвердить
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="border-destructive text-destructive hover:bg-destructive/10 flex-1"
+                      className="bg-white border-2 border-destructive text-destructive hover:bg-destructive hover:text-white flex-1 shadow-sm"
                     >
                       <XCircle className="h-4 w-4 mr-1" />
                       Отклонить
@@ -264,11 +263,11 @@ const ChatDemo = () => {
                 
                 <div className="flex items-center justify-between gap-2 mt-2">
                   <p
-                    className={`text-xs ${
+                    className={`text-xs font-medium ${
                       isSystemMessage 
-                        ? 'text-accent-foreground/70'
+                        ? 'text-foreground/70'
                         : isMyMessage 
-                          ? 'text-primary-foreground/80' 
+                          ? 'text-white/90' 
                           : 'text-muted-foreground'
                     }`}
                   >
@@ -278,9 +277,9 @@ const ChatDemo = () => {
                   {isMyMessage && !isSystemMessage && (
                     <div>
                       {message.read_at ? (
-                        <CheckCheck className="h-3.5 w-3.5 text-primary-foreground/90" />
+                        <CheckCheck className="h-3.5 w-3.5 text-white" />
                       ) : (
-                        <Check className="h-3.5 w-3.5 text-primary-foreground/70" />
+                        <Check className="h-3.5 w-3.5 text-white/80" />
                       )}
                     </div>
                   )}
@@ -291,25 +290,25 @@ const ChatDemo = () => {
         })}
       </div>
 
-      {/* Input */}
-      <div className="bg-white border-t p-4">
+      {/* Input - White on gray background */}
+      <div className="bg-white border-t-4 border-primary/20 p-4 shadow-lg">
         <div className="flex gap-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Напишите сообщение..."
-            className="flex-1 h-12 rounded-xl"
+            className="flex-1 h-12 rounded-xl border-2 border-muted focus:border-primary"
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={!newMessage.trim()}
-            className="h-12 w-12 rounded-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
+            className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-yoldosh-brand hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
           >
             <Send className="h-5 w-5" />
           </Button>
         </div>
-        <p className="text-xs text-center text-muted-foreground mt-2">
+        <p className="text-xs text-center text-muted-foreground mt-2 bg-muted/30 rounded px-2 py-1">
           Это демо-чат для тестирования дизайна
         </p>
       </div>
