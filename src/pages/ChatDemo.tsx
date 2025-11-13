@@ -133,36 +133,36 @@ const ChatDemo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yoldosh-brand-light via-background to-secondary flex flex-col">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-r from-primary to-yoldosh-brand shadow-lg">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header with minimal brand color */}
+      <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               onClick={() => navigate(-1)}
-              className="text-white hover:bg-white/20"
+              className="hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
               <div className="flex items-center gap-3 p-2 rounded-xl">
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground font-bold">
                     АК
                   </div>
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5">
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
                     <CheckCircle className="h-4 w-4 text-primary" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h1 className="text-base font-bold text-white truncate">{demoParticipant.name}</h1>
-                    <Badge className="bg-white/20 text-white border-0 backdrop-blur-sm text-xs">
+                    <h1 className="text-base font-bold text-foreground truncate">{demoParticipant.name}</h1>
+                    <Badge variant="secondary" className="text-xs">
                       🚗 Водитель
                     </Badge>
                   </div>
-                  <p className="text-xs text-white/80">
+                  <p className="text-xs text-muted-foreground">
                     ⭐ {demoParticipant.rating.toFixed(1)} • {demoParticipant.total_rides} поездок
                   </p>
                 </div>
@@ -173,42 +173,42 @@ const ChatDemo = () => {
       </div>
 
       {/* Ride Info */}
-      <div className="bg-white/60 backdrop-blur-sm border-b border-primary/10 px-4 py-3">
-        <div className="bg-gradient-to-br from-primary via-yoldosh-brand to-accent border-2 border-white shadow-lg rounded-2xl p-4">
+      <div className="bg-muted/30 border-b px-4 py-3">
+        <div className="bg-white border border-border rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
-              <MapPin className="h-5 w-5 text-white" />
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <MapPin className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-bold text-white text-lg drop-shadow-sm">
+            <span className="font-bold text-foreground text-base">
               {demoRide.from_city} → {demoRide.to_city}
             </span>
           </div>
           
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-white font-semibold">
-                <Calendar className="h-4 w-4" />
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5" />
                 <span>{formatDate(demoRide.departure_date)}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-white font-semibold">
-                <Clock className="h-4 w-4" />
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
                 <span>{demoRide.departure_time}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-xl">
-              <Users className="h-4 w-4 text-white" />
-              <span className="text-white font-bold">{demoRide.available_seats}</span>
+            <div className="flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-lg">
+              <Users className="h-3.5 w-3.5 text-primary" />
+              <span className="text-primary font-semibold">{demoRide.available_seats}</span>
             </div>
           </div>
           
-          <div className="text-xs text-white/90 mt-2 flex items-center gap-1 font-medium">
+          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
             ✨ Демо-поездка для тестирования
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 bg-muted/20">
         {messages.map((message) => {
           const isMyMessage = message.sender_id === 'me';
           const isSystemMessage = message.sender_type === 'system';
@@ -225,14 +225,14 @@ const ChatDemo = () => {
                   isSystemMessage
                     ? 'bg-accent/10 text-accent-foreground border border-accent/20 px-4 py-3'
                     : isMyMessage
-                      ? 'bg-gradient-to-br from-primary to-yoldosh-brand text-white px-4 py-3'
-                      : 'bg-white/80 backdrop-blur-sm text-foreground border border-primary/10 px-4 py-3'
+                      ? 'bg-primary text-primary-foreground px-4 py-3'
+                      : 'bg-white text-foreground border border-border px-4 py-3'
                 }`}
               >
                 {/* Заголовок для системных сообщений */}
                 {isSystemMessage && (
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
+                    <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
                       <span className="text-xs text-white font-bold">Y</span>
                     </div>
                     <span className="text-sm font-bold">Команда Yoldosh</span>
@@ -268,7 +268,7 @@ const ChatDemo = () => {
                       isSystemMessage 
                         ? 'text-accent-foreground/70'
                         : isMyMessage 
-                          ? 'text-white/80' 
+                          ? 'text-primary-foreground/80' 
                           : 'text-muted-foreground'
                     }`}
                   >
@@ -278,9 +278,9 @@ const ChatDemo = () => {
                   {isMyMessage && !isSystemMessage && (
                     <div>
                       {message.read_at ? (
-                        <CheckCheck className="h-3.5 w-3.5 text-white/90" />
+                        <CheckCheck className="h-3.5 w-3.5 text-primary-foreground/90" />
                       ) : (
-                        <Check className="h-3.5 w-3.5 text-white/70" />
+                        <Check className="h-3.5 w-3.5 text-primary-foreground/70" />
                       )}
                     </div>
                   )}
@@ -292,19 +292,19 @@ const ChatDemo = () => {
       </div>
 
       {/* Input */}
-      <div className="bg-white/80 backdrop-blur-sm border-t border-primary/10 p-4">
+      <div className="bg-white border-t p-4">
         <div className="flex gap-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Напишите сообщение..."
-            className="flex-1 h-12 bg-white/80 border-primary/20 rounded-2xl px-4 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            className="flex-1 h-12 rounded-xl"
           />
           <Button 
             onClick={handleSendMessage} 
             disabled={!newMessage.trim()}
-            className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-yoldosh-brand hover:shadow-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
+            className="h-12 w-12 rounded-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
           >
             <Send className="h-5 w-5" />
           </Button>
