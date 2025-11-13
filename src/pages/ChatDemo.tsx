@@ -174,35 +174,35 @@ const ChatDemo = () => {
 
       {/* Ride Info */}
       <div className="bg-white/60 backdrop-blur-sm border-b border-primary/10 px-4 py-3">
-        <div className="bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 rounded-2xl p-4">
+        <div className="bg-gradient-to-br from-primary via-yoldosh-brand to-accent border-2 border-white shadow-lg rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="bg-gradient-to-br from-primary to-accent p-2 rounded-xl">
-              <MapPin className="h-4 w-4 text-white" />
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+              <MapPin className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-foreground text-base">
+            <span className="font-bold text-white text-lg drop-shadow-sm">
               {demoRide.from_city} → {demoRide.to_city}
             </span>
           </div>
           
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-primary font-medium">
-                <Calendar className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-white font-semibold">
+                <Calendar className="h-4 w-4" />
                 <span>{formatDate(demoRide.departure_date)}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-primary font-medium">
-                <Clock className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-1.5 text-white font-semibold">
+                <Clock className="h-4 w-4" />
                 <span>{demoRide.departure_time}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-lg">
-              <Users className="h-3.5 w-3.5 text-primary" />
-              <span className="text-primary font-semibold">{demoRide.available_seats}</span>
+            <div className="flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-xl">
+              <Users className="h-4 w-4 text-white" />
+              <span className="text-white font-bold">{demoRide.available_seats}</span>
             </div>
           </div>
           
-          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            👆 Демо-поездка для тестирования
+          <div className="text-xs text-white/90 mt-2 flex items-center gap-1 font-medium">
+            ✨ Демо-поездка для тестирования
           </div>
         </div>
       </div>
