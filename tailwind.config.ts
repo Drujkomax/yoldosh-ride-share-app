@@ -26,37 +26,37 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#6366f1',
-					foreground: '#ffffff'
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
-					DEFAULT: '#8b5cf6',
-					foreground: '#ffffff'
+					DEFAULT: 'hsl(var(--secondary))',
+					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				accent: {
-					DEFAULT: '#f59e0b',
-					foreground: '#ffffff'
+					DEFAULT: 'hsl(var(--accent))',
+					foreground: 'hsl(var(--accent-foreground))'
 				},
 				muted: {
-					DEFAULT: '#f8fafc',
-					foreground: '#64748b'
+					DEFAULT: 'hsl(var(--muted))',
+					foreground: 'hsl(var(--muted-foreground))'
 				},
 				destructive: {
-					DEFAULT: '#ef4444',
-					foreground: '#ffffff'
+					DEFAULT: 'hsl(var(--destructive))',
+					foreground: 'hsl(var(--destructive-foreground))'
 				},
 				card: {
-					DEFAULT: '#ffffff',
-					foreground: '#1e293b'
+					DEFAULT: 'hsl(var(--card))',
+					foreground: 'hsl(var(--card-foreground))'
 				},
 				popover: {
-					DEFAULT: '#ffffff',
-					foreground: '#1e293b'
+					DEFAULT: 'hsl(var(--popover))',
+					foreground: 'hsl(var(--popover-foreground))'
 				},
 				yoldosh: {
-					primary: '#6366f1',
-					secondary: '#8b5cf6',
-					accent: '#06b6d4',
+					brand: 'hsl(var(--yoldosh-brand))',
+					'brand-light': 'hsl(var(--yoldosh-brand-light))',
+					'brand-dark': 'hsl(var(--yoldosh-brand-dark))',
 					dark: '#1e293b',
 					light: '#f1f5f9',
 					success: '#10b981',

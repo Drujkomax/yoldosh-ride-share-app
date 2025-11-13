@@ -44,48 +44,56 @@ const ChatsListPage = () => {
   };
 
   return (
-    <MobilePageLayout className="bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
-            <h1 className="text-xl font-bold text-teal-900">Входящие сообщения</h1>
+    <MobilePageLayout className="bg-gradient-to-br from-yoldosh-brand-light via-background to-secondary">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-primary to-yoldosh-brand shadow-lg">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+                <MessageCircle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">Сообщения</h1>
+                <p className="text-xs text-white/80">{filteredChats.length} активных чатов</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Search */}
+        {/* Search with modern design */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
-              placeholder="Поиск по сообщениям..."
+              placeholder="Поиск чатов..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white border-gray-200"
+              className="pl-12 h-12 bg-white/80 backdrop-blur-sm border-primary/20 rounded-2xl shadow-sm focus:shadow-md transition-all"
             />
           </div>
         </div>
 
         {/* Chats List */}
-        <div className="space-y-4">
-          <div className="flex items-center mb-6">
-            <MessageCircle className="h-6 w-6 mr-3 text-teal-600" />
-            <h2 className="text-lg font-bold text-teal-900">
-              Активные чаты ({filteredChats.length})
-            </h2>
-          </div>
+        <div className="space-y-3">
           
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
+              <p className="mt-4 text-sm text-muted-foreground">Загрузка чатов...</p>
             </div>
           ) : filteredChats.length === 0 ? (
-            <div className="text-center py-16">
-              <MessageCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-600">
-                {searchQuery ? 'Чаты по запросу не найдены' : 'У вас пока нет сообщений'}
+            <div className="text-center py-16 bg-white/60 backdrop-blur-sm rounded-3xl shadow-sm">
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageCircle className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                {searchQuery ? 'Чаты не найдены' : 'Нет сообщений'}
+              </h3>
+              <p className="text-muted-foreground text-sm">
+                {searchQuery ? 'Попробуйте изменить поисковый запрос' : 'Ваши чаты появятся здесь'}
               </p>
             </div>
           ) : (
@@ -99,55 +107,52 @@ const ChatsListPage = () => {
                   <div
                     key={chat.id}
                     onClick={() => navigate(`/chat/${chat.id}`)}
-                    className="p-4 rounded-2xl bg-white border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer hover:scale-[1.02]"
+                    className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-primary/10 p-4 cursor-pointer hover:shadow-lg hover:border-primary/30 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
                   >
-                    <div className="flex items-start space-x-4">
-                       <UserAvatar 
-                         size="md"
-                         userId={otherParticipant?.id}
-                         name={otherParticipant?.name}
-                       />
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-bold text-gray-900 truncate">
-                              {otherParticipant?.name || 'Пользователь'}
-                            </h3>
-                            {otherParticipant?.is_verified && (
-                              <Shield className="h-4 w-4 text-teal-600" />
-                            )}
-                            {chat.unreadCount > 0 && (
-                              <Badge className="bg-red-500 text-white text-xs">
-                                {chat.unreadCount}
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-xs text-gray-500 flex-shrink-0">
-                            {formatTime(chat.last_message_at)}
-                          </span>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                          {lastMessagePreview}
-                        </p>
-                        
-                        {chat.ride && (
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="h-3 w-3" />
-                              <span className="truncate">
-                                {chat.ride.from_city} → {chat.ride.to_city}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-3 w-3" />
-                              <span>
-                                {new Date(chat.ride.departure_date).toLocaleDateString('ru-RU')}
-                              </span>
-                            </div>
+                    <div className="flex items-start gap-4">
+                      <div className="relative">
+                        <UserAvatar
+                          userId={otherParticipant?.id}
+                          name={otherParticipant?.name}
+                          size="lg"
+                        />
+                        {chat.unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 bg-gradient-to-br from-primary to-accent text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg ring-2 ring-white">
+                            {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
                           </div>
                         )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-foreground truncate text-base">
+                            {otherParticipant?.name || 'Пользователь'}
+                          </h3>
+                          {otherParticipant?.is_verified && (
+                            <div className="bg-gradient-to-br from-primary to-accent p-1 rounded-full">
+                              <Shield className="h-3 w-3 text-white flex-shrink-0" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {chat.ride && (
+                          <div className="flex items-center gap-1.5 text-xs text-primary font-medium mb-2 bg-primary/5 px-2 py-1 rounded-lg w-fit">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">
+                              {chat.ride.from_city} → {chat.ride.to_city}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm text-muted-foreground truncate flex-1">
+                            {lastMessagePreview}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTime(chat.last_message_at)}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
