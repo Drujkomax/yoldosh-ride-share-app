@@ -18,6 +18,7 @@ import CreateDriverRide from "./pages/CreateDriverRide";
 import MyTripsPage from "./pages/MyTripsPage";
 import ChatsListPage from "./pages/ChatsListPage";
 import ChatPage from "./pages/ChatPage";
+import ChatDemo from "./pages/ChatDemo";
 import ProfilePage from "./pages/ProfilePage";
 import EditProfilePage from "./pages/EditProfilePage";
 import UserProfile from "./pages/UserProfile";
@@ -65,6 +66,7 @@ function App() {
                 <Route path="/my-trips" element={<MyTripsPage />} />
                 <Route path="/chats" element={<ChatsListPage />} />
                 <Route path="/chat/:chatId" element={<ChatPage />} />
+                <Route path="/chat-demo" element={<ChatDemo />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/edit-profile" element={<EditProfilePage />} />
                 <Route path="/about-me" element={<AboutMePage />} />

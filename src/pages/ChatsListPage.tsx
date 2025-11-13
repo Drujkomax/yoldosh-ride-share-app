@@ -63,6 +63,16 @@ const ChatsListPage = () => {
       </div>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Demo Button */}
+        <div className="mb-4">
+          <Button
+            onClick={() => navigate('/chat-demo')}
+            className="w-full bg-gradient-to-r from-accent to-primary hover:shadow-lg transition-all"
+          >
+            🎨 Открыть демо-чат для тестирования дизайна
+          </Button>
+        </div>
+
         {/* Search with modern design */}
         <div className="mb-6">
           <div className="relative">
